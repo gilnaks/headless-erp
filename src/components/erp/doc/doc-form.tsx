@@ -12,6 +12,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import { FormAlert } from "@/components/erp/form-alert";
+import { getModule } from "@/config/navigation";
 import { type Doctype, docPath, type FormTab } from "@/doctypes/define";
 import { getDoctypeByName } from "@/doctypes/registry";
 import { formValuesFor, schemaFor } from "@/doctypes/schema";
@@ -103,8 +104,9 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
         return () => window.removeEventListener("beforeunload", onBeforeUnload);
     }, [isDirty]);
 
-    const title = isNew ? `New ${d.doctype}` : String(row?.[d.titleField] || d.doctype);
-    const listHref = `/${orgSlug}/${docPath(d)}`;
+    const title = isNew ? `New ${d.doctype}` : d.single ? d.doctype : String(row?.[d.titleField] || d.doctype);
+    const listHref = d.single ? `/${orgSlug}/${d.module}` : `/${orgSlug}/${docPath(d)}`;
+    const backLabel = d.single ? (getModule(d.module)?.label ?? d.module) : d.doctype;
 
     const renderTab = (t: FormTab) =>
         t.sections.map((section, si) => {
@@ -158,7 +160,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                             className="flex w-max items-center gap-1 text-xs font-medium text-tertiary hover:text-secondary"
                         >
                             <ChevronLeft aria-hidden="true" className="size-3.5" />
-                            {d.doctype}
+                            {backLabel}
                         </Link>
                         <div className="flex min-w-0 items-center gap-2">
                             <h1 className="truncate text-lg font-semibold text-primary">{title}</h1>

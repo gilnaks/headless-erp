@@ -34,6 +34,7 @@ export async function saveDoc(input: {
     const org = await getOrgBySlug(input.orgSlug);
     if (!org) return fail("Organization not found.");
     if (input.id !== null && !UUID.test(input.id)) return fail(`${d.doctype} not found.`);
+    if (d.single && input.id === null) return fail(`${d.doctype} cannot be created.`);
 
     const parsed = schemaFor(d).safeParse(input.values);
     if (!parsed.success) return fail("Check the highlighted fields.", zodFieldErrors(parsed.error));
@@ -64,6 +65,7 @@ export async function deleteDoc(input: { orgSlug: string; doctype: string; id: s
     const org = await getOrgBySlug(input.orgSlug);
     if (!org) return fail("Organization not found.");
     if (!UUID.test(input.id)) return fail(`${d.doctype} not found.`);
+    if (d.single) return fail(`${d.doctype} cannot be deleted.`);
 
     const supabase = await createClient();
     const { error } = await supabase.rpc("delete_doc", { p_doctype: d.doctype, p_id: input.id });

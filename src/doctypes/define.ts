@@ -56,6 +56,8 @@ export type Doctype = {
     /** URL segment below the module (`/[org]/<module>/<slug>`). */
     slug: string;
     submittable: boolean;
+    /** Frappe "Single": one row per org, edited in place (no list, new or delete). */
+    single: boolean;
     titleField: string;
     fields: Record<string, FieldDef>;
     children: Record<string, ChildDoctype>;
@@ -67,20 +69,29 @@ export type Doctype = {
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
 
-/** `C` = Table field names (child row arrays), which are not columns of the parent table. */
-export type DoctypeInput<T extends TableName, C extends string = never> = {
+type ListViewInput<T extends TableName> = {
+    columns: Columns<T>[];
+    searchFields: Columns<T>[];
+    defaultSort: { field: Columns<T>; desc?: boolean };
+};
+
+type DoctypeBase<T extends TableName, C extends string> = {
     doctype: string;
     table: T;
     module: ModuleId;
     slug: string;
-    submittable?: boolean;
-    titleField: Columns<T>;
     fields: Partial<Record<Columns<T> | C, FieldDef>>;
     children?: Record<C, ChildDoctype>;
     tabs: LayoutOf<Columns<T> | C>;
-    listView: { columns: Columns<T>[]; searchFields: Columns<T>[]; defaultSort: { field: Columns<T>; desc?: boolean } };
     errorFields?: Record<string, Columns<T>>;
 };
+
+/** `C` = Table field names (child row arrays), which are not columns of the parent table. */
+export type DoctypeInput<T extends TableName, C extends string = never> = DoctypeBase<T, C> &
+    (
+        | { single?: false; submittable?: boolean; titleField: Columns<T>; listView: ListViewInput<T> }
+        | { single: true; submittable?: never; titleField?: never; listView?: never }
+    );
 
 /**
  * Typed descriptor for a doctype: field keys, layout, list columns and the title field must be real columns of
@@ -94,11 +105,12 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         module: input.module,
         slug: input.slug,
         submittable: input.submittable ?? false,
-        titleField: input.titleField,
+        single: input.single ?? false,
+        titleField: input.titleField ?? "id",
         fields: input.fields as Record<string, FieldDef>,
         children: (input.children ?? {}) as Record<string, ChildDoctype>,
         tabs: input.tabs as FormTab[],
-        listView: input.listView,
+        listView: input.listView ?? { columns: [], searchFields: [], defaultSort: { field: "id" } },
         errorFields: input.errorFields ?? {},
     };
 }

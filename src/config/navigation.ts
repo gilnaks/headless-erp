@@ -48,7 +48,7 @@ import type { FC } from "react";
 
 export type ModuleId = "setup" | "accounts" | "selling" | "buying" | "stock" | "manufacturing" | "projects" | "assets";
 
-export type Phase = "P1" | "P2" | "P3" | "P4" | "P5" | "P6" | "P7" | "P8" | "P9" | "P10";
+export type Phase = "P0" | "P1" | "P2" | "P3" | "P4" | "P5" | "P6" | "P7" | "P8" | "P9" | "P10";
 
 export type NavTarget =
     | { kind: "workspace" }
@@ -550,8 +550,8 @@ export const MODULES: ModuleNav[] = [
                 label: "Settings",
                 icon: Settings01,
                 items: [
-                    doctype("Global Defaults", "setup/global-defaults", "P1"),
-                    doctype("System", "setup/system-settings", "P1", "System Settings"),
+                    doctype("Global Defaults", "setup/global-defaults", "P0"),
+                    doctype("System", "setup/system-settings", "P0", "System Settings"),
                     doctype("Accounts", "accounts/settings", "P3", "Accounts Settings"),
                     doctype("Selling", "selling/settings", "P5", "Selling Settings"),
                     doctype("Buying", "buying/settings", "P6", "Buying Settings"),

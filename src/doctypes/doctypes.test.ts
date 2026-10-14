@@ -48,6 +48,29 @@ describe("registry", () => {
     });
 });
 
+describe("single doctypes", () => {
+    const settings = defineDoctype({
+        doctype: "Fixture Settings",
+        table: "companies",
+        module: "setup",
+        slug: "fixture-settings",
+        single: true,
+        fields: { company_name: { type: "Data", label: "Name" } },
+        tabs: [{ label: "Details", sections: [{ columns: [["company_name"]] }] }],
+    });
+
+    it("default to an id title, an empty list view and not submittable", () => {
+        expect(settings.single).toBe(true);
+        expect(settings.submittable).toBe(false);
+        expect(settings.titleField).toBe("id");
+        expect(settings.listView.columns).toEqual([]);
+    });
+
+    it("are regular documents by default", () => {
+        expect(company.single).toBe(false);
+    });
+});
+
 describe("schemaFor (Company)", () => {
     const schema = schemaFor(company);
     const valid = formValuesFor(company, { company_name: "Acme", abbr: "AC", default_currency: "USD", country: "Netherlands" });

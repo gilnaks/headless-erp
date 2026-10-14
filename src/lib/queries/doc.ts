@@ -68,6 +68,14 @@ export async function getDoc(d: Doctype, orgId: string, id: string): Promise<Fie
     return doc;
 }
 
+/** The org's row of a single doctype (seeded with the organization), or null when not visible. */
+export async function getSingleDoc(d: Doctype, orgId: string): Promise<FieldValues | null> {
+    const supabase = await createClient();
+    const { data, error } = await docTable(supabase, d.table).select("*").eq("org_id", orgId).maybeSingle();
+    if (error || !data) return null;
+    return data as FieldValues;
+}
+
 /** UI hints from role_permissions + the caller's roles (the database still authorizes every write). */
 export async function getDocPermissions(orgId: string, doctype: string): Promise<DocPermissions> {
     const claims = await getAuthClaims();

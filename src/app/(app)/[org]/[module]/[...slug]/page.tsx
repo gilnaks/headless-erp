@@ -9,7 +9,7 @@ import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
 import type { Doctype } from "@/doctypes/define";
 import { getDoctype } from "@/doctypes/registry";
 import { loadListParams } from "@/lib/list-params";
-import { getDoc, getDocPermissions, getOrgBySlug, listDocs } from "@/lib/queries/doc";
+import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs } from "@/lib/queries/doc";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { optionSourcesOf } from "@/lib/reference-options";
 
@@ -90,11 +90,36 @@ async function FormRoute({ d, orgSlug, id }: { d: Doctype; orgSlug: string; id: 
     );
 }
 
+async function SingleRoute({ d, orgSlug }: { d: Doctype; orgSlug: string }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const perms = await getDocPermissions(org.id, d.doctype);
+    if (!perms.read) return <NotPermitted action="view" doctype={d.doctype} />;
+
+    const [row, referenceOptions] = await Promise.all([getSingleDoc(d, org.id), getReferenceOptions(optionSourcesOf(d))]);
+    if (!row) notFound();
+    return (
+        <DocForm
+            doctype={d.doctype}
+            orgSlug={org.slug}
+            id={String(row.id)}
+            row={row}
+            canSave={perms.write}
+            canDelete={false}
+            referenceOptions={referenceOptions}
+        />
+    );
+}
+
 async function ItemRoute({ params, searchParams }: ItemPageProps) {
     const { org, module: moduleId, slug } = await params;
     if (!getModule(moduleId)) notFound();
 
     const d = slug.length <= 2 ? getDoctype(moduleId, slug[0]) : undefined;
+    if (d?.single) {
+        if (slug.length === 1) return <SingleRoute d={d} orgSlug={org} />;
+        notFound();
+    }
     if (d && slug.length === 1) return <ListRoute d={d} orgSlug={org} searchParams={searchParams} />;
     if (d && slug[1] === "new") return <FormRoute d={d} orgSlug={org} id={null} />;
     if (d && UUID.test(slug[1])) return <FormRoute d={d} orgSlug={org} id={slug[1]} />;
