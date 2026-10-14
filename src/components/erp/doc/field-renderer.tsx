@@ -11,6 +11,7 @@ import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import type { FieldDef, OptionSource } from "@/doctypes/define";
 import type { ReferenceOptions } from "@/lib/reference-options";
+import { cx } from "@/utils/cx";
 import { LinkField } from "./link-field";
 
 /** Reference-table options (Currency, Country) loaded by the route and shared by every field in the form. */
@@ -53,6 +54,8 @@ export function FieldRenderer(props: FieldRendererProps) {
             return Array.isArray(field.options) ? <FixedSelectField {...props} /> : <SourceSelectField {...props} />;
         case "MultiSelect":
             return <MultiSelectField {...props} />;
+        case "Color":
+            return <ColorField {...props} />;
         default:
             return <InputField {...props} />;
     }
@@ -89,6 +92,44 @@ function InputField({ control, name, field, isDisabled, compact }: FieldRenderer
             hint={compact ? undefined : (fieldState.error?.message ?? field.description)}
             inputClassName={numeric ? "tabular-nums text-right" : undefined}
         />
+    );
+}
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/** ERPNext Color: a hex value typed or picked with the native colour picker. */
+function ColorField({ control, name, field, isDisabled, compact }: FieldRendererProps) {
+    const { field: f, fieldState } = useController({ control, name });
+    const value = typeof f.value === "string" ? f.value : "";
+    return (
+        <div className="flex items-start gap-2">
+            <Input
+                {...labelProps(field, compact)}
+                ref={f.ref}
+                name={f.name}
+                size="sm"
+                className="flex-1"
+                value={value}
+                onChange={f.onChange}
+                onBlur={f.onBlur}
+                placeholder="#3366ff"
+                isRequired={field.required}
+                isDisabled={isDisabled}
+                isInvalid={Boolean(fieldState.error)}
+                hint={compact ? undefined : (fieldState.error?.message ?? field.description)}
+            />
+            <input
+                type="color"
+                aria-label={`Pick ${field.label}`}
+                value={HEX_COLOR.test(value) ? value.toLowerCase() : "#000000"}
+                onChange={(e) => f.onChange(e.target.value)}
+                disabled={isDisabled}
+                className={cx(
+                    "h-9 w-10 shrink-0 cursor-pointer rounded-lg bg-primary p-1 ring-1 ring-primary ring-inset disabled:cursor-not-allowed disabled:opacity-50",
+                    !compact && "mt-6",
+                )}
+            />
+        </div>
     );
 }
 
