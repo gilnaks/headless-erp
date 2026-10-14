@@ -4,6 +4,7 @@ import { cache } from "react";
 import type { Doctype, FieldValues } from "@/doctypes/define";
 import { getAuthClaims } from "@/lib/auth/claims";
 import { can, type RolePermission } from "@/lib/auth/permissions";
+import { PAGE_SIZES } from "@/lib/list-params";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -13,8 +14,6 @@ import { createClient } from "@/lib/supabase/server";
 export function docTable(supabase: Awaited<ReturnType<typeof createClient>>, table: string) {
     return (supabase as unknown as SupabaseClient).from(table);
 }
-
-export const PAGE_SIZES = [20, 50, 100] as const;
 
 export type ListParams = { q?: string; sort?: string; desc?: boolean; page?: number; pageSize?: number };
 export type ListResult = { rows: FieldValues[]; count: number; page: number; pageSize: number; sort: string; desc: boolean };
