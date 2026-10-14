@@ -134,6 +134,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      branch: {
+        Row: {
+          branch: string
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          branch: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           abbr: string
