@@ -33,6 +33,13 @@ async function OrgShell({ children, params }: OrgLayoutProps) {
     // The token's roles are a snapshot from sign-in; the membership row is current.
     const roles = member?.roles ?? claims.orgs[org.id] ?? [];
     const stale = member ? rolesDiffer(claims.orgs[org.id], member.roles) : false;
+    const { data: createPerms } = await supabase
+        .from("role_permissions")
+        .select("doctype")
+        .eq("org_id", org.id)
+        .eq("can_create", true)
+        .in("role", roles);
+    const creatable = [...new Set((createPerms ?? []).map((p) => p.doctype))];
 
     return (
         <AppShell
@@ -41,6 +48,7 @@ async function OrgShell({ children, params }: OrgLayoutProps) {
             companies={companies ?? []}
             companyId={companyId}
             roles={roles}
+            creatable={creatable}
             user={{ email: claims.email, name: profile?.full_name ?? null, avatarUrl: profile?.avatar_url ?? null }}
         >
             {stale && <ClaimsRefresher signature={`${org.id}:${[...roles].sort().join(",")}`} />}

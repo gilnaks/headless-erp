@@ -20,12 +20,14 @@ type AppShellProps = {
     companies: ShellCompany[];
     companyId: string | null;
     roles: string[];
+    /** Doctypes the caller's roles may create (command palette "Create" group). */
+    creatable: string[];
     user: ShellUser;
     children: ReactNode;
 };
 
 /** Icon rail (modules) + module sidebar (ERPNext sidebar sections) + top bar; see docs/architecture/05-ui-ux.md. */
-export function AppShell({ org, orgs, companies, companyId, roles, user, children }: AppShellProps) {
+export function AppShell({ org, orgs, companies, companyId, roles, creatable, user, children }: AppShellProps) {
     const pathname = usePathname();
     const path = orgRelativePath(pathname, org.slug);
     const module = moduleForPath(path);
@@ -88,6 +90,7 @@ export function AppShell({ org, orgs, companies, companyId, roles, user, childre
                     orgSlug={org.slug}
                     companies={companies}
                     companyId={companyId}
+                    creatable={creatable}
                     user={user}
                     onOpenMobileNav={() => setMobileNavOpen(true)}
                 />

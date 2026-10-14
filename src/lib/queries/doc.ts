@@ -27,7 +27,7 @@ export const getOrgBySlug = cache(async (slug: string) => {
 });
 
 /** PostgREST `or=` filters break on these characters; search terms are plain text. */
-function searchTerm(q: string | undefined): string {
+export function searchTerm(q: string | undefined): string {
     return (q ?? "").replace(/[,()*%\\]/g, " ").trim();
 }
 

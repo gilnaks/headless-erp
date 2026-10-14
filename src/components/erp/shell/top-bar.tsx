@@ -2,15 +2,17 @@
 
 import { Building07, ChevronSelectorVertical, LayoutLeft, LogOut01, Menu02, Plus, SearchLg, User01 } from "@untitledui/icons";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { Key } from "react-aria-components";
 import { Button as AriaButton } from "react-aria-components";
+import { useHotkeys } from "react-hotkeys-hook";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import { orgHref } from "@/config/navigation";
 import { useSessionStore } from "@/stores/session";
 import { useUiStore } from "@/stores/ui";
+import { CommandPalette } from "./command-palette";
 import type { ShellCompany, ShellUser } from "./types";
 
 type TopBarProps = {
@@ -18,12 +20,22 @@ type TopBarProps = {
     orgSlug: string;
     companies: ShellCompany[];
     companyId: string | null;
+    creatable: string[];
     user: ShellUser;
     onOpenMobileNav: () => void;
 };
 
-export function TopBar({ orgId, orgSlug, companies, companyId, user, onOpenMobileNav }: TopBarProps) {
+export function TopBar({ orgId, orgSlug, companies, companyId, creatable, user, onOpenMobileNav }: TopBarProps) {
     const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+    const [paletteOpen, setPaletteOpen] = useState(false);
+    useHotkeys(
+        "mod+k",
+        (e) => {
+            e.preventDefault();
+            setPaletteOpen((open) => !open);
+        },
+        { enableOnFormTags: true, enableOnContentEditable: true },
+    );
 
     return (
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-secondary bg-primary px-3 lg:px-4">
@@ -38,17 +50,25 @@ export function TopBar({ orgId, orgSlug, companies, companyId, user, onOpenMobil
             />
             <CompanySwitcher orgId={orgId} orgSlug={orgSlug} companies={companies} initialCompanyId={companyId} />
             <div className="ml-auto flex items-center gap-3">
-                <button
-                    type="button"
-                    disabled
-                    title="Command palette arrives with the first doctypes"
-                    className="flex h-9 w-56 cursor-not-allowed items-center gap-2 rounded-lg bg-primary px-3 text-sm text-placeholder shadow-xs ring-1 ring-primary ring-inset max-md:hidden"
+                <AriaButton
+                    onPress={() => setPaletteOpen(true)}
+                    aria-keyshortcuts="Control+K Meta+K"
+                    className="flex h-9 w-56 cursor-pointer items-center gap-2 rounded-lg bg-primary px-3 text-sm text-placeholder shadow-xs ring-1 ring-primary outline-focus-ring ring-inset hover:bg-primary_hover focus-visible:outline-2 focus-visible:outline-offset-2 max-md:hidden"
                 >
                     <SearchLg aria-hidden="true" className="size-4 text-fg-quaternary" />
                     <span className="flex-1 text-left">Search</span>
-                    <kbd className="rounded px-1 py-px text-xs font-medium text-quaternary ring-1 ring-secondary ring-inset">⌘K</kbd>
-                </button>
+                    <kbd className="rounded px-1 py-px text-xs font-medium text-quaternary ring-1 ring-secondary ring-inset">Ctrl K</kbd>
+                </AriaButton>
+                <ButtonUtility
+                    className="md:hidden"
+                    size="sm"
+                    color="tertiary"
+                    icon={SearchLg}
+                    tooltip="Search"
+                    onPress={() => setPaletteOpen(true)}
+                />
                 <UserMenu user={user} />
+                <CommandPalette orgSlug={orgSlug} creatable={creatable} isOpen={paletteOpen} onOpenChange={setPaletteOpen} />
             </div>
         </header>
     );

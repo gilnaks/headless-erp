@@ -46,4 +46,17 @@ test("sign in, create an organization and a company, see it in the list", async 
 
     await page.goto(`${org}/setup/company`);
     await expect(page.getByRole("row", { name: new RegExp(companyName) })).toBeVisible();
+
+    const palette = page.getByRole("dialog", { name: "Command palette" });
+    const search = palette.getByRole("searchbox", { name: "Search pages, actions and records" });
+
+    await page.keyboard.press("ControlOrMeta+k");
+    await search.pressSequentially(`Smoke Company ${stamp}`);
+    await expect(palette.getByRole("menuitem", { name: new RegExp(companyName) })).toBeVisible();
+
+    await search.fill("");
+    await search.pressSequentially("Global Defaults");
+    await palette.getByRole("menuitem", { name: /^Global Defaults/ }).click();
+    await expect(page).toHaveURL(new RegExp(`${org}/setup/global-defaults$`));
+    await expect(page.getByRole("combobox", { name: label("Default Company") })).toHaveValue(companyName);
 });
