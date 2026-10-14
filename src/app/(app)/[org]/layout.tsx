@@ -2,8 +2,10 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { AppShell } from "@/components/erp/shell/app-shell";
+import { ClaimsRefresher } from "@/components/erp/shell/claims-refresher";
 import { ShellSkeleton } from "@/components/erp/shell/shell-skeleton";
 import { requireUser } from "@/lib/auth/claims";
+import { rolesDiffer } from "@/lib/auth/orgs";
 import { createClient } from "@/lib/supabase/server";
 import { COMPANY_COOKIE } from "@/stores/session-cookie";
 
@@ -19,14 +21,18 @@ async function OrgShell({ children, params }: OrgLayoutProps) {
     const org = orgs?.find((o) => o.slug === slug);
     if (!org) notFound();
 
-    const [{ data: companies }, { data: profile }, cookieStore] = await Promise.all([
+    const [{ data: companies }, { data: profile }, { data: member }, cookieStore] = await Promise.all([
         supabase.from("companies").select("id, company_name, abbr").eq("org_id", org.id).order("company_name"),
         supabase.from("user_profile").select("full_name, avatar_url").eq("user_id", claims.userId).maybeSingle(),
+        supabase.from("org_members").select("roles").eq("org_id", org.id).eq("user_id", claims.userId).maybeSingle(),
         cookies(),
     ]);
 
     const cookieCompany = cookieStore.get(COMPANY_COOKIE)?.value;
     const companyId = companies?.find((c) => c.id === cookieCompany)?.id ?? companies?.[0]?.id ?? null;
+    // The token's roles are a snapshot from sign-in; the membership row is current.
+    const roles = member?.roles ?? claims.orgs[org.id] ?? [];
+    const stale = member ? rolesDiffer(claims.orgs[org.id], member.roles) : false;
 
     return (
         <AppShell
@@ -34,9 +40,10 @@ async function OrgShell({ children, params }: OrgLayoutProps) {
             orgs={orgs ?? []}
             companies={companies ?? []}
             companyId={companyId}
-            roles={claims.orgs[org.id] ?? []}
+            roles={roles}
             user={{ email: claims.email, name: profile?.full_name ?? null, avatarUrl: profile?.avatar_url ?? null }}
         >
+            {stale && <ClaimsRefresher signature={`${org.id}:${[...roles].sort().join(",")}`} />}
             {children}
         </AppShell>
     );

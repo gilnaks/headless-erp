@@ -76,7 +76,7 @@ Add `org_ids` and a lightweight `roles` map to the JWT via a Supabase **Custom A
 { "app": { "orgs": { "<org_uuid>": ["Accounts Manager","Stock User"] } } }
 ```
 
-The claim is for **UI hints only** (`can()` to hide buttons). RLS helpers always read `org_members`/`role_permissions` (security definer, PK-indexed), so removing a member or a role takes effect immediately instead of when the access token expires. We still force a token refresh client-side after role edits so the UI hints catch up.
+The claim is for **UI hints only** (`can()` to hide buttons). RLS helpers always read `org_members`/`role_permissions` (security definer, PK-indexed), so removing a member or a role takes effect immediately instead of when the access token expires. The org layout (`src/app/(app)/[org]/layout.tsx`) passes the caller's `org_members.roles` (own row, readable through RLS) to the shell, not the claim. When the two differ (`rolesDiffer` in `src/lib/auth/orgs.ts`), it renders `ClaimsRefresher`, which calls `supabase.auth.refreshSession()` once per roles signature (guarded in `sessionStorage`) and then `router.refresh()`, so the token catches up after role edits without a refresh loop.
 
 The hook is enabled in `supabase/config.toml` (`[auth.hook.custom_access_token]`) and pushed to hosted projects with `supabase config push`.
 

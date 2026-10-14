@@ -13,3 +13,11 @@ export function orgsFromClaims(claims: Record<string, unknown> | null | undefine
     }
     return result;
 }
+
+/** True when the JWT's roles for an org no longer match `org_members.roles` (order-insensitive). */
+export function rolesDiffer(claimRoles: readonly string[] | undefined, dbRoles: readonly string[]): boolean {
+    if (!claimRoles) return true;
+    const a = [...new Set(claimRoles)].sort();
+    const b = [...new Set(dbRoles)].sort();
+    return a.length !== b.length || a.some((r, i) => r !== b[i]);
+}
