@@ -11,6 +11,7 @@ const USERS = [
     { env: "E2E_PERMS", local: "perms", first_name: "Perms", last_name: "Admin" },
     { env: "E2E_RESTRICTOR", local: "restrictor", first_name: "Restricting", last_name: "Owner" },
     { env: "E2E_RESTRICTED", local: "restricted", first_name: "Restricted", last_name: "Member" },
+    { env: "E2E_BRANCH", local: "branch", first_name: "Branch", last_name: "Admin" },
 ] as const;
 
 /**

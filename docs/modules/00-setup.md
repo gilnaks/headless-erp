@@ -143,6 +143,7 @@ Additionally owned by this doc (not sidebar items):
 - Fields: `branch text reqd unique` (= name). No `.py` validation.
 - Permissions (JSON): HR User rwcd, HR Manager rwcd — both out of scope; we seed **System Manager rwcd**, read for all standard roles (**Deviation:** HR roles not seeded).
 - List: name.
+- **Built (0110):** `public.branch (id, org_id, branch)` with `unique (org_id, lower(branch))` (case-insensitive, **Deviation:** ERPNext's name uniqueness is case-insensitive on MariaDB too, so behaviour matches); a `before insert/update` trigger trims the name. Renaming is a plain save (the UUID is the key). Descriptor `src/doctypes/setup/branch.ts`; pgTAP `15_branch.test.sql`; e2e `branch.spec.ts`.
 
 ### 2.3 Department → `department`
 
@@ -904,7 +905,7 @@ Decisions (2026-10-14):
 - [ ] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings"
 - [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail
 - [x] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — `0106_setup_users.sql` (§2.6, §8), `0107_setup_invitations.sql` (§3.4, link-only delivery)
-- [ ] Branch: table, descriptor, list/form
+- [x] Branch: table, descriptor, list/form — `0110_setup_branch.sql` (§2.2), descriptor `branch.ts`
 - [ ] Department: table (tree), seed root + 13 per company, TreeView
 - [ ] Designation: table, 31-row seed, list/form
 - [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`

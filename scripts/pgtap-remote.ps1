@@ -38,7 +38,8 @@ foreach ($path in $Paths) {
 
     Write-Host (Split-Path $path -Leaf) -ForegroundColor Cyan
     $start = $raw.IndexOf('{')
-    $result = if ($start -ge 0) { $raw.Substring($start) | ConvertFrom-Json } else { $null }
+    $end = $raw.LastIndexOf('}')
+    $result = if ($start -ge 0 -and $end -gt $start) { $raw.Substring($start, $end - $start + 1) | ConvertFrom-Json } else { $null }
     if (-not $result -or $result.error -or -not $result.rows) {
         Write-Host "  ERROR $raw" -ForegroundColor Red
         $failed++
