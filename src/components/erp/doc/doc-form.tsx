@@ -17,8 +17,9 @@ import { getDoctypeByName } from "@/doctypes/registry";
 import { formValuesFor, schemaFor } from "@/doctypes/schema";
 import { deleteDoc, saveDoc } from "@/lib/actions/doc";
 import { applyFieldErrors } from "@/lib/forms";
+import type { ReferenceOptions } from "@/lib/reference-options";
 import { ChildTable } from "./child-table";
-import { FieldRenderer } from "./field-renderer";
+import { FieldRenderer, ReferenceOptionsContext } from "./field-renderer";
 
 export type DocFormProps = {
     /** Doctype name; the descriptor is resolved client-side because it holds functions (`dependsOn`). */
@@ -29,13 +30,17 @@ export type DocFormProps = {
     row: FieldValues | null;
     canSave: boolean;
     canDelete: boolean;
+    /** Options for reference-backed Select fields (`optionSourcesOf(descriptor)`), loaded on the server. */
+    referenceOptions?: ReferenceOptions;
 };
+
+const NO_OPTIONS: ReferenceOptions = {};
 
 /**
  * Generic ERPNext form view: header (title, "Not Saved", Save with Ctrl/Cmd+S, Delete), tabs -> sections -> columns
  * of fields, `depends_on` visibility, server errors mapped back onto fields.
  */
-export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete }: DocFormProps) {
+export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referenceOptions = NO_OPTIONS }: DocFormProps) {
     const d = getDoctypeByName(doctype) as Doctype;
     const isNew = id === null;
     const editable = canSave && Number(row?.docstatus ?? 0) === 0;
@@ -144,58 +149,63 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete }: DocFo
         });
 
     return (
-        <form onSubmit={onSubmit} noValidate className="flex flex-col">
-            <header className="sticky -top-5 z-10 -mx-4 -mt-5 flex flex-wrap items-center gap-3 border-b border-secondary bg-primary px-4 py-3 lg:-top-6 lg:-mx-8 lg:-mt-6 lg:px-8">
-                <div className="flex min-w-0 flex-1 flex-col">
-                    <Link href={listHref} className="flex w-max items-center gap-1 text-xs font-medium text-tertiary hover:text-secondary">
-                        <ChevronLeft aria-hidden="true" className="size-3.5" />
-                        {d.doctype}
-                    </Link>
-                    <div className="flex min-w-0 items-center gap-2">
-                        <h1 className="truncate text-lg font-semibold text-primary">{title}</h1>
-                        {(isNew || isDirty) && (
-                            <Badge size="sm" color="warning">
-                                Not Saved
-                            </Badge>
+        <ReferenceOptionsContext value={referenceOptions}>
+            <form onSubmit={onSubmit} noValidate className="flex flex-col">
+                <header className="sticky -top-5 z-10 -mx-4 -mt-5 flex flex-wrap items-center gap-3 border-b border-secondary bg-primary px-4 py-3 lg:-top-6 lg:-mx-8 lg:-mt-6 lg:px-8">
+                    <div className="flex min-w-0 flex-1 flex-col">
+                        <Link
+                            href={listHref}
+                            className="flex w-max items-center gap-1 text-xs font-medium text-tertiary hover:text-secondary"
+                        >
+                            <ChevronLeft aria-hidden="true" className="size-3.5" />
+                            {d.doctype}
+                        </Link>
+                        <div className="flex min-w-0 items-center gap-2">
+                            <h1 className="truncate text-lg font-semibold text-primary">{title}</h1>
+                            {(isNew || isDirty) && (
+                                <Badge size="sm" color="warning">
+                                    Not Saved
+                                </Badge>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {!isNew && canDelete && <DeleteMenu doctype={d.doctype} title={title} orgSlug={orgSlug} id={id} />}
+                        {editable && (
+                            <Button type="submit" size="sm" isLoading={isSubmitting} showTextWhileLoading>
+                                Save
+                                <kbd className="ml-1 text-xs font-medium opacity-70 max-md:hidden">Ctrl+S</kbd>
+                            </Button>
                         )}
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {!isNew && canDelete && <DeleteMenu doctype={d.doctype} title={title} orgSlug={orgSlug} id={id} />}
-                    {editable && (
-                        <Button type="submit" size="sm" isLoading={isSubmitting} showTextWhileLoading>
-                            Save
-                            <kbd className="ml-1 text-xs font-medium opacity-70 max-md:hidden">Ctrl+S</kbd>
-                        </Button>
-                    )}
-                </div>
-            </header>
+                </header>
 
-            <div className="flex flex-col gap-3 pt-4">
-                {error && <FormAlert>{error}</FormAlert>}
-                {saved && !isDirty && <FormAlert tone="success">Saved.</FormAlert>}
-                {!editable && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
-            </div>
+                <div className="flex flex-col gap-3 pt-4">
+                    {error && <FormAlert>{error}</FormAlert>}
+                    {saved && !isDirty && <FormAlert tone="success">Saved.</FormAlert>}
+                    {!editable && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
+                </div>
 
-            {tabs.length > 1 ? (
-                <Tabs selectedKey={tab} onSelectionChange={setTab} className="pt-2">
-                    <Tabs.List type="underline" size="sm" aria-label={`${d.doctype} sections`}>
+                {tabs.length > 1 ? (
+                    <Tabs selectedKey={tab} onSelectionChange={setTab} className="pt-2">
+                        <Tabs.List type="underline" size="sm" aria-label={`${d.doctype} sections`}>
+                            {tabs.map((t) => (
+                                <Tabs.Item key={t.label} id={t.label} badge={tabErrors(t) || undefined}>
+                                    {t.label}
+                                </Tabs.Item>
+                            ))}
+                        </Tabs.List>
                         {tabs.map((t) => (
-                            <Tabs.Item key={t.label} id={t.label} badge={tabErrors(t) || undefined}>
-                                {t.label}
-                            </Tabs.Item>
+                            <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="[&[inert]]:hidden">
+                                {renderTab(t)}
+                            </Tabs.Panel>
                         ))}
-                    </Tabs.List>
-                    {tabs.map((t) => (
-                        <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="[&[inert]]:hidden">
-                            {renderTab(t)}
-                        </Tabs.Panel>
-                    ))}
-                </Tabs>
-            ) : (
-                tabs.map((t) => <div key={t.label}>{renderTab(t)}</div>)
-            )}
-        </form>
+                    </Tabs>
+                ) : (
+                    tabs.map((t) => <div key={t.label}>{renderTab(t)}</div>)
+                )}
+            </form>
+        </ReferenceOptionsContext>
     );
 }
 

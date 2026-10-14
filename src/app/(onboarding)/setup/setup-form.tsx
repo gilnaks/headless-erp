@@ -4,21 +4,24 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/base/buttons/button";
+import type { SelectItemType } from "@/components/base/select/select";
 import { FormAlert } from "@/components/erp/form-alert";
 import { FormComboBox } from "@/components/erp/form-combobox";
 import { FormInput } from "@/components/erp/form-input";
 import { createOrganization } from "@/lib/actions/organization";
 import { applyFieldErrors } from "@/lib/forms";
-import { browserTimeZone, currencyOptions, timeZoneOptions } from "@/lib/intl";
+import { browserTimeZone, timeZoneOptions } from "@/lib/intl";
 import { type CreateOrganizationInput, createOrganizationSchema, slugify } from "@/lib/schemas/organization";
-import { countries } from "@/utils/countries";
 
-const countryOptions = countries.map((c) => ({ id: c.name, label: c.name }));
+type SetupFormProps = {
+    /** From the global `country` / `currency` tables. */
+    countries: SelectItemType[];
+    currencies: SelectItemType[];
+};
 
-export function SetupForm() {
+export function SetupForm({ countries, currencies }: SetupFormProps) {
     const [error, setError] = useState<string | null>(null);
     const slugEdited = useRef(false);
-    const currencies = useMemo(currencyOptions, []);
     const timeZones = useMemo(timeZoneOptions, []);
 
     const form = useForm<CreateOrganizationInput>({
@@ -66,7 +69,7 @@ export function SetupForm() {
                 control={form.control}
                 name="country"
                 label="Country"
-                items={countryOptions}
+                items={countries}
                 placeholder="Search countries"
                 isRequired
             />

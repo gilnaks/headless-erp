@@ -38,6 +38,14 @@ describe("registry", () => {
         expect(new Set(placed).size).toBe(placed.length);
         expect([...placed].sort()).toEqual(Object.keys(d.fields).sort());
     });
+
+    it.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s maps only real error codes onto declared fields", (_, d) => {
+        const builtIn = ["duplicate", "linked", "permission_denied"];
+        for (const [code, field] of Object.entries(d.errorFields)) {
+            expect(d.fields[field], `${code} -> ${field}`).toBeDefined();
+            if (!builtIn.includes(code)) expect(migrations, code).toMatch(new RegExp(`'${code}: `));
+        }
+    });
 });
 
 describe("schemaFor (Company)", () => {

@@ -139,5 +139,7 @@ export const company = defineDoctype({
         invalid_parent: "parent_id",
         has_children: "is_group",
         duplicate: "company_name",
+        country_unknown: "country",
+        currency_unknown: "default_currency",
     },
 });

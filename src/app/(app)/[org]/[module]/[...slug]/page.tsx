@@ -10,6 +10,8 @@ import type { Doctype } from "@/doctypes/define";
 import { getDoctype } from "@/doctypes/registry";
 import { loadListParams } from "@/lib/list-params";
 import { getDoc, getDocPermissions, getOrgBySlug, listDocs } from "@/lib/queries/doc";
+import { getReferenceOptions } from "@/lib/queries/reference";
+import { optionSourcesOf } from "@/lib/reference-options";
 
 type ItemPageProps = {
     params: Promise<{ org: string; module: string; slug: string[] }>;
@@ -59,12 +61,33 @@ async function FormRoute({ d, orgSlug, id }: { d: Doctype; orgSlug: string; id: 
 
     if (id === null) {
         if (!perms.create) return <NotPermitted action="create" doctype={d.doctype} />;
-        return <DocForm doctype={d.doctype} orgSlug={org.slug} id={null} row={null} canSave canDelete={false} />;
+        const referenceOptions = await getReferenceOptions(optionSourcesOf(d));
+        return (
+            <DocForm
+                doctype={d.doctype}
+                orgSlug={org.slug}
+                id={null}
+                row={null}
+                canSave
+                canDelete={false}
+                referenceOptions={referenceOptions}
+            />
+        );
     }
 
-    const row = await getDoc(d, org.id, id);
+    const [row, referenceOptions] = await Promise.all([getDoc(d, org.id, id), getReferenceOptions(optionSourcesOf(d))]);
     if (!row) notFound();
-    return <DocForm doctype={d.doctype} orgSlug={org.slug} id={id} row={row} canSave={perms.write} canDelete={perms.delete} />;
+    return (
+        <DocForm
+            doctype={d.doctype}
+            orgSlug={org.slug}
+            id={id}
+            row={row}
+            canSave={perms.write}
+            canDelete={perms.delete}
+            referenceOptions={referenceOptions}
+        />
+    );
 }
 
 async function ItemRoute({ params, searchParams }: ItemPageProps) {

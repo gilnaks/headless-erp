@@ -17,6 +17,8 @@ export async function createOrganization(input: CreateOrganizationInput): Promis
         const { code, message } = dbError(error);
         if (code === "slug_taken" || code === "slug_reserved" || code === "invalid_slug")
             return fail("Choose a different URL.", { slug: message });
+        if (code === "country_unknown") return fail("Check the highlighted fields.", { country: message });
+        if (code === "currency_unknown") return fail("Check the highlighted fields.", { default_currency: message });
         return fail(message);
     }
 

@@ -1,17 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { Key } from "react-aria-components";
 import { type Control, type FieldValues, useController } from "react-hook-form";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { HintText } from "@/components/base/input/hint-text";
 import { Input } from "@/components/base/input/input";
-import { Select, type SelectItemType } from "@/components/base/select/select";
+import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import type { FieldDef, OptionSource } from "@/doctypes/define";
-import { currencyOptions } from "@/lib/intl";
-import { countries } from "@/utils/countries";
+import type { ReferenceOptions } from "@/lib/reference-options";
 import { LinkField } from "./link-field";
+
+/** Reference-table options (Currency, Country) loaded by the route and shared by every field in the form. */
+export const ReferenceOptionsContext = createContext<ReferenceOptions>({});
 
 export type FieldRendererProps = {
     control: Control<FieldValues>;
@@ -31,15 +33,6 @@ const NUMERIC_INPUT: Partial<Record<FieldDef["type"], "numeric" | "decimal">> = 
     Currency: "decimal",
     Percent: "decimal",
 };
-
-function sourceItems(source: OptionSource): SelectItemType[] {
-    switch (source) {
-        case "Currency":
-            return currencyOptions();
-        case "Country":
-            return countries.map((c) => ({ id: c.name, label: c.name }));
-    }
-}
 
 /** Renders one ERPNext field (by `fieldtype`) bound to React Hook Form. Table fields are rendered by `ChildTable`. */
 export function FieldRenderer(props: FieldRendererProps) {
@@ -158,7 +151,7 @@ function FixedSelectField({ control, name, field, isDisabled, compact }: FieldRe
 
 function SourceSelectField({ control, name, field, isDisabled, compact }: FieldRendererProps) {
     const { field: f, fieldState } = useController({ control, name });
-    const items = useMemo(() => sourceItems(field.options as OptionSource), [field.options]);
+    const items = useContext(ReferenceOptionsContext)[field.options as OptionSource] ?? [];
     return (
         <Select.ComboBox
             {...labelProps(field, compact)}
