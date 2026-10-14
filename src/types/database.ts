@@ -553,6 +553,7 @@ export type Database = {
           child_field: string | null
           doctype: string
           is_child: boolean
+          is_single: boolean
           is_submittable: boolean
           is_tree: boolean
           module: string
@@ -568,6 +569,7 @@ export type Database = {
           child_field?: string | null
           doctype: string
           is_child?: boolean
+          is_single?: boolean
           is_submittable?: boolean
           is_tree?: boolean
           module: string
@@ -583,6 +585,7 @@ export type Database = {
           child_field?: string | null
           doctype?: string
           is_child?: boolean
+          is_single?: boolean
           is_submittable?: boolean
           is_tree?: boolean
           module?: string
@@ -600,6 +603,93 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "doctype_meta"
             referencedColumns: ["doctype"]
+          },
+        ]
+      }
+      global_defaults: {
+        Row: {
+          country: string | null
+          created_at: string
+          created_by: string | null
+          default_company_id: string | null
+          default_currency: string | null
+          default_distance_unit: string | null
+          disable_in_words: boolean
+          disable_rounded_total: boolean
+          hide_currency_symbol: boolean
+          id: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+          use_posting_datetime_for_naming_documents: boolean
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_company_id?: string | null
+          default_currency?: string | null
+          default_distance_unit?: string | null
+          disable_in_words?: boolean
+          disable_rounded_total?: boolean
+          hide_currency_symbol?: boolean
+          id?: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+          use_posting_datetime_for_naming_documents?: boolean
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_company_id?: string | null
+          default_currency?: string | null
+          default_distance_unit?: string | null
+          disable_in_words?: boolean
+          disable_rounded_total?: boolean
+          hide_currency_symbol?: boolean
+          id?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          use_posting_datetime_for_naming_documents?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "global_defaults_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "global_defaults_default_company_id_fkey"
+            columns: ["default_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "global_defaults_default_currency_fkey"
+            columns: ["default_currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "global_defaults_default_distance_unit_fkey"
+            columns: ["default_distance_unit"]
+            isOneToOne: false
+            referencedRelation: "uom_template"
+            referencedColumns: ["uom_name"]
+          },
+          {
+            foreignKeyName: "global_defaults_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -31,7 +31,7 @@ Sidebar source: `erpnext/setup/sidebar/setup/setup.json`. Sections marked *out* 
 | Email › Email Account | `/setup/email-account` | Email Account → `email_account` (outbound only) | P1 |
 | Email › Email Template | `/setup/email-template` | Email Template → `email_template` | P1 |
 | Email › Email Digest | `/setup/email-digest` | Email Digest / Email Digest Recipient → `email_digest`, `email_digest_recipient` | P1 (job wired as modules land) |
-| Settings › Global Defaults | `/setup/global-defaults` | Global Defaults (single) → `global_defaults` | P1 |
+| Settings › Global Defaults | `/setup/global-defaults` | Global Defaults (single) → `global_defaults` | P0 ✅ |
 | Settings › System | `/setup/system-settings` | System Settings (Frappe, subset) → `system_settings` | P1 |
 | Settings › Accounts / Selling / Buying / Stock / Manufacturing / Projects | `/[org]/<module>/settings` | pointer links only — each is owned by its module doc (`01-accounts.md` … `06-projects.md`) | per module |
 | Data (Data Import, Rename Tool, Bulk Transaction Log, Transaction Deletion Record) | — | **out** (PLAN §1: Data Import/Rename tools) | — |
@@ -416,6 +416,7 @@ Source: `erpnext/setup/doctype/global_defaults/global_defaults.json`, `.py`.
 
 - `on_update` pushes `company/currency/country/hide_currency_symbol/disable_rounded_total/disable_in_words` into user defaults → ours: Server Components read `global_defaults` directly; `revalidateTag('global-defaults')`.
 - Permissions: System Manager rwc.
+- **Built (P0, `0103_setup_global_defaults.sql`):** one row per org, seeded by a trigger on `organizations` insert (country + currency); the first company inserted becomes `default_company_id`. Members read, System Manager writes (`role_permissions`: read/write, no create/delete; rows are never inserted or deleted through the API). Link errors: `country_unknown`, `currency_unknown`, `company_unknown` (company from another org). Saving a new `default_currency` enables it in `org_currency`. `default_distance_unit` is in the table but joins the form with the UOM doctype (P1). `demo_company` is not ported.
 
 ### 2.18 System Settings (Frappe) → `system_settings` (single, per org)
 

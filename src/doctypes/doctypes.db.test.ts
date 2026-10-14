@@ -38,8 +38,14 @@ describe.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s", (_, d) => {
     it("matches its doctype_meta row", async () => {
         const meta = await metaOf(d.doctype);
         expect(meta).not.toBeNull();
-        expect(meta).toMatchObject({ table_name: d.table, module: d.module, is_submittable: d.submittable, is_child: false });
-        expect(meta?.title_field).toBe(d.titleField);
+        expect(meta).toMatchObject({
+            table_name: d.table,
+            module: d.module,
+            is_submittable: d.submittable,
+            is_child: false,
+            is_single: d.single,
+        });
+        if (!d.single) expect(meta?.title_field).toBe(d.titleField);
     });
 
     it("uses only real columns for fields, list view and title", async () => {
