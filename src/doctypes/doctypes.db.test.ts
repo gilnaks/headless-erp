@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Database } from "@/types/database";
 import { type ChildDoctype, type Doctype, layoutFields } from "./define";
 import { DOCTYPES } from "./registry";
+import { TREE_PERMISSION_TARGETS } from "./setup/user-permission";
 
 /**
  * Descriptor <-> database consistency against a freshly reset local Supabase (`npm run test:db` in CI).
@@ -33,6 +34,12 @@ const columnFields = (d: Pick<Doctype, "fields">) =>
     Object.entries(d.fields)
         .filter(([, f]) => f.type !== "Table")
         .map(([name]) => name);
+
+it("Hide Descendants is offered for exactly the tree User Permission targets", async () => {
+    const { data, error } = await db.from("doctype_meta").select("doctype").eq("user_permission_target", true).eq("is_tree", true);
+    expect(error).toBeNull();
+    expect((data ?? []).map((r) => r.doctype).sort()).toEqual([...TREE_PERMISSION_TARGETS].sort());
+});
 
 describe.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s", (_, d) => {
     it("matches its doctype_meta row", async () => {

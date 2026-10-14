@@ -12,13 +12,15 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000011b1","role":"authenticated"}', true);
 select set_config('test.org_b', public.create_organization('{"name":"Users Org B","slug":"users-org-b"}') ->> 'id', true);
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000011a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"Users Org A","slug":"users-org-a"}') ->> 'id', true);
+select set_config('test.org', public.create_organization('{"name":"Users Org A","slug":"users-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
 
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000011a2', '{Sales User}'),
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000011a3', '{Sales User}');
+insert into public.companies (id, org_id, company_name, abbr)
+  values ('00000000-0000-0000-0000-0000000011c1', current_setting('test.org')::uuid, 'Users Co', 'UCO');
 insert into public.user_permissions (org_id, user_id, doctype, record_id)
-  values (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000011a3', 'Company', gen_random_uuid());
+  values (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000011a3', 'Company', '00000000-0000-0000-0000-0000000011c1');
 
 -- Directory as System Manager (owner A)
 select is(

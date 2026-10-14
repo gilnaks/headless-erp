@@ -2,7 +2,7 @@
 
 import { ChevronLeft, Trash01 } from "@untitledui/icons";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { type ReactNode, useState, useTransition } from "react";
 import { Heading as AriaHeading } from "react-aria-components";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Badge } from "@/components/base/badges/badges";
@@ -20,6 +20,8 @@ type MemberPanelProps = {
     roleOptions: RoleOption[];
     profiles: RoleProfileOption[];
     canEdit: boolean;
+    /** Extra sections rendered before "Remove" (the User Permissions list). */
+    children?: ReactNode;
 };
 
 const sameRoles = (a: string[], b: string[]) => {
@@ -28,7 +30,7 @@ const sameRoles = (a: string[], b: string[]) => {
 };
 
 /** Frappe User form, reduced to what an organization controls: roles (or a role profile), status and membership. */
-export function MemberPanel({ orgSlug, member, roleOptions, profiles, canEdit }: MemberPanelProps) {
+export function MemberPanel({ orgSlug, member, roleOptions, profiles, canEdit, children }: MemberPanelProps) {
     const assignment = useRoleAssignment({ profile: member.roleProfile, roles: member.roles }, profiles);
     const { profile, roles } = assignment;
     const [error, setError] = useState<string | null>(null);
@@ -147,6 +149,8 @@ export function MemberPanel({ orgSlug, member, roleOptions, profiles, canEdit }:
                     onChange={toggleStatus}
                 />
             </section>
+
+            {children}
 
             {canEdit && !member.isOwner && <RemoveMember orgSlug={orgSlug} member={member} title={title} />}
         </div>

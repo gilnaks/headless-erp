@@ -42,6 +42,7 @@ function valueSchema(field: FieldDef): z.ZodType {
         case "Percent":
             return z.string().regex(NUMBER, `${field.label} must be a number`).or(z.literal(""));
         case "Link":
+        case "DynamicLink":
             return z
                 .string()
                 .regex(UUID, `Select a valid ${field.target ?? field.label}`)
@@ -109,6 +110,21 @@ export function formValuesFor(d: Doctype, row?: FieldValues): FieldValues {
         values[name] = rows.map((r) => ({ ...(r.id ? { id: String(r.id) } : {}), ...rowToInput(child.fields, r) }));
     }
     return values;
+}
+
+/**
+ * Values for a new document from the URL query (Frappe `frappe.route_options`, e.g. `?user_id=<id>`): editable,
+ * non-table fields only; null when nothing applies.
+ */
+export function prefillValues(d: Pick<Doctype, "fields">, query: Record<string, string | string[] | undefined>): FieldValues | null {
+    const row: FieldValues = {};
+    for (const [name, field] of Object.entries(d.fields)) {
+        const raw = query[name];
+        const value = Array.isArray(raw) ? raw[0] : raw;
+        if (value === undefined || field.readOnly || ARRAY_TYPES.has(field.type)) continue;
+        row[name] = field.type === "Check" ? value === "1" || value === "true" : value;
+    }
+    return Object.keys(row).length ? row : null;
 }
 
 /** A blank child row with ERPNext defaults. */

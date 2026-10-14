@@ -15,21 +15,37 @@ type LinkFieldProps = {
     isDisabled?: boolean;
     /** Grid cell: no visible label or hint. */
     compact?: boolean;
+    /** DynamicLink: target doctype read from the sibling field (overrides `field.target`). */
+    target?: string;
 };
 
 const DEBOUNCE_MS = 250;
 
 /** ERPNext Link: an async combobox over the target doctype's title field; the stored value is the record id. */
-export function LinkField({ control, name, field, orgSlug, isDisabled, compact }: LinkFieldProps) {
+export function LinkField({ control, name, field, orgSlug, isDisabled, compact, target: dynamicTarget }: LinkFieldProps) {
     const { field: f, fieldState } = useController({ control, name });
     const value = typeof f.value === "string" ? f.value : "";
-    const target = field.target ?? "";
+    const target = dynamicTarget ?? field.target ?? "";
     const [items, setItems] = useState<LinkOption[]>([]);
     const [loaded, setLoaded] = useState(false);
     const request = useRef(0);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const shownTarget = useRef(target);
+
+    // A record id of the previous doctype means nothing for the new one.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: only when the target doctype changes
+    useEffect(() => {
+        if (target === shownTarget.current) return;
+        shownTarget.current = target;
+        request.current++;
+        setItems([]);
+        setLoaded(false);
+        f.onChange("");
+        if (!compact) load("");
+    }, [target]);
 
     const load = (q: string) => {
+        if (!target) return;
         const seq = ++request.current;
         void searchLink({ orgSlug, doctype: target, q, ids: value ? [value] : [] }).then((options) => {
             if (seq !== request.current) return;
@@ -64,9 +80,11 @@ export function LinkField({ control, name, field, orgSlug, isDisabled, compact }
             items={items}
             size="sm"
             shortcut={false}
-            placeholder={field.placeholder ?? (compact ? "" : `Select ${target}`)}
+            // Results arrive after typing starts; without this the menu stays closed when the first keystroke found no options.
+            allowsEmptyCollection
+            placeholder={field.placeholder ?? (compact ? "" : target ? `Select ${target}` : `Select ${field.label}`)}
             isRequired={field.required}
-            isDisabled={isDisabled}
+            isDisabled={isDisabled || !target}
             isInvalid={Boolean(fieldState.error)}
             hint={compact ? undefined : (fieldState.error?.message ?? field.description)}
             selectedKey={value || null}

@@ -8,8 +8,10 @@ import { PageSkeleton } from "@/components/erp/shell/shell-skeleton";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
 import type { Doctype } from "@/doctypes/define";
 import { getDoctype } from "@/doctypes/registry";
+import { prefillValues } from "@/doctypes/schema";
 import { loadListParams } from "@/lib/list-params";
 import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs } from "@/lib/queries/doc";
+import { getListLinkTitles } from "@/lib/queries/links";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { optionSourcesOf } from "@/lib/reference-options";
 
@@ -43,23 +45,29 @@ async function ListRoute({ d, orgSlug, searchParams }: { d: Doctype; orgSlug: st
 
     const { q, sort, desc, page, size } = await loadListParams(searchParams);
     const list = await listDocs(d, org.id, { q, sort: sort ?? undefined, desc, page, pageSize: size });
-    return <DocList doctype={d.doctype} orgSlug={org.slug} {...list} canCreate={perms.create} />;
+    const titles = await getListLinkTitles(d, org.id, list.rows);
+    return <DocList doctype={d.doctype} orgSlug={org.slug} {...list} titles={titles} canCreate={perms.create} />;
 }
 
-async function FormRoute({ d, orgSlug, id }: { d: Doctype; orgSlug: string; id: string | null }) {
+type FormRouteProps = { d: Doctype; orgSlug: string; id: string | null; searchParams?: ItemPageProps["searchParams"] };
+
+async function FormRoute({ d, orgSlug, id, searchParams }: FormRouteProps) {
     const org = await getOrgBySlug(orgSlug);
     if (!org) notFound();
     const perms = await getDocPermissions(org.id, d.doctype);
 
     if (id === null) {
         if (!perms.create) return <NotPermitted action="create" doctype={d.doctype} />;
-        const referenceOptions = await getReferenceOptions(optionSourcesOf(d), org.id);
+        const [referenceOptions, prefill] = await Promise.all([
+            getReferenceOptions(optionSourcesOf(d), org.id),
+            searchParams ? searchParams.then((sp) => prefillValues(d, sp)) : null,
+        ]);
         return (
             <DocForm
                 doctype={d.doctype}
                 orgSlug={org.slug}
                 id={null}
-                row={null}
+                row={prefill}
                 canSave
                 canDelete={false}
                 referenceOptions={referenceOptions}
@@ -113,7 +121,7 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
         notFound();
     }
     if (d && slug.length === 1) return <ListRoute d={d} orgSlug={org} searchParams={searchParams} />;
-    if (d && slug[1] === "new") return <FormRoute d={d} orgSlug={org} id={null} />;
+    if (d && slug[1] === "new") return <FormRoute d={d} orgSlug={org} id={null} searchParams={searchParams} />;
     if (d && UUID.test(slug[1])) return <FormRoute d={d} orgSlug={org} id={slug[1]} />;
 
     const path = [moduleId, ...slug].join("/");

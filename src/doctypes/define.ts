@@ -11,6 +11,7 @@ export type FieldType =
     | "Select"
     | "MultiSelect"
     | "Link"
+    | "DynamicLink"
     | "Date"
     | "Check"
     | "Int"
@@ -19,8 +20,11 @@ export type FieldType =
     | "Percent"
     | "Table";
 
-/** Option lists resolved at runtime instead of being inlined. `Role` is per organization; the others are global. */
-export type OptionSource = "Currency" | "Country" | "TimeZone" | "Role";
+/**
+ * Option lists resolved at runtime instead of being inlined. `Role` is per organization; the others are global.
+ * `DocType` lists document types (no child tables); `UserPermissionTarget` those a User Permission can restrict.
+ */
+export type OptionSource = "Currency" | "Country" | "TimeZone" | "Role" | "DocType" | "UserPermissionTarget";
 
 export type FieldValues = Record<string, unknown>;
 
@@ -34,8 +38,10 @@ export type FieldDef = {
     setOnlyOnce?: boolean;
     /** Select / MultiSelect (`text[]` column): fixed labels (ERPNext `options`) or a runtime source. */
     options?: readonly string[] | OptionSource;
-    /** Link: target doctype. Table: child doctype. */
+    /** Link: target doctype (`User` = organization members). Table: child doctype. */
     target?: string;
+    /** DynamicLink: the sibling field holding the target doctype (ERPNext `options`). */
+    optionsField?: string;
     default?: string | number | boolean;
     /** ERPNext `depends_on`; hidden fields are still submitted. */
     dependsOn?: (values: FieldValues) => boolean;

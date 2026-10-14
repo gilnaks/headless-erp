@@ -254,6 +254,13 @@ Frappe fields → columns: `user → user_id`, `allow (DocType) → doctype text
 - Honoured by `app.record_allowed()` / `app.company_allowed()` in RLS. Allowed `doctype` values in P1: Company, Warehouse, Cost Center (others added as their tables land; the picker lists `doctype_meta` rows flagged `user_permission_target`).
 - `is_default`: pre-fills the link field in new documents (session default), mirrors Frappe.
 - Permissions: System Manager rwcd. List: user, doctype, record (title), applicable_for, is_default.
+- **Built (P1, `0109_setup_user_permissions.sql`):**
+  - Validation trigger (every caller; security definer so a System Manager restricted to some companies can still grant others): `user_not_member`, `doctype_not_allowed` (not a `user_permission_target`), `record_unknown` (no such record in the org), `applicable_for_unknown` (blank → null = all document types), `default_exists` (one default per user and doctype, Frappe `validate_default_permission`); duplicates hit the unique index (`duplicate`). `hide_descendants` is forced off for non-tree doctypes.
+  - Descendants: on a tree doctype (`doctype_meta.is_tree`, `path` ltree) a permission allows the record and everything below it, unless `hide_descendants` (Frappe `get_user_permissions`). Company is the only target in P1; Warehouse and Cost Center become targets with their P2 tables.
+  - `applicable_for`: rows with a value only restrict that doctype; when RLS checks a doctype's own records (e.g. the Company list) it uses the rows for all doctypes plus the rows applicable to that doctype. If no row applies, the user is unrestricted.
+  - Non-strict mode (ERPNext `build_qb_match_conditions` default): documents whose link is empty stay visible; transaction policies (P3+) will pass `company_allowed(org_id, company_id, '<Doctype>')` and allow null links.
+  - `is_default` on Company picks the top-bar company when the user has no `hx_company` cookie (`[org]` layout). Defaults for other link fields come with the transaction forms.
+  - UI: descriptor `src/doctypes/setup/user-permission.ts` on the generic list/form (`/setup/user-permissions`): User is a Link over the members, Allow a Select of the target doctypes, For Value a Dynamic Link, Hide Descendants shown for tree targets only. The member panel lists the member's rows with "Add user permission" (opens the form with `?user_id=` prefilled).
 
 ### 2.10 Authorization Rule → `authorization_rule` (simplified port)
 
@@ -827,6 +834,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Role Permissions matrix** (Frappe `permission-manager` page): filter by doctype or role; rows = doctypes (grouped by module), columns = read/write/create/submit/cancel/amend/delete/if_owner toggles; "Reset to defaults" restores the seed; "Add new rule" picks role × doctype. Edits write `role_permissions`.
   - Built as the bespoke route `src/app/(app)/[org]/setup/role-permissions/page.tsx` (in `BUILT_PAGES`) with `permission-matrix.tsx`: the matrix edits many `role_permissions` rows at once, which no descriptor form models. System Manager only (others get an error alert, as Frappe restricts the page). Filters `?doctype=` / `?role=` (nuqs); nothing is listed until one is set. Each checkbox saves immediately; Submit/Cancel/Amend are disabled on non-submittable doctypes. Columns: Read, Write, Create, Delete, Submit, Cancel, Amend, Report, Export, Only If Creator. The Access doctypes are shown read-only with an info alert. "Reset to defaults" (confirm dialog) and "Add a new rule" (role × doctype, starts with Read).
 - **User Permissions**: list grouped by user; "Add" dialog = user, doctype (Company/Warehouse/Cost Center…), record, applicable_for (all / one doctype), is_default, hide_descendants.
+  - Built on the generic `DocList` / `DocForm` (not a dialog): the list shows the user's name and email and the record's title instead of ids, sorted by doctype. The member panel shows a "User Permissions" section (not a tab: the panel is one scrolling page of sections) with each row and an "Add user permission" button.
 - **Holiday List form**: header fields + actions *Add Weekly Holidays*, *Add Local Holidays*, *Clear Table*; child grid; calendar preview coloured by `color`.
 - **Department / Company**: `TreeView` with company filter (Department tree root is `All Departments`; `get_children` hides disabled unless toggled).
 - **Letter Head**: live preview of header/footer over an A4 frame; Image vs HTML toggle.
@@ -902,7 +910,7 @@ Decisions (2026-10-14):
 - [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`
 - [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type
 - [x] Role Permissions matrix page + Server Actions + "reset to defaults" — `0108_setup_role_permission_manager.sql` (§2.8, §8), per-doctype reset
-- [ ] User Permissions: list/form, picker for Company/Warehouse/Cost Center
+- [x] User Permissions: list/form, picker for Company/Warehouse/Cost Center — `0109_setup_user_permissions.sql` (§2.9), descriptor `user-permission.ts`, `DynamicLink` field type; Warehouse/Cost Center join the picker with their P2 tables
 - [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
 - [ ] Letter Head: table, storage upload, preview, default trigger
 - [ ] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
