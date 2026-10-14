@@ -14,9 +14,9 @@ insert into public.doctype_meta (doctype, table_name, module, is_child, parent_d
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000013b1","role":"authenticated"}', true);
-select set_config('test.org_b', public.create_organization('{"name":"Perm Org B","slug":"perm-org-b"}') ->> 'id', true);
+select set_config('test.org_b', app.create_organization('{"name":"Perm Org B","slug":"perm-org-b"}') ->> 'id', true);
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000013a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"Perm Org A","slug":"perm-org-a"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"Perm Org A","slug":"perm-org-a"}') ->> 'id', true);
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000013a2', '{Sales User}');
 

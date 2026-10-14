@@ -33,6 +33,43 @@ export function fiscalYearName(start: string, end: string): string | null {
     return a === b ? String(a) : `${a}-${b}`;
 }
 
+/** `erpnext.setup.fiscal_years` (setup_wizard.js): month-day each country's fiscal year starts on; others use 01-01. */
+export const COUNTRY_FISCAL_YEAR_START: Readonly<Record<string, string>> = {
+    Afghanistan: "12-21",
+    Australia: "07-01",
+    Bangladesh: "07-01",
+    "Costa Rica": "10-01",
+    Egypt: "07-01",
+    Ethiopia: "07-08",
+    "Hong Kong": "04-01",
+    India: "04-01",
+    Iran: "06-23",
+    Kenya: "07-01",
+    Malaysia: "07-01",
+    Myanmar: "04-01",
+    Nepal: "07-16",
+    "New Zealand": "04-01",
+    Pakistan: "07-01",
+    Singapore: "04-01",
+    "South Africa": "03-01",
+    "United Kingdom": "04-01",
+};
+
+/**
+ * Setup wizard `set_fy_dates`: the country's fiscal year that contains `today`. The end is start + 12 months − 1 day
+ * (the wizard's start-date handler) rather than the map's end, which is off by one in leap years for South Africa.
+ */
+export function defaultFiscalYear(country: string, today: string): { start: string; end: string } | null {
+    const t = parse(today);
+    if (!t) return null;
+    const monthDay = COUNTRY_FISCAL_YEAR_START[country] ?? "01-01";
+    let year = t.getUTCFullYear();
+    if (`${year}-${monthDay}` > today) year -= 1;
+    const start = `${year}-${monthDay}`;
+    const end = fiscalYearEnd(start);
+    return end ? { start, end } : null;
+}
+
 /** True when `year` is empty or looks generated from dates, so it may be re-derived when the dates change. */
 export function isAutoYearName(year: unknown): boolean {
     return year === undefined || year === null || String(year).trim() === "" || AUTO_NAME.test(String(year).trim());

@@ -8,7 +8,7 @@ insert into auth.users (id, email, aud, role) values
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000007a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"Profiles Org","slug":"profiles-org"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"Profiles Org","slug":"profiles-org"}') ->> 'id', true);
 
 select results_eq(
   $$select name, roles from public.role_profile where org_id = current_setting('test.org')::uuid order by name$$,

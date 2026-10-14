@@ -9,9 +9,9 @@ insert into auth.users (id, email, aud, role) values
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000010b1","role":"authenticated"}', true);
-select set_config('test.org_b', public.create_organization('{"name":"Roles Org B","slug":"roles-org-b"}') ->> 'id', true);
+select set_config('test.org_b', app.create_organization('{"name":"Roles Org B","slug":"roles-org-b"}') ->> 'id', true);
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000010a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"Roles Org A","slug":"roles-org-a"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"Roles Org A","slug":"roles-org-a"}') ->> 'id', true);
 
 -- Standard roles and System Manager
 select throws_ok(

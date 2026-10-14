@@ -36,7 +36,20 @@ export function slugify(value: string): string {
         .replace(/-+$/g, "");
 }
 
-export const createOrganizationSchema = z.object({
+/** setup_wizard.js `company_name` input: first letter of each word, upper-cased, at most 10 (`app.company_abbr`). */
+export function companyAbbr(companyName: string): string {
+    return companyName
+        .split(" ")
+        .map((part) => part.slice(0, 1))
+        .join("")
+        .slice(0, 10)
+        .toUpperCase();
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Wizard step 1. */
+export const organizationStepSchema = z.object({
     name: z.string().trim().min(1, "Enter the organization name").max(140),
     slug: z
         .string()
@@ -53,4 +66,40 @@ export const createOrganizationSchema = z.object({
     time_zone: z.string().trim().min(1, "Select a time zone"),
 });
 
-export type CreateOrganizationInput = z.input<typeof createOrganizationSchema>;
+/** Wizard step 2 (setup_wizard.js organization slide `validate`). */
+export const companyStepSchema = z
+    .object({
+        company_name: z
+            .string()
+            .trim()
+            .min(1, "Enter the company name")
+            .max(140)
+            .refine((v) => v.toLowerCase() !== "company", "Please pick a company name other than Company."),
+        abbr: z.string().trim().min(1, "Enter an abbreviation").max(10, "Company Abbreviation cannot have more than 10 characters"),
+        fy_start_date: z.string().regex(ISO_DATE, "Please enter a valid date for when your financial year begins."),
+        fy_end_date: z.string().regex(ISO_DATE, "Please enter a valid date for when your financial year begins."),
+        chart_of_accounts: z.string().trim().min(1, "Select a chart of accounts"),
+    })
+    .refine((v) => v.fy_end_date > v.fy_start_date, {
+        message: "Please enter a valid date for when your financial year begins.",
+        path: ["fy_start_date"],
+    });
+
+const inviteSchema = z.object({
+    email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
+    role_profile: z.string().trim().min(1, "Choose a role profile"),
+});
+
+/** Wizard step 3 (optional): teammates invited with a role profile. */
+export const inviteStepSchema = z
+    .array(inviteSchema)
+    .refine((rows) => new Set(rows.map((r) => r.email)).size === rows.length, "Each email can be invited once");
+
+/** Payload of `app.provision_organization` (00-setup §3.1). */
+export const provisionOrganizationSchema = z.object({
+    org: organizationStepSchema,
+    company: companyStepSchema,
+    invites: inviteStepSchema,
+});
+
+export type ProvisionOrganizationInput = z.input<typeof provisionOrganizationSchema>;

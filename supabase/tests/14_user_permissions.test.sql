@@ -12,7 +12,7 @@ insert into public.doctype_meta (doctype, table_name, module) values ('ZZ UP Doc
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000014a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"UP Org A","slug":"up-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"UP Org A","slug":"up-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000014a2', '{Sales User}');
 

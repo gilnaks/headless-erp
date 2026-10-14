@@ -18,6 +18,13 @@ export const getCountries = cache(async () => {
     return countryItems(data ?? []);
 });
 
+/** The standard role profiles every new organization gets (for invites made before the organization exists). */
+export const getRoleProfileTemplates = cache(async (): Promise<SelectItemType[]> => {
+    const supabase = await createClient();
+    const { data } = await supabase.from("role_profile_template").select("name, roles").order("name");
+    return (data ?? []).map((r) => ({ id: r.name, label: r.name, supportingText: r.roles.join(", ") }));
+});
+
 /** Enabled roles of one organization (RLS: members read their org's roles). */
 export const getRoleOptions = cache(async (orgId: string): Promise<SelectItemType[]> => {
     const supabase = await createClient();

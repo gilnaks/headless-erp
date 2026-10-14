@@ -10,9 +10,9 @@ insert into auth.users (id, email, aud, role) values
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000016b1","role":"authenticated"}', true);
-select set_config('test.org_b', public.create_organization('{"name":"Designation Org B","slug":"designation-org-b"}') ->> 'id', true);
+select set_config('test.org_b', app.create_organization('{"name":"Designation Org B","slug":"designation-org-b"}') ->> 'id', true);
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000016a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"Designation Org A","slug":"designation-org-a"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"Designation Org A","slug":"designation-org-a"}') ->> 'id', true);
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000016a2', '{Sales User}'),
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000016a3', '{Stock User}');

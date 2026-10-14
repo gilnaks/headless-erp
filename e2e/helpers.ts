@@ -24,15 +24,29 @@ export async function signIn(page: Page, prefix: string) {
     await page.getByRole("button", { name: "Sign in" }).click();
 }
 
-/** From `/setup` (a signed-in user without an organization): creates one and returns its path (`/<slug>`). */
+/**
+ * From `/setup` (a signed-in user without an organization): runs the setup wizard with Philippine defaults and returns
+ * the organization path (`/<slug>`). The wizard also creates a first company named like the organization, with the
+ * Philippines chart and the current fiscal year.
+ */
 export async function createOrganization(page: Page, name: string): Promise<string> {
     await expect(page).toHaveURL(/\/setup$/);
-    await page.getByRole("textbox", { name: label("Organization name") }).fill(name);
+    const slug = name.toLowerCase().replaceAll(" ", "-");
+    // Retried: a value typed before the form hydrates is lost.
+    await expect(async () => {
+        await page.getByRole("textbox", { name: label("Organization name") }).fill(name);
+        await expect(page.getByRole("textbox", { name: label("URL") })).toHaveValue(slug, { timeout: 1_000 });
+    }).toPass();
     await pick(page, "Country", "Philippines", /^Philippines/);
     await pick(page, "Default currency", "PHP", /^PHP/);
+    await page.getByRole("button", { name: "Next" }).click();
+
+    await expect(page.getByRole("textbox", { name: label("Company name") })).toHaveValue(name);
+    await expect(page.getByRole("combobox", { name: label("Chart of accounts") })).toHaveValue("Philippines", { timeout: 15_000 });
+    await page.getByRole("button", { name: "Next" }).click();
+
     await page.getByRole("button", { name: "Create organization" }).click();
-    const slug = name.toLowerCase().replaceAll(" ", "-");
-    await expect(page).toHaveURL(new RegExp(`/${slug}$`));
+    await expect(page).toHaveURL(new RegExp(`/${slug}$`), { timeout: 30_000 });
     return new URL(page.url()).pathname;
 }
 

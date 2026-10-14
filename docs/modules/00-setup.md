@@ -630,7 +630,8 @@ Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language},
 - **Idempotency:** re-running for a slug the caller owns that is already provisioned returns `{id, slug, company_id}` unchanged; any other existing slug fails with `slug_taken`.
 - **Atomicity:** any error, such as an invalid invite or an unknown chart, rolls back the whole organization.
 - **Existing organizations:** those created before 0116 had `provisioned_at` backfilled to `created_at`.
-- **Tests:** pgTAP `21_provision_organization.test.sql`.
+- **Tests:** pgTAP `21_provision_organization.test.sql`, which also took over the slug checks of the former `03_create_organization` test.
+- **Caller:** the onboarding wizard (05-ui-ux) is the only caller. The P0 `public.create_organization` RPC was dropped in `0117`, and pgTAP fixtures call `app.create_organization` directly.
 
 **Stage A — basics (org-level fixtures)**
 
@@ -882,6 +883,11 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 
 - **Company form tabs** (Tab Breaks in `company.json`): *Details* (implicit first tab: name, abbr, is_group, parent, currency, country, letter head, holiday list, logo/description, CoA selection, registration fields) · *Accounts* (default accounts, cost center, frozen entries, exchange gain/loss, assets) · *Buying and Selling* (terms, sales-return warehouse, default sales contact, credit limit, payment terms) · *Stock and Manufacturing* (perpetual inventory, inventory/adjustment/SRBNB accounts, valuation method, default warehouses, operating cost) · *Dashboard* (monthly target, total monthly sales, transaction heatmap) · *Accounts Closing* (frozen till date, role allowed). Right rail: Address & Contact cards. Actions: Create Default Tax Template, Delete Transactions (out of scope → hidden).
 - **CoA selection step** (onboarding + new company): radio *Standard* / *Standard with Numbers* / `<country template(s)>`, with a read-only `TreeView` preview from `app.coa_template_preview(key)`; bank account name input validated against the template (`validate_bank_account`: cannot reuse an existing chart account name).
+  - Built in the onboarding wizard's Company step:
+    - A combobox lists `coa_templates_for_country` (country charts first, default preselected).
+    - An indented read-only list previews the chosen template (`coa_template_preview`).
+    - The Company form uses the `ChartOfAccounts` select narrowed by country.
+    - The bank account input waits for B13 (P2).
 - **Users page**: list + invite drawer (email, roles multi-select or role profile) + per-user panel (roles chips, user permissions tab, disable). Role Profile picker replaces roles.
   - Built as bespoke routes `src/app/(app)/[org]/setup/users/page.tsx` and `[userId]/page.tsx` (listed in `BUILT_PAGES` in `src/config/navigation.ts`) instead of a descriptor: a member is `org_members` + `auth.users` + `user_profile`, keyed by `user_id` rather than a doctype row id, and its email is only readable through the directory function.
   - List (`member-list.tsx`): search over name, email, profile and roles; Owner and status badges; rows open the panel.
@@ -926,6 +932,9 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Module Profiles / `block_modules` dropped; module visibility derives from permissions. Reason: simplicity.
 - **Deviation:** No demo data stage and no demo-company deletion guard; P11 demo generator instead. Reason: scope.
 - **Deviation:** Fiscal Year auto-creation and company monthly-sales cache run as pg_cron SQL jobs rather than Frappe scheduler. Reason: Postgres.
+- **Deviation:** The setup wizard has no persona/Modules slide (module visibility derives from permissions), no demo-data checkbox and no language slide (the organization language defaults to `en`). Invites are part of the wizard (ERPNext invites from the User list later). Reason: scope; invites save a step for multi-user tenants.
+- **Deviation:** The wizard's fiscal year end is the start + 12 months − 1 day, not the end date from `erpnext.setup.fiscal_years`. ERPNext's own start-date handler computes it the same way, and the map's `02-28` end for South Africa would fail the one-year rule in leap years. Reason: consistency with the Fiscal Year validation.
+- **Deviation:** Wizard invites pick a role profile only (no individual roles). Reason: the organization's roles do not exist yet; profiles are the standard five, and roles can be edited on the Users page afterwards.
 
 ---
 
@@ -939,7 +948,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - [x] `role_profile` table + seed; default permissions via `role_permission_template` (table + `app.sync_role_permissions()` done in `0004`; each doctype migration adds its rows — Company done) — `0102_setup_role_profiles.sql`: global `role_profile_template` (5 ERPNext profiles), copied into every org by `app.sync_role_permissions()` without overwriting tenant edits
 - [x] `system_settings`, `global_defaults` tables + defaults — `0103_setup_global_defaults.sql`, `0104_setup_system_settings.sql` (§2.17–2.18): single doctypes seeded per org, pages at `/[org]/setup/global-defaults` and `/[org]/setup/system-settings`
 - [x] Auth: email+password, magic link, `proxy.ts` session refresh, `acceptInvitation()`, custom access token hook — `/login` (Password / Email link tabs), `/signup`, `/forgot-password`, `/update-password`, `/auth/callback` (PKCE `code` or `token_hash`), `/auth/signout`, `/invite/[token]`; Server Actions in `src/lib/actions/auth.ts` + `organization.ts`
-- [x] P0 precursor of §3.1 Stage A: `app.create_organization(jsonb)` (`0005`, reserved slugs `0006`) creates the org, seeds role permissions and makes the caller owner + System Manager; `/setup` form calls it and refreshes the session. P1 wraps it as Stage A of `app.provision_organization()` (0116)
+- [x] P0 precursor of §3.1 Stage A: `app.create_organization(jsonb)` (`0005`, reserved slugs `0006`) creates the org, seeds role permissions and makes the caller owner + System Manager; `/setup` form calls it and refreshes the session. P1 wraps it as Stage A of `app.provision_organization()` (0116) and replaces the form with the onboarding wizard (0117 drops the public RPC)
 - [x] App shell: icon rail (org switcher, 7 modules + Setup), module sidebar from `src/config/navigation.ts` (ERPNext sidebars, out-of-scope items removed, phase per PLAN §7), top bar (company switcher → `hx_company` cookie, Ctrl/⌘K command palette with Go to / Create / Records, user menu), placeholder pages `/[org]/[module]/[...slug]`, `src/stores/session.ts` + `ui.ts`
 - [x] Doctype framework proven on Company — `0007_framework_naming.sql` (`naming_series`, `app.next_name`), `0008_framework_doc_engine.sql` (`app.save_doc` / `app.delete_doc`), `src/doctypes/` (`defineDoctype`, `schemaFor`, registry, `setup/company.ts`: Details tab + Chart of Accounts section only; Accounts/Stock default Link fields wait for their tables), generic `DocList` / `DocForm` / `ChildTable` / `LinkField` on `/[org]/setup/company[/new|/<id>]`. Company "new" goes through `app.create_company()` (descriptor `create` hook, 0116).
 - [x] CI and deploys (`06-deployment-ops.md`): `.github/workflows/ci.yml` (Biome, tsc, Vitest; clean `supabase db reset` + pgTAP, types drift check, doctype/DB consistency suite `src/doctypes/doctypes.db.test.ts`, `next build`, Playwright smoke `e2e/smoke.spec.ts`), gated `deploy-db.yml`, Dependabot, PR template. Netlify site and production secrets are owner setup steps
@@ -958,7 +967,7 @@ Decisions (2026-10-14):
 - [ ] `app.create_company(jsonb)` (§3.3) incl. parent-company CoA copy and "Create Default Tax Template" action — the function and the Company form's create hook are built (0116); the chart, defaults, parent copy and tax templates wait for the P2 tables
 - [x] CoA template loader: global `coa_template` table (generated migration like `0009`), `supabase/seed/coa/verified/*.json` (73 files) + the two standard Python charts; `app.coa_template_preview(key)`, `app.coa_templates_for_country(country)` — `0115_setup_coa_templates.sql` (§3.2, 1.5 MB: 41 templates), `scripts/gen-coa-templates.mjs`, Company `ChartOfAccounts` select
 - [ ] Country-wise tax seed (`country_wise_tax.json`) → `app.create_default_tax_templates(company_id)`
-- [ ] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings"
+- [x] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings" — `/setup` stepper Organization → Company → Invite (05-ui-ux; Modules dropped, §9), `provisionOrganization` Server Action, country fiscal-year defaults (`src/lib/fiscal-year.ts`), chart preview, `0117` drops the P0 RPC; e2e `onboarding.spec.ts`, and `createOrganization` in `e2e/helpers.ts` now drives the wizard (every spec's organization has a first company)
 - [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail
 - [x] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — `0106_setup_users.sql` (§2.6, §8), `0107_setup_invitations.sql` (§3.4, link-only delivery)
 - [x] Branch: table, descriptor, list/form — `0110_setup_branch.sql` (§2.2), descriptor `branch.ts`

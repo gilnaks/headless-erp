@@ -1947,7 +1947,6 @@ export type Database = {
         }
         Returns: Json
       }
-      create_organization: { Args: { p: Json }; Returns: Json }
       delete_doc: {
         Args: { p_doctype: string; p_id: string }
         Returns: undefined
