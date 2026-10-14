@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defineChildDoctype } from "@/doctypes/define";
 import { company } from "@/doctypes/setup/company";
 import { roleProfile } from "@/doctypes/setup/role-profile";
-import { countryItems, currencyItems, optionSourcesOf } from "./reference-options";
+import { chartOfAccountsItems, countryItems, currencyItems, optionSourcesOf } from "./reference-options";
 
 describe("reference option items", () => {
     it("keys currencies by ISO code and carries the name for search", () => {
@@ -18,7 +18,19 @@ describe("reference option items", () => {
 
 describe("optionSourcesOf", () => {
     it("lists each reference source a doctype uses once", () => {
-        expect(optionSourcesOf(company).sort()).toEqual(["Country", "Currency"]);
+        expect(optionSourcesOf(company).sort()).toEqual(["ChartOfAccounts", "Country", "Currency"]);
+    });
+
+    it("narrows the company charts to its country plus the standard ones", () => {
+        const items = chartOfAccountsItems(
+            [{ name: "SKR04 mit Kontonummern" }, { name: "Standard" }, { name: "Philippines" }],
+            [
+                { template: "SKR04 mit Kontonummern", country_name: "Germany" },
+                { template: "Philippines", country_name: "Philippines" },
+            ],
+        );
+        const filter = company.fields.chart_of_accounts.filterOptions;
+        expect(items.filter((i) => filter?.(i, { country: "Germany" })).map((i) => i.id)).toEqual(["SKR04 mit Kontonummern", "Standard"]);
     });
 
     it("includes MultiSelect sources", () => {

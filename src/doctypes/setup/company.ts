@@ -33,7 +33,9 @@ export const company = defineDoctype({
         chart_of_accounts: {
             type: "Select",
             label: "Chart Of Accounts Template",
-            options: ["Standard", "Standard with Numbers"],
+            options: "ChartOfAccounts",
+            // get_charts_for_country(country, with_standard): the country's charts plus the untagged standard ones.
+            filterOptions: (item, v) => !item.tags || item.tags.includes(String(v.country ?? "")),
             default: "Standard",
             setOnlyOnce: true,
             dependsOn: (v) => v.create_chart_of_accounts_based_on === "Standard Template",
@@ -138,6 +140,7 @@ export const company = defineDoctype({
         abbr_required: "abbr",
         abbr_taken: "abbr",
         coa_input: "existing_company_id",
+        coa_unknown: "chart_of_accounts",
         invalid_parent: "parent_id",
         has_children: "is_group",
         duplicate: "company_name",

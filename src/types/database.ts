@@ -26,6 +26,26 @@ export type Database = {
         Returns: string[]
       }
       auto_create_fiscal_year: { Args: never; Returns: number }
+      coa_template_preview: {
+        Args: { p_template: string }
+        Returns: {
+          account: string
+          account_number: string
+          account_type: string
+          depth: number
+          idx: number
+          is_group: boolean
+          parent_account: string
+          root_type: string
+        }[]
+      }
+      coa_templates_for_country: {
+        Args: { p_country: string }
+        Returns: {
+          is_default: boolean
+          name: string
+        }[]
+      }
       company_allowed: {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
@@ -187,6 +207,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      coa_template: {
+        Row: {
+          disabled: boolean
+          name: string
+          tree: Json
+        }
+        Insert: {
+          disabled?: boolean
+          name: string
+          tree: Json
+        }
+        Update: {
+          disabled?: boolean
+          name?: string
+          tree?: Json
+        }
+        Relationships: []
+      }
+      coa_template_file: {
+        Row: {
+          file_name: string
+          template: string
+        }
+        Insert: {
+          file_name: string
+          template: string
+        }
+        Update: {
+          file_name?: string
+          template?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coa_template_file_template_fkey"
+            columns: ["template"]
+            isOneToOne: false
+            referencedRelation: "coa_template"
+            referencedColumns: ["name"]
           },
         ]
       }
@@ -519,6 +580,20 @@ export type Database = {
           write_off_account_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "companies_chart_of_accounts_fkey"
+            columns: ["chart_of_accounts"]
+            isOneToOne: false
+            referencedRelation: "coa_template"
+            referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "companies_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
           {
             foreignKeyName: "companies_country_fkey"
             columns: ["country"]
@@ -957,6 +1032,13 @@ export type Database = {
             foreignKeyName: "global_defaults_country_fkey"
             columns: ["country"]
             isOneToOne: false
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "global_defaults_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
             referencedRelation: "country"
             referencedColumns: ["country_name"]
           },
@@ -1084,6 +1166,13 @@ export type Database = {
           weekly_off?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "holiday_list_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
           {
             foreignKeyName: "holiday_list_country_fkey"
             columns: ["country"]
@@ -1353,6 +1442,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "organizations_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
           {
             foreignKeyName: "organizations_country_fkey"
             columns: ["country"]
@@ -1800,10 +1896,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      coa_template_country: {
+        Row: {
+          country_name: string | null
+          template: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coa_template_file_template_fkey"
+            columns: ["template"]
+            isOneToOne: false
+            referencedRelation: "coa_template"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      coa_template_preview: {
+        Args: { p_template: string }
+        Returns: {
+          account: string
+          account_number: string
+          account_type: string
+          depth: number
+          idx: number
+          is_group: boolean
+          parent_account: string
+          root_type: string
+        }[]
+      }
+      coa_templates_for_country: {
+        Args: { p_country: string }
+        Returns: {
+          is_default: boolean
+          name: string
+        }[]
+      }
       create_invitation: {
         Args: {
           p_email: string

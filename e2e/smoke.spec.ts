@@ -16,9 +16,17 @@ test("sign in, create an organization and a company, see it in the list", async 
     await page.getByRole("textbox", { name: label("Abbr") }).fill(`S${stamp.slice(-3).toUpperCase()}`);
     await pick(page, "Default Currency", "PHP", /^PHP/);
     await pick(page, "Country", "Philippines", /^Philippines/);
+    // Chart templates follow the country: its chart plus the standard ones.
+    const chart = page.getByRole("combobox", { name: label("Chart Of Accounts Template") });
+    await chart.click();
+    await chart.fill("");
+    await expect(page.getByRole("option", { name: "Philippines" })).toBeVisible();
+    await expect(page.getByRole("option", { name: /^SKR04/ })).toHaveCount(0);
+    await page.getByRole("option", { name: "Philippines" }).click();
     await page.getByRole("button", { name: /^Save/ }).click();
 
-    await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`));
+    await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`), { timeout: 15_000 });
+    await expect(chart).toHaveValue("Philippines");
 
     await page.goto(`${org}/setup/company`);
     await expect(page.getByRole("row", { name: new RegExp(companyName) })).toBeVisible();

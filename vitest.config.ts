@@ -7,7 +7,7 @@ export default defineConfig({
     },
     test: {
         environment: "node",
-        include: ["src/**/*.test.ts"],
+        include: ["src/**/*.test.ts", "scripts/**/*.test.mjs"],
         exclude: ["src/**/*.db.test.ts", "node_modules/**"],
         passWithNoTests: true,
     },
