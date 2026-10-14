@@ -102,6 +102,10 @@ export type Database = {
       }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reserved_slugs: { Args: never; Returns: string[] }
+      reset_role_permissions: {
+        Args: { p_doctype: string; p_org: string }
+        Returns: number
+      }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
       save_doc_children: {
         Args: {
@@ -1454,7 +1458,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      permission_doctypes: {
+        Args: never
+        Returns: {
+          doctype: string
+          is_submittable: boolean
+          locked: boolean
+          module: string
+        }[]
+      }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
+      reset_role_permissions: {
+        Args: { p_doctype: string; p_org: string }
+        Returns: number
+      }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
     }
     Enums: {

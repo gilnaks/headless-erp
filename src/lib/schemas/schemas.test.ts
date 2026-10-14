@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MIN_PASSWORD_LENGTH, passwordLoginSchema, signupSchema, updatePasswordSchema } from "./auth";
 import { createOrganizationSchema, RESERVED_SLUGS, SLUG_PATTERN, slugify } from "./organization";
+import { resetDoctypeSchema, ruleSchema, setPermissionSchema } from "./role-permissions";
 import { createInvitationSchema, removeMemberSchema, setMemberStatusSchema, updateMemberRolesSchema } from "./users";
 
 describe("auth schemas", () => {
@@ -97,5 +98,26 @@ describe("invitation schema", () => {
 
     it("rejects a malformed email", () => {
         expect(createInvitationSchema.safeParse({ ...base, email: "jane" }).success).toBe(false);
+    });
+});
+
+describe("role permission schemas", () => {
+    const base = { orgSlug: "acme", role: "Sales User", doctype: "Customer" };
+
+    it("accepts a patch of known flags", () => {
+        expect(setPermissionSchema.parse({ ...base, patch: { can_write: true, can_submit: false } }).patch).toEqual({
+            can_write: true,
+            can_submit: false,
+        });
+    });
+
+    it("rejects an empty patch or an unknown flag", () => {
+        expect(setPermissionSchema.safeParse({ ...base, patch: {} }).success).toBe(false);
+        expect(setPermissionSchema.safeParse({ ...base, patch: { can_fly: true } }).success).toBe(false);
+    });
+
+    it("needs a role and a document type", () => {
+        expect(ruleSchema.safeParse({ ...base, role: " " }).success).toBe(false);
+        expect(resetDoctypeSchema.safeParse({ orgSlug: "acme", doctype: "" }).success).toBe(false);
     });
 });
