@@ -16,7 +16,7 @@ Sidebar source: `erpnext/setup/sidebar/setup/setup.json`. Sections marked *out* 
 |---|---|---|---|
 | Home (Workspace "Home") | `/[org]` (org home) | workspace content → `app.home_dashboard()` + onboarding checklist | P1 |
 | Company | `/setup/company`, `/setup/company/[id]` | Company → `companies` | P0 (table) / P1 (form) |
-| Users (User) | `/setup/users`, `/setup/users/[id]`, `/setup/users/invite` | User → `auth.users` + `user_profile` + `org_members` + `invitations` | P0/P1 |
+| Users (User) | `/setup/users` (with the invite drawer), `/setup/users/[id]` | User → `auth.users` + `user_profile` + `org_members` + `invitations` | P0/P1 |
 | Organization › Branch | `/setup/branch` | Branch → `branch` | P1 |
 | Organization › Department | `/setup/department` (tree) | Department → `department` | P1 |
 | Organization › Designation | `/setup/designation` | Designation → `designation` | P1 |
@@ -727,6 +727,15 @@ Same as Stage B (B2–B13) without the Fiscal Year (B1); `global_defaults.defaul
 
 Owner/System Manager → `invitations(org_id, email, roles[], role_profile?, token, expires_at = now + 7 days)` → email via platform sender using template `Invitation` with `/invite/[token]` → recipient signs up/in → Server Action `acceptInvitation(token)`: verifies not expired/accepted, inserts `org_members(status = active, roles)`, `user_profile` if missing, sets `accepted_at`, forces token refresh. Resend / revoke actions on the Users page. Mirrors Frappe's "Add User → welcome email" (`invite_users` onboarding step: *Invite your team — Add the people you work with and choose what they can see*).
 
+**Built (P1, `0107_setup_invitations.sql`) — link-only delivery until the Email track:** no email is sent. The System Manager copies `/invite/<token>` from the invite drawer (or from the invitation row) and shares it.
+
+- `app.create_invitation(p_org, p_email, p_roles, p_role_profile)` (System Manager only, else `42501`) returns `{ id, token }`. It raises `roles_required` (neither roles nor profile), `already_member` (the email belongs to an active member; disabled members can be re-invited and are re-activated on accept), `invite_pending` (an open invitation exists; resend it instead), `invalid_role` and `invalid_email`. An expired open invitation is revoked automatically so a new one can be created. A partial unique index keeps one open invitation per `(org_id, email)`.
+- `invitations` gained `role_profile` (FK to `role_profile`, cascades on rename, set null on delete) and `revoked_at`. A trigger lower-cases the email, copies the profile's roles into `roles` when a profile is set, dedupes, and validates roles.
+- `app.resend_invitation(id)` issues a new token and a fresh 7-day expiry (the old link stops working); accepted or revoked invitations raise `invitation_closed`. Revoke is an RLS update setting `revoked_at`.
+- `app.invitation_preview(token)` (signed-in callers only) returns `{ org_name, email, state }` for `/invite/[token]`, which shows the organization, refuses closed invitations with a message, and offers "Sign out and switch account" when the signed-in email differs.
+- `app.accept_invitation` also refuses revoked invitations and applies the invitation's `role_profile` (the membership gets the profile and its roles; without a profile, roles are merged into an existing membership as before).
+- The link's origin is the browser's (`window.location.origin`), so it matches the deployment the System Manager is using.
+
 ### 3.5 Address / Contact quick-create from party forms
 
 Customer/Supplier/Company forms show Address & Contact cards (ERPNext `load_address_and_contact`) with "+ New" opening a drawer pre-filled with `dynamic_link = (party doctype, id)`; `is_primary_address`/`is_shipping_address`/`is_primary_contact` toggles apply the "unset previous" rule. Mapper `app.party_addresses(doctype, id)` returns rows ordered primary-first.
@@ -746,7 +755,7 @@ No submittable doctypes in this module (all `docstatus = 0` masters/singles). St
 | Table | Field | Values |
 |---|---|---|
 | `org_members` | status | `active \| invited \| disabled` |
-| `invitations` | derived | `pending \| accepted \| expired \| revoked` |
+| `invitations` | derived | `pending \| accepted \| expired \| revoked` — `accepted_at` set → accepted; else `revoked_at` set → revoked; else `expires_at < now()` → expired; else pending (`src/lib/invitations.ts`, `app.invitation_preview`) |
 | `contact` | status | `Passive \| Open \| Replied` (default Passive) |
 | `email_digest` | enabled / next_send | badge "Next: <date>" when enabled |
 | `fiscal_year` | disabled / auto_created | |
@@ -828,6 +837,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Only `permlevel 0` role permissions; no `select/print/email/share/import/set_user_permissions` flags; print/email allowed with read. Reason: simplicity.
 - **Deviation:** Roles seeded are the 19 standard ones; Analytics, Shop Floor, HR, Academics, Delivery, Customer/Supplier website roles omitted. Reason: scope.
 - **Deviation:** Every seeded (standard) role is protected from rename/delete, System Manager cannot be disabled, and the Access doctypes' permissions are fixed to System Manager (`permission_locked`). Reason: no Administrator account exists to recover from a lockout.
+- **Deviation (temporary):** Inviting a user creates a copyable link instead of sending a welcome email. Reason: email sending is deferred to the Email track (P1 decision); the invitation row and token are already what the email will carry.
 - **Deviation:** Disabling a role keeps it assigned (it simply grants nothing) instead of deleting the Has Role rows. Reason: reversible.
 - **Deviation:** Authorization Rule limited to Grand Total on SO/PO/SI/PI with role/user approver; discount-based rules, Quotation/DN/PR, employee/designation targets dropped. Reason: Pricing/HR out of scope.
 - **Deviation:** Print Format = one server-rendered modern template per doctype; no Print Format Builder, Jinja/JS formats, `Classic`/`Standard` legacy formats or raw printing. Reason: `05-ui-ux.md`, simplicity.
@@ -878,7 +888,7 @@ Decisions (2026-10-14):
 - [ ] Country-wise tax seed (`country_wise_tax.json`) → `app.create_default_tax_templates(company_id)`
 - [ ] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings"
 - [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail
-- [ ] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — list, member panel, disable/remove and profile assignment done (`0106_setup_users.sql`, §2.6, §8); invitations pending
+- [x] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — `0106_setup_users.sql` (§2.6, §8), `0107_setup_invitations.sql` (§3.4, link-only delivery)
 - [ ] Branch: table, descriptor, list/form
 - [ ] Department: table (tree), seed root + 13 per company, TreeView
 - [ ] Designation: table, 31-row seed, list/form
