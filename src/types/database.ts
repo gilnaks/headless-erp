@@ -116,6 +116,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      seed_designations: { Args: { p_org: string }; Returns: undefined }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }
@@ -615,6 +616,47 @@ export type Database = {
           symbol_on_right?: boolean
         }
         Relationships: []
+      }
+      designation: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          designation_name: string
+          id: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          designation_name: string
+          id?: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          designation_name?: string
+          id?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "designation_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctype_meta: {
         Row: {

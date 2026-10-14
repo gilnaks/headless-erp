@@ -166,6 +166,7 @@ Additionally owned by this doc (not sidebar items):
 - **Kind:** master. **Naming:** `field:designation_name`. Fields: `designation_name text reqd unique`, `description text`. No `.py` logic.
 - Seeded with 31 rows from `erpnext/setup/setup_wizard/data/designation.txt` (Accountant … Vice President; full list in §3.1 A18).
 - Permissions (JSON): HR User rwc, HR Manager rwcd, Sales User r. We seed System Manager rwcd, Sales User r.
+- **Built (0111):** `public.designation` with `unique (org_id, lower(designation_name))` and a trimming trigger. `app.seed_designations(org)` inserts the 31 presets (idempotent, `on conflict do nothing`); the `organizations_seed_designations` trigger runs it for every new organization and the migration backfilled existing ones. **Deviation:** ERPNext installs the presets once per site in the setup wizard; we seed per organization at creation (§3.1 A18 is satisfied by the trigger, not the provisioning function). Descriptor `designation.ts`; pgTAP `16_designation.test.sql`; e2e `designation.spec.ts`.
 
 ### 2.5 Holiday List → `holiday_list` + child `holiday`
 
@@ -907,7 +908,7 @@ Decisions (2026-10-14):
 - [x] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — `0106_setup_users.sql` (§2.6, §8), `0107_setup_invitations.sql` (§3.4, link-only delivery)
 - [x] Branch: table, descriptor, list/form — `0110_setup_branch.sql` (§2.2), descriptor `branch.ts`
 - [ ] Department: table (tree), seed root + 13 per company, TreeView
-- [ ] Designation: table, 31-row seed, list/form
+- [x] Designation: table, 31-row seed, list/form — `0111_setup_designation.sql` (§2.4), org seed trigger + backfill
 - [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`
 - [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type
 - [x] Role Permissions matrix page + Server Actions + "reset to defaults" — `0108_setup_role_permission_manager.sql` (§2.8, §8), per-doctype reset
