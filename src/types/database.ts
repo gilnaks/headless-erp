@@ -37,6 +37,15 @@ export type Database = {
       }
       has_role: { Args: { p_org: string; p_role: string }; Returns: boolean }
       is_member: { Args: { p_org: string }; Returns: boolean }
+      next_name: {
+        Args: {
+          p_company: string
+          p_org: string
+          p_posting_date?: string
+          p_series: string
+        }
+        Returns: string
+      }
       orgs_with_perm: {
         Args: { p_action: string; p_doctype: string }
         Returns: string[]
@@ -531,6 +540,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      naming_series: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current: number
+          id: string
+          org_id: string
+          prefix: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current?: number
+          id?: string
+          org_id: string
+          prefix: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current?: number
+          id?: string
+          org_id?: string
+          prefix?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "naming_series_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
