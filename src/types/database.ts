@@ -31,12 +31,22 @@ export type Database = {
       }
       create_organization: { Args: { p: Json }; Returns: Json }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      delete_doc: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: undefined
+      }
+      doc_system_columns: { Args: never; Returns: string[] }
+      doc_writable_columns: {
+        Args: { p_exclude?: string[]; p_keys: string[]; p_table: string }
+        Returns: string[]
+      }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
         Returns: boolean
       }
       has_role: { Args: { p_org: string; p_role: string }; Returns: boolean }
       is_member: { Args: { p_org: string }; Returns: boolean }
+      jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
       next_name: {
         Args: {
           p_company: string
@@ -61,6 +71,16 @@ export type Database = {
         Returns: boolean
       }
       reserved_slugs: { Args: never; Returns: string[] }
+      save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
+      save_doc_children: {
+        Args: {
+          p_meta: Database["public"]["Tables"]["doctype_meta"]["Row"]
+          p_org: string
+          p_parent: string
+          p_payload: Json
+        }
+        Returns: undefined
+      }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }
@@ -444,6 +464,7 @@ export type Database = {
       doctype_meta: {
         Row: {
           allow_on_submit: string[]
+          child_field: string | null
           doctype: string
           is_child: boolean
           is_submittable: boolean
@@ -458,6 +479,7 @@ export type Database = {
         }
         Insert: {
           allow_on_submit?: string[]
+          child_field?: string | null
           doctype: string
           is_child?: boolean
           is_submittable?: boolean
@@ -472,6 +494,7 @@ export type Database = {
         }
         Update: {
           allow_on_submit?: string[]
+          child_field?: string | null
           doctype?: string
           is_child?: boolean
           is_submittable?: boolean
@@ -1004,6 +1027,11 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
       create_organization: { Args: { p: Json }; Returns: Json }
+      delete_doc: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: undefined
+      }
+      save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
