@@ -29,6 +29,7 @@ export type Database = {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
       }
+      create_organization: { Args: { p: Json }; Returns: Json }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
@@ -951,6 +952,7 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      create_organization: { Args: { p: Json }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
