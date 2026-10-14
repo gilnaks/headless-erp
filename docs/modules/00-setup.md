@@ -846,6 +846,12 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 
 ### P1 (Setup module)
 
+Decisions (2026-10-14):
+- **Staged provisioning.** `app.provision_organization()` seeds only tables that exist in P1. Each later migration that creates a seeded table (item groups, territories, groups, accounts, cost centers, warehouses, modes of payment, price lists, UOMs, module settings) adds its seed step to provisioning and backfills existing orgs. §3.1 is the target end state, not the P1 deliverable.
+- **Order:** Users and invites + Roles, Role Profiles and the Role Permissions matrix, then the Organization doctypes (Branch, Designation, Department, Holiday List), then the onboarding wizard and provisioning, then Printing and Email.
+- **Email sending deferred:** Email Account and Email Template tables and UI are built; the provider (Edge Function, Vault) comes later.
+- **Workflow:** one branch and PR per item, merged when CI is green.
+
 - [ ] `app.provision_organization(jsonb)` implementing §3.1 Stages A–C (idempotent, single transaction) + pgTAP test asserting counts/names of every seeded record and every `companies.*_account_id` default
 - [ ] `app.create_company(jsonb)` (§3.3) incl. parent-company CoA copy and "Create Default Tax Template" action
 - [ ] CoA template loader: global `coa_template` table (generated migration like `0009`, ~9.4 MB of source JSON), `supabase/seed/coa/*.json` from `verified/` (77 files) + `standard`, `standard_with_numbers`; `app.coa_template_preview(key)`, `app.coa_templates_for_country(country)`
