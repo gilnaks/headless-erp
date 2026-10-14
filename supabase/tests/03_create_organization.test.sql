@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-0000000000f1', 'founder@test.local', 'authenticated', 'authenticated');
@@ -45,6 +45,11 @@ select throws_ok(
 select throws_ok(
   $$select public.create_organization('{"name":"Bad","slug":"a b"}')$$,
   'P0001', 'invalid_slug: use 3-40 lowercase letters, digits or dashes', 'slug format is validated'
+);
+
+select throws_ok(
+  $$select public.create_organization('{"name":"Sneaky","slug":"login"}')$$,
+  'P0001', 'slug_reserved: this URL is reserved; choose another', 'top-level route names are reserved'
 );
 
 reset role;

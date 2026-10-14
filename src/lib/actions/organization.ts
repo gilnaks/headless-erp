@@ -15,7 +15,8 @@ export async function createOrganization(input: CreateOrganizationInput): Promis
     const { data, error } = await supabase.rpc("create_organization", { p: parsed.data });
     if (error) {
         const { code, message } = dbError(error);
-        if (code === "slug_taken" || code === "invalid_slug") return fail("Choose a different URL.", { slug: message });
+        if (code === "slug_taken" || code === "slug_reserved" || code === "invalid_slug")
+            return fail("Choose a different URL.", { slug: message });
         return fail(message);
     }
 

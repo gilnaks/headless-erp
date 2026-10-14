@@ -51,6 +51,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reserved_slugs: { Args: never; Returns: string[] }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }

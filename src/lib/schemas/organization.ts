@@ -3,6 +3,28 @@ import { z } from "zod";
 /** Mirrors the `organizations.slug` check constraint. */
 export const SLUG_PATTERN = /^[a-z0-9-]{3,40}$/;
 
+/** Top-level routes an org slug would shadow; mirrors `app.reserved_slugs()`. */
+export const RESERVED_SLUGS = [
+    "admin",
+    "api",
+    "app",
+    "auth",
+    "forgot-password",
+    "health",
+    "help",
+    "invite",
+    "login",
+    "logout",
+    "print",
+    "settings",
+    "setup",
+    "signup",
+    "static",
+    "support",
+    "update-password",
+    "www",
+] as const;
+
 export function slugify(value: string): string {
     return value
         .normalize("NFKD")
@@ -16,7 +38,12 @@ export function slugify(value: string): string {
 
 export const createOrganizationSchema = z.object({
     name: z.string().trim().min(1, "Enter the organization name").max(140),
-    slug: z.string().trim().toLowerCase().regex(SLUG_PATTERN, "Use 3–40 lowercase letters, digits or dashes"),
+    slug: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .regex(SLUG_PATTERN, "Use 3–40 lowercase letters, digits or dashes")
+        .refine((s) => !(RESERVED_SLUGS as readonly string[]).includes(s), "This URL is reserved; choose another"),
     country: z.string().trim().min(1, "Select a country"),
     default_currency: z
         .string()
