@@ -38,6 +38,7 @@ Source of truth for behaviour: the ERPNext clone at `C:\Users\John\Desktop\erpne
 | Lint/format | Biome | Untitled UI-owned folders (`components/{base,application,foundations,shared-assets}`, `hooks`, `providers`, `styles`, `utils`) are excluded so upstream diffs stay clean. |
 | Package manager | npm (Node 22) | `package-lock.json` committed. |
 | CI/CD | GitHub Actions → Netlify (Next.js adapter) + Supabase CLI | See `docs/architecture/06-deployment-ops.md`. |
+| Public holidays | `date-holidays` (MIT) | Server-only (Holiday List "Add Local Holidays" Server Action). Replaces ERPNext's Python `holidays` package; added P1. |
 
 ## 3. Architecture in one page
 

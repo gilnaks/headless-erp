@@ -18,6 +18,7 @@ export type FieldType =
     | "Float"
     | "Currency"
     | "Percent"
+    | "Color"
     | "Table";
 
 /**
@@ -71,6 +72,19 @@ export type TreeOptions = {
     disabledField?: string;
 };
 
+export type FormActionContext = { orgSlug: string };
+
+/**
+ * A form button that edits the unsaved document (ERPNext whitelisted controller methods such as
+ * `get_weekly_off_dates`). `run` returns the fields it changes; throw an `Error` to show its message. The server
+ * still validates on save.
+ */
+export type FormAction = {
+    id: string;
+    label: string;
+    run: (values: FieldValues, ctx: FormActionContext) => FieldValues | Promise<FieldValues>;
+};
+
 export type ChildDoctype = {
     doctype: string;
     table: TableName;
@@ -96,6 +110,8 @@ export type Doctype = {
     /** Maps `code` of a `code: message` database error to the field it belongs to. */
     errorFields: Record<string, string>;
     tree?: TreeOptions;
+    /** Form actions, shown in the form header menu while the document is editable. */
+    actions: FormAction[];
 };
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
@@ -114,8 +130,9 @@ type DoctypeBase<T extends TableName, C extends string> = {
     fields: Partial<Record<Columns<T> | C, FieldDef>>;
     children?: Record<C, ChildDoctype>;
     tabs: LayoutOf<Columns<T> | C>;
-    errorFields?: Record<string, Columns<T>>;
+    errorFields?: Record<string, Columns<T> | C>;
     tree?: { parentField: Columns<T>; groupField: Columns<T>; filters?: Columns<T>[]; disabledField?: Columns<T> };
+    actions?: FormAction[];
 };
 
 /** `C` = Table field names (child row arrays), which are not columns of the parent table. */
@@ -145,6 +162,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         listView: input.listView ?? { columns: [], searchFields: [], defaultSort: { field: "id" } },
         errorFields: input.errorFields ?? {},
         ...(input.tree ? { tree: input.tree } : {}),
+        actions: input.actions ?? [],
     };
 }
 

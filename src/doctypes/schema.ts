@@ -11,6 +11,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const NUMBER = /^-?\d+(\.\d+)?$/;
 const INT = /^-?\d+$/;
+const COLOR = /^#[0-9a-f]{6}$/i;
 
 const NUMERIC_TYPES = new Set(["Int", "Float", "Currency", "Percent"]);
 const ARRAY_TYPES = new Set(["Table", "MultiSelect"]);
@@ -49,6 +50,8 @@ function valueSchema(field: FieldDef): z.ZodType {
                 .or(z.literal(""));
         case "Date":
             return z.string().regex(DATE, `${field.label} must be a date (YYYY-MM-DD)`).or(z.literal(""));
+        case "Color":
+            return z.string().regex(COLOR, `${field.label} must be a colour like #3366ff`).or(z.literal(""));
         case "Select":
             if (Array.isArray(field.options)) {
                 const options = field.options as readonly string[];

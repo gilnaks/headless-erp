@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, DotsVertical, Trash01 } from "@untitledui/icons";
+import { ChevronDown, ChevronLeft, DotsVertical, Trash01 } from "@untitledui/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Heading as AriaHeading, type Key } from "react-aria-components";
@@ -85,6 +85,23 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
         form.reset(input);
         setSaved(true);
     }, showFirstErrorTab);
+
+    const [running, setRunning] = useState(false);
+    const runAction = async (actionId: string) => {
+        const action = d.actions.find((a) => a.id === actionId);
+        if (!action) return;
+        setError(null);
+        setSaved(false);
+        setRunning(true);
+        try {
+            const changes = await action.run(form.getValues(), { orgSlug });
+            for (const [name, value] of Object.entries(changes)) form.setValue(name, value, { shouldDirty: true });
+        } catch (e) {
+            setError(e instanceof Error ? e.message : `${action.label} failed.`);
+        } finally {
+            setRunning(false);
+        }
+    };
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -172,6 +189,20 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {editable && d.actions.length > 0 && (
+                            <Dropdown.Root>
+                                <Button size="sm" color="secondary" iconTrailing={ChevronDown} isLoading={running} showTextWhileLoading>
+                                    Actions
+                                </Button>
+                                <Dropdown.Popover placement="bottom right">
+                                    <Dropdown.Menu aria-label={`${d.doctype} actions`} onAction={(key) => void runAction(String(key))}>
+                                        {d.actions.map((a) => (
+                                            <Dropdown.Item key={a.id} id={a.id} label={a.label} />
+                                        ))}
+                                    </Dropdown.Menu>
+                                </Dropdown.Popover>
+                            </Dropdown.Root>
+                        )}
                         {!isNew && canDelete && <DeleteMenu doctype={d.doctype} title={title} orgSlug={orgSlug} id={id} />}
                         {editable && (
                             <Button type="submit" size="sm" isLoading={isSubmitting} showTextWhileLoading>

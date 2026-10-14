@@ -58,7 +58,16 @@ export type Database = {
         Returns: boolean
       }
       has_role: { Args: { p_org: string; p_role: string }; Returns: boolean }
+      holiday_list_refresh: { Args: { p_list: string }; Returns: undefined }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
+      is_half_holiday: {
+        Args: { p_date?: string; p_list: string }
+        Returns: boolean
+      }
+      is_holiday: {
+        Args: { p_date?: string; p_list: string }
+        Returns: boolean
+      }
       is_member: { Args: { p_org: string }; Returns: boolean }
       jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
       locked_permission_doctypes: { Args: never; Returns: string[] }
@@ -519,6 +528,13 @@ export type Database = {
             referencedColumns: ["code"]
           },
           {
+            foreignKeyName: "companies_default_holiday_list_fkey"
+            columns: ["org_id", "default_holiday_list_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_org_id_exception_budget_approver_role_fkey"
             columns: ["org_id", "exception_budget_approver_role"]
             isOneToOne: false
@@ -871,6 +887,116 @@ export type Database = {
             foreignKeyName: "global_defaults_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holiday: {
+        Row: {
+          description: string
+          holiday_date: string
+          id: string
+          idx: number
+          is_half_day: boolean
+          org_id: string
+          parent_id: string
+          weekly_off: boolean
+        }
+        Insert: {
+          description: string
+          holiday_date: string
+          id?: string
+          idx: number
+          is_half_day?: boolean
+          org_id: string
+          parent_id: string
+          weekly_off?: boolean
+        }
+        Update: {
+          description?: string
+          holiday_date?: string
+          id?: string
+          idx?: number
+          is_half_day?: boolean
+          org_id?: string
+          parent_id?: string
+          weekly_off?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holiday_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_list"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      holiday_list: {
+        Row: {
+          color: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          from_date: string
+          holiday_list_name: string
+          id: string
+          is_half_day: boolean
+          org_id: string
+          subdivision: string | null
+          to_date: string
+          total_holidays: number
+          updated_at: string
+          updated_by: string | null
+          weekly_off: string | null
+        }
+        Insert: {
+          color?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_date: string
+          holiday_list_name: string
+          id?: string
+          is_half_day?: boolean
+          org_id: string
+          subdivision?: string | null
+          to_date: string
+          total_holidays?: number
+          updated_at?: string
+          updated_by?: string | null
+          weekly_off?: string | null
+        }
+        Update: {
+          color?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_date?: string
+          holiday_list_name?: string
+          id?: string
+          is_half_day?: boolean
+          org_id?: string
+          subdivision?: string | null
+          to_date?: string
+          total_holidays?: number
+          updated_at?: string
+          updated_by?: string | null
+          weekly_off?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holiday_list_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "holiday_list_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },

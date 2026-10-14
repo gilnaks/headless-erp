@@ -195,6 +195,15 @@ Additionally owned by this doc (not sidebar items):
 - **Deviation:** "Add Local Holidays" (python `holidays` package + babel) is replaced by a TS implementation using `date-holidays` for the org's country only; subdivisions optional.
 - Permissions (JSON): HR Manager rwcd; read-less rows for HR User, Accounts Manager, Manufacturing User, Projects Manager/User, Sales Manager. We seed System Manager rwcd, read for Manufacturing Manager/User, Projects Manager/User.
 - List: name, from_date, to_date, total_holidays.
+- **Built (0113):** `public.holiday_list` (name unique per org, `weekly_off` checked against Sunday…Saturday, `color` checked as `#rrggbb`, `country` → `country.country_name`) and child `public.holiday` (`parent_id`, `idx`, composite FK to the parent with cascade).
+  - `app.holiday_list_validate` (before trigger) trims the name, stores an empty weekly off as null and raises `holiday_dates` when To Date is before From Date.
+  - `app.holiday_list_refresh(list)` ports `validate_days` / `sort_holidays` / `total_holidays`: raises `holiday_out_of_range` and `holiday_duplicate`, re-indexes the rows by `(weekly_off, holiday_date)` and recomputes `total_holidays` (half days count 0.5). It runs from **deferred constraint triggers** on the header and the rows, so the whole document (header + rows written by `save_doc`) is checked once at commit.
+  - `app.is_holiday(list, date)` / `app.is_half_holiday(list, date)` (executable by `authenticated`).
+  - `companies.default_holiday_list_id` gets its FK (`companies_default_holiday_list_fkey`, same org; deleting a list in use fails) and the Company form shows it.
+  - Form actions (client-side, they only edit the unsaved form; `src/lib/holidays.ts`): *Add Weekly Holidays* (`get_weekly_off_dates`: every `weekly_off` weekday in range, skipping existing dates, flagged `weekly_off` + `is_half_day`; "Please select weekly off day." when empty), *Add Local Holidays* (`get_local_holidays`, Server Action `getLocalHolidays` with `date-holidays`, public holidays in English, skipping existing dates, at most 10 years), *Clear Table*.
+  - **Deviation:** Add Local Holidays uses the list's `country` (codes from `country.code`) and optional `subdivision` with the `date-holidays` package instead of Python `holidays` + babel; holiday names are English only.
+  - **Deviation:** no calendar view yet; `color` is stored for the P8 scheduling calendar.
+  - Descriptor `holiday-list.ts`; pgTAP `18_holiday_list.test.sql`; e2e `holiday-list.spec.ts`.
 
 ### 2.6 User → `auth.users` + `user_profile` + `org_members`
 
@@ -845,6 +854,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **User Permissions**: list grouped by user; "Add" dialog = user, doctype (Company/Warehouse/Cost Center…), record, applicable_for (all / one doctype), is_default, hide_descendants.
   - Built on the generic `DocList` / `DocForm` (not a dialog): the list shows the user's name and email and the record's title instead of ids, sorted by doctype. The member panel shows a "User Permissions" section (not a tab: the panel is one scrolling page of sections) with each row and an "Add user permission" button.
 - **Holiday List form**: header fields + actions *Add Weekly Holidays*, *Add Local Holidays*, *Clear Table*; child grid; calendar preview coloured by `color`.
+  - Built: the actions sit in the generic form "Actions" menu (descriptor `actions`, 05-ui-ux); results replace the Holidays grid and Total Holidays in the unsaved form, and Save persists them. The calendar preview is deferred to P8.
 - **Department / Company**: `TreeView` with company filter (Department tree root is `All Departments`; `get_children` hides disabled unless toggled).
   - Built: both list routes have a List / Tree toggle (`?view=tree`). Department filters by Company (`?company_id=`), keeping the root above the company's departments, and has "Include disabled". "Add child" on a group opens the new form with the parent and company prefilled (the root takes the company from the filter, as `add_node` does). See 05-ui-ux `TreeView`.
 - **Letter Head**: live preview of header/footer over an A4 frame; Image vs HTML toggle.
@@ -871,7 +881,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Email Template / Terms and Conditions render a handlebars-style subset instead of Jinja. Reason: no server-side Python; safety.
 - **Deviation:** Email Digest drops `issue`, `calendar_events`, `todo_list`, `notifications`, `add_quote`; no 24h card cache. Reason: Support/Frappe-desk features out of scope.
 - **Deviation:** Address Template doctype replaced by code (`src/lib/format/address.ts`) covering the default + 9 country templates. Reason: simplicity.
-- **Deviation:** Holiday List "Add Local Holidays" uses a TS holidays library for the org country; subdivisions optional. Reason: Python `holidays` package not available.
+- **Deviation:** Holiday List "Add Local Holidays" uses the `date-holidays` package for the list's country; subdivisions optional, English names only. Reason: Python `holidays` package not available.
 - **Deviation:** Default payable account selected deterministically (`Creditors`, Liability) instead of ERPNext's unordered `account_type = Payable` lookup. Reason: Postgres determinism.
 - **Deviation:** Stock Entry Types, Party Types and fixtures for out-of-scope features (variants, CRM, Support, Share management, Incoterms, Delivery Trip template, Currency Exchange Settings, Pegged Currencies) are not seeded. Reason: scope.
 - **Deviation:** UOMs: curated subset by default with an "Import all" action (ERPNext seeds all 239 + 235 conversions). Reason: PLAN §5.
@@ -917,7 +927,7 @@ Decisions (2026-10-14):
 - [x] Branch: table, descriptor, list/form — `0110_setup_branch.sql` (§2.2), descriptor `branch.ts`
 - [x] Department: table (tree), seed root + 13 per company, TreeView — `0112_setup_department.sql` (§2.3), descriptor `department.ts`, generic `tree-view.tsx`
 - [x] Designation: table, 31-row seed, list/form — `0111_setup_designation.sql` (§2.4), org seed trigger + backfill
-- [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`
+- [x] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()` — `0113_setup_holiday_list.sql` (§2.5), descriptor `holiday-list.ts` with form actions, `date-holidays` Server Action, Company `default_holiday_list_id` FK
 - [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type
 - [x] Role Permissions matrix page + Server Actions + "reset to defaults" — `0108_setup_role_permission_manager.sql` (§2.8, §8), per-doctype reset
 - [x] User Permissions: list/form, picker for Company/Warehouse/Cost Center — `0109_setup_user_permissions.sql` (§2.9), descriptor `user-permission.ts`, `DynamicLink` field type; Warehouse/Cost Center join the picker with their P2 tables
