@@ -114,7 +114,7 @@ bin: unique (org_id, item_id, warehouse_id)
 1. `supabase migration new <nnnn>_<module>_<doctype>` (numbering ranges: 0000-0099 framework, 0100 setup, 0200 stock masters, 0300 accounts, 0400 selling, 0500 buying, 0600 stock txns, 0700 manufacturing, 0800 projects, 0900 assets, 1000+ reports/perf).
 2. Each migration is idempotent-safe (`create table if not exists`, `drop policy if exists`), ends with RLS enablement and policies, and includes the `doctype_meta` + default `role_permissions` upserts for that doctype.
 3. Run locally (`supabase db reset`), run pgTAP, regenerate `src/types/database.ts`, commit both.
-4. Applied to the hosted project only by CI (`deploy-db.yml`) or, when working interactively against the **dev** project, by `supabase db push --linked` (keeps the `NNNN` versions in sync with git; preferred over the MCP `apply_migration`, which records timestamp versions) — never DDL against prod.
+4. Applied to the hosted project only by CI (`deploy-db.yml`) or, when working interactively against the **dev** project, by `supabase db push --linked` (keeps the `NNNN` versions in sync with git; preferred over the MCP `apply_migration`, which records timestamp versions) — never DDL against prod. A new framework migration numbered below an already-applied module migration (e.g. `0005` after `0100`) needs `--include-all`.
 5. Without Docker, run pgTAP against the linked dev project with `npm run db:test:linked` (`scripts/pgtap-remote.ps1`: each file runs in its own transaction and is rolled back), advisors with `supabase db advisors --linked`, types with `npm run db:types:linked`.
 
 ## Seeds

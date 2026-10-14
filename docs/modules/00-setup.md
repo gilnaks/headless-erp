@@ -832,7 +832,9 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - [ ] Global tables `country`, `currency`, `org_currency`, `uom_template`, `coa_template` + seeds (`supabase/seed/`)
 - [ ] `role_profile` table + seed; default permissions via `role_permission_template` (table + `app.sync_role_permissions()` done in `0004`; each doctype migration adds its rows — Company done)
 - [ ] `system_settings`, `global_defaults` tables + defaults
-- [ ] Auth: email+password, magic link, `proxy.ts` session refresh, `acceptInvitation()`, custom access token hook
+- [x] Auth: email+password, magic link, `proxy.ts` session refresh, `acceptInvitation()`, custom access token hook — `/login` (Password / Email link tabs), `/signup`, `/forgot-password`, `/update-password`, `/auth/callback` (PKCE `code` or `token_hash`), `/auth/signout`, `/invite/[token]`; Server Actions in `src/lib/actions/auth.ts` + `organization.ts`
+- [x] P0 precursor of §3.1 Stage A: `app.create_organization(jsonb)` (`0005`, reserved slugs `0006`) creates the org, seeds role permissions and makes the caller owner + System Manager; `/setup` form calls it and refreshes the session. P1 replaces it with `app.provision_organization()`
+- [x] App shell: icon rail (org switcher, 7 modules + Setup), module sidebar from `src/config/navigation.ts` (ERPNext sidebars, out-of-scope items removed, phase per PLAN §7), top bar (company switcher → `hx_company` cookie, ⌘K placeholder, user menu), placeholder pages `/[org]/[module]/[...slug]`, `src/stores/session.ts` + `ui.ts`
 - [ ] Custom claims + token refresh after role edits
 
 ### P1 (Setup module)
