@@ -1,0 +1,34 @@
+---
+description: defineDoctype() descriptor, Zod schema and calc-library conventions when porting an ERPNext doctype
+globs: src/doctypes/**/*.ts,src/lib/calc/**/*.ts,src/lib/actions/**/*.ts
+alwaysApply: false
+---
+
+# Porting a doctype
+
+1. Read `erpnext/<module>/doctype/<slug>/<slug>.json`, `<slug>.py`, `<slug>.js`, `<slug>_dashboard.py`, `test_<slug>.py`
+   (helper: `scripts/erpnext-doctype.ps1 -Names "<DocType>" -Brief`). Record ported fields + deviations in `docs/modules/`.
+2. Descriptor `src/doctypes/<module>/<slug>.ts`:
+   ```ts
+   export const salesInvoice = defineDoctype({
+     doctype: 'Sales Invoice', table: 'sales_invoice', module: 'accounts', slug: 'sales-invoice',
+     submittable: true, namingSeries: ['ACC-SINV-.YYYY.-'], titleField: 'customer_name',
+     tabs: [{ label: 'Details', sections: [...] }, { label: 'Payments', ... }],
+     fields: { customer_id: { type: 'Link', target: 'Customer', required: true, fetch: { customer_name: 'customer_name' } }, ... },
+     children: { items: { doctype: 'Sales Invoice Item', table: 'sales_invoice_item', fields: {...} }, taxes: {...}, payment_schedule: {...} },
+     allowOnSubmit: ['remarks', 'cost_center'], noCopy: ['name', 'amended_from', 'outstanding_amount'],
+     statuses: ['Draft','Unpaid','Partly Paid','Paid','Overdue','Return','Credit Note Issued','Cancelled'],
+     connections: [{ group: 'Payment', doctypes: ['Payment Entry','Journal Entry'] }, ...],   // from <slug>_dashboard.py
+     createFrom: ['Sales Order','Delivery Note','Timesheet'], createNext: ['Payment Entry','Delivery Note','Sales Return'],
+     listView: { columns: [...], filters: [...], statusField: 'status' },
+   });
+   export const salesInvoiceSchema = schemaFor(salesInvoice);   // Zod, used by forms and Server Actions
+   ```
+   Keep ERPNext fieldnames, labels, options, defaults, `reqd`, `read_only`, `depends_on` (as predicate functions).
+3. The descriptor must agree with `doctype_meta` + the migration (CI script `scripts/check-doctypes.ts` compares).
+4. `src/lib/calc/**` is pure TypeScript (no imports from React/Supabase), deterministic, unit-tested against
+   fixtures ported from ERPNext tests; rounding through `round(value, precision)` (half away from zero).
+5. Server Actions are thin: Zod parse → permission check → `rpc('save_doc'|'submit_doc'|'cancel_doc'|'amend_doc'|'map_doc')`
+   → `updateTag('org:<orgId>:<doctype>')` → typed result. Business rules go in SQL (`app.*`) or `lib/calc`, not in actions.
+6. Status derivations and link mappers follow `docs/architecture/03-posting-engine.md`; add the ERPNext file path
+   as a comment above the ported function.

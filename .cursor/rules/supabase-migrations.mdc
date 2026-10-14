@@ -1,0 +1,32 @@
+---
+description: Supabase migration, RLS and posting-engine SQL conventions
+globs: supabase/**/*.sql
+alwaysApply: false
+---
+
+# Supabase SQL conventions
+
+- File name `NNNN_<module>_<doctype>.sql`; ranges: 0000-0099 framework, 0100 setup, 0200 stock masters, 0300 accounts,
+  0400 selling, 0500 buying, 0600 stock txns, 0700 manufacturing, 0800 projects, 0900 assets, 1000+ reports/perf.
+- Table = ERPNext doctype in snake_case (`sales_invoice`, child `sales_invoice_item`). Keep ERPNext fieldnames.
+- Base columns on every tenant table: `id uuid pk default gen_random_uuid()`, `org_id uuid not null references organizations(id) on delete cascade`,
+  `created_at/created_by/updated_at/updated_by`. Transactional docs add `company_id`, `name` (null until submit),
+  `naming_series`, `docstatus smallint check (docstatus in (0,1,2))`, `status`, `amended_from`, `posting_date`.
+- Child tables: `parent_id uuid not null references <parent>(id) on delete cascade`, `idx int`, `org_id`.
+- Money/qty: `numeric(21,9)`. Enum-like fields: `text` + `check` with ERPNext labels verbatim.
+- Every migration ends with:
+  ```sql
+  alter table <t> enable row level security; alter table <t> force row level security;
+  -- select/insert/update/delete policies using (select app.has_perm(org_id,'<DocType>','<action>'))
+  insert into doctype_meta (...) on conflict do update ...;
+  insert into role_permissions (...) on conflict do nothing;   -- from ERPNext doctype JSON permissions
+  ```
+- Child-table policies delegate to the parent via `exists (select 1 from <parent> p where p.id = parent_id)`.
+- Ledger tables (`gl_entry`, `stock_ledger_entry`, `payment_ledger_entry`, `bin`): select policies only; writes only from
+  `security definer` functions in schema `app`.
+- `security definer` functions: `set search_path = app, public, pg_temp`, first statement checks `app.has_perm(...)`,
+  lock the header row `for update`, raise with `using errcode = 'P0001', message = '<machine_key>: <human text>'`.
+- Idempotent DDL (`if not exists`, `drop policy if exists`), no `execute_sql` DDL against prod, never disable RLS.
+- Indexes: `(org_id, name)`, `(org_id, company_id, docstatus, posting_date desc)` + the ledger indexes in
+  `docs/architecture/02-database-conventions.md`.
+- Add a pgTAP test under `supabase/tests/` for each posting function and an RLS isolation test for each table.

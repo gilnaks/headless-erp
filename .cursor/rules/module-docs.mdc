@@ -1,0 +1,18 @@
+---
+description: Conventions for the planning docs (PLAN, architecture, module docs)
+globs: docs/**/*.md
+alwaysApply: false
+---
+
+# Docs conventions
+
+- `docs/PLAN.md` is the master instruction file; architecture docs define cross-cutting rules; `docs/modules/NN-*.md`
+  define per-module scope. Keep them consistent: a change in one must be mirrored where referenced.
+- Module doc template (keep headings in this order): Scope & sidebar mapping → Doctype inventory → Document flows &
+  mappers → Posting rules → Statuses → Settings & defaults → Reports & dashboard → UI notes → Deviations from
+  ERPNext → Implementation checklist.
+- Cite ERPNext sources as repo-relative paths (`erpnext/accounts/doctype/sales_invoice/sales_invoice.py`), never as
+  line numbers (they drift).
+- Tables for inventories; prose only for rationale. State defaults explicitly (`so_required = No`).
+- Mark deviations with **Deviation:** and the reason (scope, simplicity, multi-tenancy, Postgres).
+- Checklists use `- [ ]` items at doctype granularity so they can be turned into GitHub issues.

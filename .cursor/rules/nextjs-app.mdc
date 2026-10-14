@@ -1,0 +1,29 @@
+---
+description: Next.js 16 App Router, Supabase SSR and Server Action patterns
+globs: src/**/*.ts,src/**/*.tsx
+alwaysApply: false
+---
+
+# Next.js 16 + Supabase SSR
+
+- `params`/`searchParams` are Promises; `cookies()`/`headers()` are async:
+  ```tsx
+  export default async function Page({ params }: { params: Promise<{ org: string; id: string }> }) {
+    const { org, id } = await params;
+  ```
+- `src/proxy.ts` (not middleware): refresh session with `supabase.auth.getClaims()`, copy cookies to request+response,
+  apply the cache headers passed to `setAll`. Redirect unauthenticated users to `/login`. No data authorization here.
+- Supabase clients: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (RSC/actions, `await cookies()`),
+  `lib/supabase/admin.ts` (service role, `import 'server-only'`, provisioning/cron/tests only).
+- Server-side identity: `const { data } = await supabase.auth.getClaims()`; never `getSession()` for auth decisions.
+- Default to Server Components. `'use client'` only for forms, tables, charts, stores, dialogs.
+- Server Actions (`lib/actions/<module>/*.ts`, `'use server'`): parse with the doctype Zod schema → check
+  `can(action, doctype)` from claims → call `supabase.rpc('save_doc' | 'submit_doc' | ...)` → `updateTag()` /
+  `revalidateTag()` → return `{ ok, data } | { ok: false, error }`; never throw raw Postgres errors to the client.
+- Reads for pages live in `lib/queries/<module>/*.ts`; wrap reference data in `'use cache'` with
+  `cacheTag('org:<orgId>:<doctype>')`; transactional lists/forms are not cached.
+- Use `<Suspense>` + `loading.tsx` + `error.tsx` on every data route segment.
+- URL state for lists via `nuqs`; UI state via Zustand selectors; no server data in stores.
+- Generated DB types from `src/types/database.ts`; derive row types with `Tables<'sales_invoice'>`.
+- Numbers: never use `toFixed` for money; use `formatCurrency/formatNumber` from `lib/calc/number.ts`.
+- No `any`; prefer `satisfies`; exhaustive `switch` on status unions.

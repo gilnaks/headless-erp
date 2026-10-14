@@ -1,0 +1,45 @@
+# headless-erp — Cursor rules (always on)
+
+You are building a multi-tenant SaaS re-implementation of ERPNext's default behaviour. The plan is law:
+read `docs/PLAN.md` first, then the relevant `docs/architecture/*.md`, then `docs/modules/NN-<module>.md` for the
+module you touch. If the task conflicts with the plan, stop and say so before coding. Update the docs when behaviour changes.
+
+## Source of truth
+- ERPNext clone: `C:\Users\John\Desktop\erpnext` (branch develop). Port *default* behaviour only. Cite the ERPNext
+  file(s) you read in the PR/commit body. Use `scripts/erpnext-doctype.ps1 -Names "<DocType>"` to read schemas.
+- Keep ERPNext field names, status labels, naming-series prefixes and default values unless the plan says otherwise.
+- Out of scope (do not build): CRM, Support, Quality, POS, Loyalty, Subscriptions, Website, Regional/e-invoicing,
+  HR/Payroll, Pricing Rules, Item Variants, Accounting Dimensions, Deferred accounting, Period Closing, Repost tools.
+
+## Stack (fixed)
+Next.js 16.4+ App Router (React 19, TS strict, Turbopack, `cacheComponents` on, `proxy.ts`), Supabase (Postgres, Auth via
+`@supabase/ssr`, Storage, pg_cron), Zustand (UI/session state only), Untitled UI React (Tailwind v4 + React Aria,
+components copied into `src/components/base|application`), Recharts 3, Zod, React Hook Form, TanStack Table, nuqs,
+Biome, Vitest, pgTAP, Playwright, GitHub Actions → Netlify.
+
+## Non-negotiables
+1. Every tenant table has `org_id` and RLS enabled + policies (see `docs/architecture/01-tenancy-auth-rls.md`). No
+   migration without RLS. Ledger tables are append-only; cancel = reversal rows.
+2. All ledger/status/numbering mutations happen in `app.*` Postgres functions called from Server Actions
+   (`app.submit_doc`, `app.cancel_doc`, `app.amend_doc`, `app.save_doc`). Never write `gl_entry`,
+   `stock_ledger_entry`, `payment_ledger_entry`, `bin` from TypeScript.
+3. Server authorization uses `supabase.auth.getClaims()`; never `getSession()` on the server; never import the
+   service-role client outside `server-only` modules (provisioning, cron, tests).
+4. Money/qty are `numeric` in SQL; rounding via `app.round()` / `src/lib/calc/number.ts`. Client totals are previews;
+   the server recomputes before posting.
+5. One doctype = one migration (+RLS +doctype_meta +role_permissions) + `src/doctypes/<module>/<slug>.ts` descriptor +
+   Zod schema + Server Actions + list/form UI + tests. Regenerate `src/types/database.ts` after schema changes.
+6. `params`, `searchParams`, `cookies()`, `headers()` are async — always `await`. Default to Server Components;
+   `'use client'` only for interactive leaves (forms, tables, charts, stores).
+7. UI: Untitled UI tokens only (no raw hex), compact density, keyboard-first, tabular numerals, empty/loading/error
+   states for every list/form. No new dependency without a note in `docs/PLAN.md §2`.
+8. Small commits (one doctype or one engine function). Conventional commits. Never commit secrets or tenant data.
+
+## Working style
+- Before coding a doctype: read its ERPNext `.json` + `.py` (+ `test_*.py` for expected ledger output), summarise the
+  ported fields/behaviour and deviations in the module doc, then implement.
+- Prefer editing existing generic components (`DocList`, `DocForm`, `ChildTable`, `ReportView`, `DashboardView`)
+  over one-off pages. Add a descriptor, not a bespoke screen.
+- Use the Supabase MCP for `apply_migration` (local/dev only), `execute_sql` (reads), `get_advisors`
+  (must be clean), `generate_typescript_types`. Production changes go through CI only.
+- Verify with `supabase db reset` + pgTAP + `vitest` + `next build` before declaring done.

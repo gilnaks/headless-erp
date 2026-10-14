@@ -1,0 +1,28 @@
+---
+description: Untitled UI, Tailwind v4, Recharts and ERP page-pattern conventions
+globs: src/components/**/*.tsx,src/app/**/*.tsx,src/styles/**/*.css
+alwaysApply: false
+---
+
+# UI conventions
+
+- Add primitives with `npx untitledui@latest add <component>` into `src/components/base/**` /
+  `src/components/application/**`; keep upstream file names. ERP composites live in `src/components/erp/**`
+  (`DocList`, `DocForm`, `ChildTable`, `FieldRenderer`, `LinkField`, `StatusBadge`, `DocActions`, `TreeView`,
+  `ReportView`, `DashboardView`, `NumberCard`, `DashboardChart`, `ConnectionsPanel`, `Timeline`).
+- Build screens from a `defineDoctype()` descriptor + the generic composites. A bespoke page needs a reason in the module doc.
+- Tailwind v4 only: `@import "tailwindcss"; @import "./theme.css"; @plugin "tailwindcss-react-aria-components";
+  @plugin "tailwindcss-animate"`. No `tailwind.config.js`, no raw hex, use `--color-*` tokens from `theme.css`.
+  Merge classes with `cx` from `utils/cx.ts`.
+- React Aria semantics: use `Button`, `TextField`, `ComboBox`, `Select`, `Dialog`, `Table` primitives; every icon-only
+  button has `aria-label`; focus rings visible; Esc closes; Enter submits.
+- Layout: icon rail (modules) → module sidebar (sections from `config/navigation.ts`) → page with breadcrumb, title,
+  primary action. Compact density: 36px table rows, 32px inputs. Numeric cells right-aligned, `tabular-nums`.
+- Status badges use the ERPNext status label and a fixed colour map in `components/erp/status-colors.ts`
+  (Draft gray, Submitted/Open blue, To Bill/To Deliver orange, Completed/Paid green, Cancelled red, Overdue red, Closed gray).
+- Every list/form/report has empty, loading (skeleton), and error states. Destructive actions confirm with consequences.
+- Recharts: `'use client'`, `responsive` prop on the chart root, shared `<ChartTooltip/>`, colours via CSS vars
+  (`var(--color-utility-brand-600)` …), horizontal grid only, compact number format. Keep chart components dumb; data comes from RSC.
+- Forms: React Hook Form + `zodResolver(doctypeSchema)`; field components receive `field` + descriptor; read-only after
+  submit except `allowOnSubmit` fields; child-table rows editable inline with keyboard navigation.
+- Dark mode via tokens; test both.
