@@ -38,10 +38,11 @@ export function LinkField({ control, name, field, orgSlug, isDisabled, compact }
         });
     };
 
-    // Resolve the label of the stored id once; searching starts on focus.
+    // React Aria opens the menu on focus/typing only if options already exist, so form fields preload; grid cells
+    // load on focus to avoid one request per row. A stored id always needs its label.
     // biome-ignore lint/correctness/useExhaustiveDependencies: only when the stored value changes
     useEffect(() => {
-        if (value && !items.some((i) => i.id === value)) load("");
+        if (!compact || (value && !items.some((i) => i.id === value))) load("");
     }, [value]);
 
     useEffect(
