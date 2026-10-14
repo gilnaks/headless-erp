@@ -78,14 +78,21 @@ Delete allowed only in Draft.      │
                                    └─ "allow_on_submit" fields may still change (whitelist per doctype)
 ```
 
-Generic SQL entry points (`supabase/migrations/0003_doc_framework.sql`):
+Generic SQL entry points:
+
+**Built (P0):**
+
+- `app.save_doc(doctype text, payload jsonb) → {id, name}` (`0008_framework_doc_engine.sql`, exposed as `public.save_doc` RPC) — **security invoker**: the table's own RLS insert/update policies (`has_perm`, `company_allowed`, user permissions) authorize the write, so it never widens what PostgREST would allow. Insert when `payload.id` is absent (requires `payload.org_id`), else update. Only real, non-generated columns present in the payload are written (allow-list from `information_schema`); system columns (`id, org_id, created_*, updated_*, docstatus, path, amended_from, submitted_*, cancelled_*`, plus `name` on submittables) are always ignored. Submitted rows only accept changes to `doctype_meta.allow_on_submit` fields (`update_after_submit`), cancelled rows are read-only (`cancelled_readonly`). Child rows (`doctype_meta.is_child`, `parent_doctype`, new column `child_field` = payload key) are replaced in the same transaction: rows with a known `id` are updated in place (stable ids for `so_detail`-style links), missing rows deleted, new rows inserted, `idx` renumbered from 1. Zero rows affected → `permission_denied` (42501).
+- `app.delete_doc(doctype, id)` (`public.delete_doc` RPC) — security invoker; drafts/masters only (`delete_submitted` otherwise), RLS decides.
+- `app.next_name(org_id, company_id, series, posting_date)` (`0007_framework_naming.sql`) — port of Frappe `parse_naming_series`/`getseries`: tokens `YYYY, YY, MM, DD, WW, ABBR, #…`; templates without `#` get `.#####`. **Deviation from the original sketch:** counters live in `naming_series(org_id, prefix, current)` keyed by the *resolved* prefix (e.g. `ACC-SINV-2026-`), exactly like Frappe's `tabSeries`, rather than by `(company_id, series, period_key)`; a new year therefore starts a new counter, and `ABBR` makes counters per company. Locked with `pg_advisory_xact_lock(hashtextextended(org:prefix))`; security definer, not executable by API roles (called only by engine functions). Members read `naming_series`; System Manager may update it ("Update Series Counter").
+- Database errors are raised as `code: message` (`P0001`); Server Actions map `code` to a form field through the descriptor's `errorFields`.
+
+**Deferred to the first submittable doctype (P3 Journal Entry)**, specified here so the design stays fixed:
 
 - `app.submit_doc(doctype text, id uuid)` → checks perm, locks row `for update`, validates `docstatus=0`, assigns `name` (`app.next_name`), sets `docstatus=1`, then dispatches to the doctype-specific `app.on_submit__<table>(id)` function if it exists, then `app.update_status(doctype,id)`.
 - `app.cancel_doc(doctype, id)` → checks perm and linked submitted documents (`app.linked_docs()` using the FK registry), sets `docstatus=2`, dispatches `app.on_cancel__<table>(id)` (which reverses ledgers), updates prev-doc status.
 - `app.amend_doc(doctype, id)` → deep-copies the row and child rows into a new draft with `amended_from`, clears no-copy fields (from `doctype_meta.no_copy_fields`).
-- `app.next_name(org_id, company_id, series, posting_date)` → parses `.YYYY.`, `.MM.`, `.####` tokens, increments `naming_series.current` under `pg_advisory_xact_lock(hashtext(org||series||year))`.
-
-Doctype registry table `doctype_meta(doctype, table_name, module, is_submittable, is_tree, is_child, parent_doctype, title_field, naming_series_default, no_copy_fields text[], allow_on_submit text[])` seeded by migration; `defineDoctype()` in TS must match it (a CI script compares them).
+Doctype registry table `doctype_meta(doctype, table_name, module, is_submittable, is_tree, is_child, parent_doctype, child_field, title_field, naming_series_default, no_copy_fields text[], allow_on_submit text[])` seeded by migration; `defineDoctype()` in TS must match it (a CI script compares them).
 
 ## Link integrity & "Connections"
 

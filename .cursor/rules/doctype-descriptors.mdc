@@ -8,7 +8,24 @@ alwaysApply: false
 
 1. Read `erpnext/<module>/doctype/<slug>/<slug>.json`, `<slug>.py`, `<slug>.js`, `<slug>_dashboard.py`, `test_<slug>.py`
    (helper: `scripts/erpnext-doctype.ps1 -Names "<DocType>" -Brief`). Record ported fields + deviations in `docs/modules/`.
-2. Descriptor `src/doctypes/<module>/<slug>.ts`:
+2. Descriptor `src/doctypes/<module>/<slug>.ts`, registered in `src/doctypes/registry.ts`. Current signature
+   (`src/doctypes/define.ts`; reference: `setup/company.ts`):
+   ```ts
+   defineDoctype<T extends TableName, C extends string = never>({
+     doctype, table: T, module: ModuleId, slug, submittable?, titleField: Column<T>,
+     fields: Partial<Record<Column<T> | C, FieldDef>>,        // FieldDef: type, label, required, readOnly, setOnlyOnce,
+                                                             // options (labels | 'Currency' | 'Country'), target, default,
+                                                             // dependsOn(values), description, placeholder
+     children?: Record<C, ChildDoctype>,                     // defineChildDoctype({ doctype, table, fields, columns })
+     tabs: [{ label, sections: [{ label?, columns: Column[][] }] }],
+     listView: { columns, searchFields, defaultSort: { field, desc? } },
+     errorFields?: Record<'<db error code>', Column<T>>,     // maps `code: message` exceptions onto form fields
+   }): Doctype
+   ```
+   Field keys, layout, list columns and `titleField` must be real columns of `table` (checked by `tsc` against
+   `src/types/database.ts`); `C` names the child-table payload keys (= `doctype_meta.child_field`). Zod comes from
+   `schemaFor(descriptor)` / `formToPayload` in `src/doctypes/schema.ts`; do not hand-write per-doctype schemas.
+   Target shape as later phases add capabilities (not implemented yet — add the property to `define.ts` when needed):
    ```ts
    export const salesInvoice = defineDoctype({
      doctype: 'Sales Invoice', table: 'sales_invoice', module: 'accounts', slug: 'sales-invoice',
@@ -22,7 +39,6 @@ alwaysApply: false
      createFrom: ['Sales Order','Delivery Note','Timesheet'], createNext: ['Payment Entry','Delivery Note','Sales Return'],
      listView: { columns: [...], filters: [...], statusField: 'status' },
    });
-   export const salesInvoiceSchema = schemaFor(salesInvoice);   // Zod, used by forms and Server Actions
    ```
    Keep ERPNext fieldnames, labels, options, defaults, `reqd`, `read_only`, `depends_on` (as predicate functions).
 3. The descriptor must agree with `doctype_meta` + the migration (CI script `scripts/check-doctypes.ts` compares).

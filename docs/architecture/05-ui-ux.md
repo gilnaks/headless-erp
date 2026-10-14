@@ -37,6 +37,8 @@ Top bar: company switcher · global search / command palette (⌘K) · notificat
 ### `DocList`
 Toolbar (search, filter chips with ERPNext-like filter builder, sort, column picker, saved views, "+ New"), TanStack table with sticky header, status badge column, row click → form, checkbox bulk actions (Submit, Cancel, Delete, Export, Assign) when permitted, infinite paging ("Load more", 20/50/100). Sidebar stats like ERPNext's list sidebar: counts by status (SQL `app.list_counts`).
 
+**Implemented (P0, `src/components/erp/doc/doc-list.tsx`):** server-rendered rows (`listDocs`, RLS, only `listView.columns`) passed to a client TanStack table rendered with the Untitled UI `Table`; URL state via nuqs (`q`, `sort`, `desc`, `page`, `size`; parsers shared with the server loader in `src/lib/list-params.ts`); debounced search (`ilike` over `listView.searchFields`), sortable headers, previous/next paging ("1–20 of 57") with 20/50/100 page sizes, "+ New" when the user can create, row click opens the form, empty states ("No X yet" / "No X matches" + Clear search), skeleton while loading. Not yet: filter chips, column picker, saved views, bulk actions, status sidebar. Link columns show the stored value (no join to the target title yet).
+
 ### `DocForm`
 - Header: title/name, status badge, "Not Saved"/"Saved" indicator, primary action button that follows docstatus (Save → Submit → Cancel/Amend) plus overflow menu (Duplicate, Print, Email, Links, Delete, Jump to…).
 - Tabs replicate the doctype's `Tab Break` fields (e.g. Sales Invoice: Details, Payments, Address & Contact, Terms, More Info, Connections). Sections and column breaks become a responsive 2-column grid.
@@ -45,6 +47,12 @@ Toolbar (search, filter chips with ERPNext-like filter builder, sort, column pic
 - Right rail (xl+): Connections (linked documents grouped like ERPNext's dashboard section, with counts and "+ Create" → `mapDoc`), timeline (versions + comments), assignments/tags.
 - "Create ▸" menu on submitted docs mirrors ERPNext's `make_*` options (e.g. Sales Order → Delivery Note, Sales Invoice, Material Request, Purchase Order, Payment Entry, Work Order…).
 - Unsaved-changes guard, autosave of drafts to `form-draft` store every 10s, restore prompt.
+
+**Implemented (P0, `src/components/erp/doc/`):**
+- Field types: `Data, Text, Select, Link, Date, Check, Int, Float, Currency, Percent, Table` (`FieldType` in `src/doctypes/define.ts`); others are added when a doctype needs them. Select takes fixed ERPNext options or a runtime source (`Currency`, `Country` → searchable ComboBox; the Currency filter matches ISO codes only). Numbers are right-aligned with tabular numerals. Field flags: `required`, `readOnly` (server-computed), `setOnlyOnce` (editable on new docs only), `dependsOn` (hides, still submitted), `description`.
+- `DocForm` (`doc-form.tsx`): React Hook Form + `zodResolver(schemaFor(d))`, sticky header (back to list, title, "Not Saved" badge, Save with Ctrl/⌘+S, overflow → Delete with confirm dialog), tabs with per-tab error counts (jumps to the first tab with an error after a failed save), sections in a 2-column grid, server errors mapped onto fields via `errorFields`, success/error/read-only alerts, `beforeunload` guard while dirty. Editable only when the user can write and `docstatus = 0`. Not yet: submit/cancel/amend actions, Connections rail, timeline, draft autosave.
+- `LinkField` (`link-field.tsx`): ComboBox over `searchLink` (debounced 250 ms, stale responses dropped), shows the target's title for the stored id; form fields preload options because React Aria only opens the menu when items exist, grid cells load on focus.
+- `ChildTable` (`child-table.tsx`): `useFieldArray` inline grid with row checkboxes + bulk delete, move up/down, "Add row" (focuses the first cell), ↑/↓/Enter row navigation (Enter on the last row adds one), `idx` column, "No rows" empty state. Pure logic in `src/doctypes/grid.ts` (Vitest); no P0 doctype has children yet. Not yet: row drawer, duplicate, drag reorder, totals footer.
 
 ### `TreeView` (CoA, Cost Centers, Warehouses, Item Groups, Customer/Supplier Groups, Territories, Departments, Tasks, BOM explode)
 Expandable rows with balances/totals, inline add child, drag to re-parent (groups only), group vs ledger badges.
