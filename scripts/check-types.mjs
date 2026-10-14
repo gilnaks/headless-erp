@@ -17,11 +17,18 @@ const format = (text) =>
         maxBuffer: 64 * 1024 * 1024,
     });
 
+// Biome keeps an object expanded when the input breaks right after `{`, so those breaks are removed first.
 const normalise = (text) =>
-    format(text.replace(/\r\n/g, "\n"))
-        .replace(/^\s*__InternalSupabase: \{[^}]*\};\n/m, "")
+    format(
+        text
+            .split(/\r?\n/)
+            .filter((line) => !line.trim().startsWith("//"))
+            .join("\n")
+            .replace(/\{\s+/g, "{ ")
+            .replace(/__InternalSupabase: \{[^}]*\};?/, ""),
+    )
         .split("\n")
-        .filter((line) => line.trim() !== "" && !line.trim().startsWith("//"));
+        .filter((line) => line.trim() !== "");
 
 const raw = execFileSync("npx", ["supabase", "gen", "types", "typescript", source, "--schema", "public,app"], {
     encoding: "utf8",
