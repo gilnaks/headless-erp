@@ -31,7 +31,7 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 
 ## GitHub
 
-- Repo `smarty72/headless-erp`, default branch `main`, protected: PR required, CI green (`quality` + `db-and-e2e`), 1 review (or Bugbot) before merge. The repo is currently **public**; the original plan said private (owner decision, see the checklist below). Either way nothing secret or tenant-related is committed.
+- Repo `gilnaks/headless-erp` (private; remote `origin`), default branch `main`, protected: PR required, CI green (`quality` + `db-and-e2e`), 1 review (or Bugbot) before merge. The earlier history came from `smarty72/headless-erp` (kept locally as remote `smarty72`, not pushed to).
 - Conventional commits; `.github/pull_request_template.md` has an "ERPNext source files consulted" section and the `PLAN.md §8` checklist.
 - Labels per module; issues created per doctype from the module docs' checklists.
 - Dependabot (`.github/dependabot.yml`): weekly npm (minor + patch grouped) and GitHub Actions updates.
@@ -43,7 +43,7 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 2. Job `db-and-e2e` (one job so local Supabase starts once; CLI pinned to the `supabase` devDependency version):
    - `supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api,mailpit` → `supabase db reset` (every migration from scratch + `supabase/seed.sql`, which is intentionally empty) → `supabase test db` (pgTAP via pg_prove).
    - Local URL and keys from `supabase status -o env` are exported as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`.
-   - `node scripts/check-types.mjs` regenerates types from the local DB and fails if `src/types/database.ts` is stale. Both sides are run through Biome's formatter first (local generation emits unformatted TypeScript, the committed file comes from the dev project) and the `PostgrestVersion` line is ignored. Locally without Docker: `npm run db:types:check -- --linked`.
+   - `node scripts/check-types.mjs` regenerates types from the local DB and fails if `src/types/database.ts` is stale. The committed file comes from the dev project (hosted generator) while CI generates locally (the CLI's newer built-in generator), so the script normalises layout (Biome), drops the `__InternalSupabase` block, `ComputedFields` and generated columns, and treats `Record<PropertyKey, never>` as `never` before comparing; anything else (a missing column, function or type change) fails. On failure the generated file is saved to `test-results/database.generated.ts` (in the uploaded artifact). Locally without Docker: `npm run db:types:check -- --linked`.
    - `npm run test:db` (`vitest.db.config.ts` → `src/doctypes/doctypes.db.test.ts`): every registered descriptor has a matching `doctype_meta` row (table, module, submittable, title field; child tables with `parent_doctype` + `child_field`) and every field / list column exists (zero-row PostgREST select).
    - `npm run build` (`cacheComponents` on, catches dynamic-API misuse), then `npm run e2e`: Playwright (Chromium) starts `next start` and runs `e2e/smoke.spec.ts`: sign in → `/setup` creates an organization → New Company → Save → the company is in the list. Sign-up needs email confirmation, so `e2e/global-setup.ts` creates a confirmed user with the admin API. The HTML report and traces are uploaded as an artifact when the job fails. The smoke grows to "create & submit a Sales Invoice → check GL report" in P5.
 
@@ -83,9 +83,9 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
 
 ## Setup checklist (owner)
 
-CI runs without any secrets. Deploys stay inert until these steps are done by a repo admin (the agent's GitHub account cannot manage secrets):
+CI runs without any secrets. Deploys stay inert until these steps are done by the repo owner (`gilnaks`) in the GitHub UI:
 
-1. **Visibility**: decide public vs private for `smarty72/headless-erp` (Settings → General). Update the GitHub section above if it stays public.
+1. ~~Repository~~: done, `gilnaks/headless-erp` (private).
 2. **Branch protection** on `main` (Settings → Branches/Rulesets): require a PR, require status checks `quality` and `db-and-e2e`, require branches to be up to date, block force pushes.
 3. **Production Supabase project**: create it (Pro plan for PITR), then in its dashboard enable the custom access token hook `app.custom_access_token_hook` (Auth → Hooks), set Site URL + redirect URLs to the production domain (`/auth/callback**`), configure SMTP, and enable leaked-password protection.
 4. **GitHub environment** `production` (Settings → Environments) with required reviewers and deployment branch `main`. Environment secrets: `SUPABASE_ACCESS_TOKEN` (personal access token), `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF` (prod ref).
