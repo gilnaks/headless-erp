@@ -3,7 +3,7 @@ import { cache } from "react";
 import type { SelectItemType } from "@/components/base/select/select";
 import type { OptionSource } from "@/doctypes/define";
 import { timeZoneOptions } from "@/lib/intl";
-import { countryItems, currencyItems, type ReferenceOptions } from "@/lib/reference-options";
+import { chartOfAccountsItems, countryItems, currencyItems, type ReferenceItem, type ReferenceOptions } from "@/lib/reference-options";
 import { createClient } from "@/lib/supabase/server";
 
 export const getCurrencies = cache(async () => {
@@ -34,13 +34,24 @@ const getDoctypeOptions = cache(async (targetsOnly: boolean): Promise<SelectItem
     return (data ?? []).map((r) => ({ id: r.doctype, label: r.doctype }));
 });
 
-const LOADERS: Record<OptionSource, (orgId: string) => Promise<SelectItemType[]>> = {
+/** Chart of accounts templates (global), tagged with their countries (`coa_template_country`). */
+export const getChartOfAccountsOptions = cache(async (): Promise<ReferenceItem[]> => {
+    const supabase = await createClient();
+    const [templates, countries] = await Promise.all([
+        supabase.from("coa_template").select("name").eq("disabled", false).order("name"),
+        supabase.from("coa_template_country").select("template, country_name"),
+    ]);
+    return chartOfAccountsItems(templates.data ?? [], countries.data ?? []);
+});
+
+const LOADERS: Record<OptionSource, (orgId: string) => Promise<ReferenceItem[]>> = {
     Currency: () => getCurrencies(),
     Country: () => getCountries(),
     TimeZone: async () => timeZoneOptions(),
     Role: getRoleOptions,
     DocType: () => getDoctypeOptions(false),
     UserPermissionTarget: () => getDoctypeOptions(true),
+    ChartOfAccounts: () => getChartOfAccountsOptions(),
 };
 
 /** Loads only the option lists a form uses. */

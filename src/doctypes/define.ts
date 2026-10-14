@@ -25,7 +25,7 @@ export type FieldType =
  * Option lists resolved at runtime instead of being inlined. `Role` is per organization; the others are global.
  * `DocType` lists document types (no child tables); `UserPermissionTarget` those a User Permission can restrict.
  */
-export type OptionSource = "Currency" | "Country" | "TimeZone" | "Role" | "DocType" | "UserPermissionTarget";
+export type OptionSource = "Currency" | "Country" | "TimeZone" | "Role" | "DocType" | "UserPermissionTarget" | "ChartOfAccounts";
 
 export type FieldValues = Record<string, unknown>;
 
@@ -44,6 +44,8 @@ export type FieldDef = {
     /** DynamicLink: the sibling field holding the target doctype (ERPNext `options`). */
     optionsField?: string;
     default?: string | number | boolean;
+    /** Runtime-source Select: keeps the options matching the form values (e.g. charts of the company country). */
+    filterOptions?: (item: { id: string | number; tags?: string[] }, values: FieldValues) => boolean;
     /** ERPNext `depends_on`; hidden fields are still submitted. */
     dependsOn?: (values: FieldValues) => boolean;
     description?: string;

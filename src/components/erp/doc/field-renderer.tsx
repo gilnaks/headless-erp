@@ -242,7 +242,13 @@ function MultiSelectField({ control, name, field, isDisabled, compact }: FieldRe
 
 function SourceSelectField({ control, name, field, isDisabled, compact }: FieldRendererProps) {
     const { field: f, fieldState } = useController({ control, name });
-    const items = useContext(ReferenceOptionsContext)[field.options as OptionSource] ?? [];
+    const all = useContext(ReferenceOptionsContext)[field.options as OptionSource] ?? [];
+    const values = useWatch({ control, disabled: !field.filterOptions });
+    const { filterOptions } = field;
+    const items = useMemo(
+        () => (filterOptions ? all.filter((item) => item.id === f.value || filterOptions(item, values ?? {})) : all),
+        [all, filterOptions, values, f.value],
+    );
     return (
         <Select.ComboBox
             {...labelProps(field, compact)}
