@@ -1,0 +1,250 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronLeft, DotsVertical, Trash01 } from "@untitledui/icons";
+import Link from "next/link";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { Heading as AriaHeading, type Key } from "react-aria-components";
+import { type FieldErrors, type FieldValues, useForm, useWatch } from "react-hook-form";
+import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
+import { Tabs } from "@/components/application/tabs/tabs";
+import { Badge } from "@/components/base/badges/badges";
+import { Button } from "@/components/base/buttons/button";
+import { Dropdown } from "@/components/base/dropdown/dropdown";
+import { FormAlert } from "@/components/erp/form-alert";
+import { type Doctype, docPath, type FormTab } from "@/doctypes/define";
+import { getDoctypeByName } from "@/doctypes/registry";
+import { formValuesFor, schemaFor } from "@/doctypes/schema";
+import { deleteDoc, saveDoc } from "@/lib/actions/doc";
+import { applyFieldErrors } from "@/lib/forms";
+import { ChildTable } from "./child-table";
+import { FieldRenderer } from "./field-renderer";
+
+export type DocFormProps = {
+    /** Doctype name; the descriptor is resolved client-side because it holds functions (`dependsOn`). */
+    doctype: string;
+    orgSlug: string;
+    id: string | null;
+    /** Stored row (with child rows), or null for a new document. */
+    row: FieldValues | null;
+    canSave: boolean;
+    canDelete: boolean;
+};
+
+/**
+ * Generic ERPNext form view: header (title, "Not Saved", Save with Ctrl/Cmd+S, Delete), tabs -> sections -> columns
+ * of fields, `depends_on` visibility, server errors mapped back onto fields.
+ */
+export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete }: DocFormProps) {
+    const d = getDoctypeByName(doctype) as Doctype;
+    const isNew = id === null;
+    const editable = canSave && Number(row?.docstatus ?? 0) === 0;
+    const resolver = useMemo(() => zodResolver(schemaFor(d)), [d]);
+    const form = useForm<FieldValues>({ resolver, defaultValues: formValuesFor(d, row ?? undefined) });
+    const { isDirty, isSubmitting, errors } = form.formState;
+    const values = useWatch({ control: form.control });
+    const [error, setError] = useState<string | null>(null);
+    const [saved, setSaved] = useState(false);
+    const [tab, setTab] = useState<Key>(d.tabs[0]?.label ?? "");
+
+    // A server refresh after saving brings normalised values (e.g. upper-cased abbr); never clobber unsaved edits.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: reset only when the stored row changes
+    useEffect(() => {
+        if (!form.formState.isDirty) form.reset(formValuesFor(d, row ?? undefined));
+    }, [row]);
+
+    const visible = (name: string) => {
+        const field = d.fields[name];
+        return Boolean(field) && (!field.dependsOn || field.dependsOn(values));
+    };
+
+    const tabs = d.tabs.filter((t) => t.sections.some((s) => s.columns.flat().some(visible)));
+    const tabErrors = (t: FormTab) => t.sections.flatMap((s) => s.columns.flat()).filter((n) => n in errors).length;
+
+    const showFirstErrorTab = (errs: FieldErrors) => {
+        const first = tabs.find((t) => t.sections.some((s) => s.columns.flat().some((n) => n in errs)));
+        if (first) setTab(first.label);
+    };
+
+    const onSubmit = form.handleSubmit(async (input) => {
+        setError(null);
+        setSaved(false);
+        const result = await saveDoc({ orgSlug, doctype, id, values: input });
+        if (!result.ok) {
+            setError(result.error);
+            applyFieldErrors(form.setError, result.fieldErrors);
+            if (result.fieldErrors) showFirstErrorTab(result.fieldErrors as unknown as FieldErrors);
+            return;
+        }
+        form.reset(input);
+        setSaved(true);
+    }, showFirstErrorTab);
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+                event.preventDefault();
+                if (editable && !form.formState.isSubmitting) void onSubmit();
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [editable, form, onSubmit]);
+
+    useEffect(() => {
+        if (!isDirty) return;
+        const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+        window.addEventListener("beforeunload", onBeforeUnload);
+        return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    }, [isDirty]);
+
+    const title = isNew ? `New ${d.doctype}` : String(row?.[d.titleField] || d.doctype);
+    const listHref = `/${orgSlug}/${docPath(d)}`;
+
+    const renderTab = (t: FormTab) =>
+        t.sections.map((section, si) => {
+            const columns = section.columns.map((c) => c.filter(visible)).filter((c) => c.length);
+            if (!columns.length) return null;
+            return (
+                <section key={section.label ?? si} className="flex flex-col gap-3 border-b border-secondary py-5 last:border-b-0">
+                    {section.label && <h2 className="text-sm font-semibold text-primary">{section.label}</h2>}
+                    <div className={columns.length > 1 ? "grid gap-x-8 gap-y-4 lg:grid-cols-2" : "grid gap-y-4"}>
+                        {columns.map((column) => (
+                            <div key={column.join()} className="flex min-w-0 flex-col gap-4">
+                                {column.map((name) => {
+                                    const field = d.fields[name];
+                                    const isDisabled = !editable || field.readOnly || (field.setOnlyOnce && !isNew);
+                                    const child = field.type === "Table" ? d.children[name] : undefined;
+                                    return child ? (
+                                        <ChildTable
+                                            key={name}
+                                            control={form.control}
+                                            name={name}
+                                            field={field}
+                                            child={child}
+                                            orgSlug={orgSlug}
+                                            isDisabled={isDisabled}
+                                        />
+                                    ) : (
+                                        <FieldRenderer
+                                            key={name}
+                                            control={form.control}
+                                            name={name}
+                                            field={field}
+                                            orgSlug={orgSlug}
+                                            isDisabled={isDisabled}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            );
+        });
+
+    return (
+        <form onSubmit={onSubmit} noValidate className="flex flex-col">
+            <header className="sticky -top-5 z-10 -mx-4 -mt-5 flex flex-wrap items-center gap-3 border-b border-secondary bg-primary px-4 py-3 lg:-top-6 lg:-mx-8 lg:-mt-6 lg:px-8">
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <Link href={listHref} className="flex w-max items-center gap-1 text-xs font-medium text-tertiary hover:text-secondary">
+                        <ChevronLeft aria-hidden="true" className="size-3.5" />
+                        {d.doctype}
+                    </Link>
+                    <div className="flex min-w-0 items-center gap-2">
+                        <h1 className="truncate text-lg font-semibold text-primary">{title}</h1>
+                        {(isNew || isDirty) && (
+                            <Badge size="sm" color="warning">
+                                Not Saved
+                            </Badge>
+                        )}
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {!isNew && canDelete && <DeleteMenu doctype={d.doctype} title={title} orgSlug={orgSlug} id={id} />}
+                    {editable && (
+                        <Button type="submit" size="sm" isLoading={isSubmitting} showTextWhileLoading>
+                            Save
+                            <kbd className="ml-1 text-xs font-medium opacity-70 max-md:hidden">Ctrl+S</kbd>
+                        </Button>
+                    )}
+                </div>
+            </header>
+
+            <div className="flex flex-col gap-3 pt-4">
+                {error && <FormAlert>{error}</FormAlert>}
+                {saved && !isDirty && <FormAlert tone="success">Saved.</FormAlert>}
+                {!editable && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
+            </div>
+
+            {tabs.length > 1 ? (
+                <Tabs selectedKey={tab} onSelectionChange={setTab} className="pt-2">
+                    <Tabs.List type="underline" size="sm" aria-label={`${d.doctype} sections`}>
+                        {tabs.map((t) => (
+                            <Tabs.Item key={t.label} id={t.label} badge={tabErrors(t) || undefined}>
+                                {t.label}
+                            </Tabs.Item>
+                        ))}
+                    </Tabs.List>
+                    {tabs.map((t) => (
+                        <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="[&[inert]]:hidden">
+                            {renderTab(t)}
+                        </Tabs.Panel>
+                    ))}
+                </Tabs>
+            ) : (
+                tabs.map((t) => <div key={t.label}>{renderTab(t)}</div>)
+            )}
+        </form>
+    );
+}
+
+function DeleteMenu({ doctype, title, orgSlug, id }: { doctype: string; title: string; orgSlug: string; id: string }) {
+    const [open, setOpen] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [pending, startTransition] = useTransition();
+
+    const confirm = () =>
+        startTransition(async () => {
+            setError(null);
+            const result = await deleteDoc({ orgSlug, doctype, id });
+            if (result && !result.ok) setError(result.error);
+        });
+
+    return (
+        <>
+            <Dropdown.Root>
+                <Button size="sm" color="secondary" iconLeading={DotsVertical} aria-label="More actions" />
+                <Dropdown.Popover placement="bottom right">
+                    <Dropdown.Menu aria-label="Actions" onAction={(key) => key === "delete" && setOpen(true)}>
+                        <Dropdown.Item id="delete" icon={Trash01} label="Delete" />
+                    </Dropdown.Menu>
+                </Dropdown.Popover>
+            </Dropdown.Root>
+            <ModalOverlay isOpen={open} onOpenChange={setOpen} isDismissable={!pending}>
+                <Modal className="max-w-md">
+                    <Dialog aria-label={`Delete ${doctype}`}>
+                        <div className="flex flex-col gap-4 p-6">
+                            <AriaHeading slot="title" className="text-lg font-semibold text-primary">
+                                Delete {doctype}?
+                            </AriaHeading>
+                            <p className="text-sm text-tertiary">
+                                <span className="font-medium text-secondary">{title}</span> will be permanently deleted. This cannot be
+                                undone.
+                            </p>
+                            {error && <FormAlert>{error}</FormAlert>}
+                            <div className="flex justify-end gap-2">
+                                <Button size="sm" color="secondary" onPress={() => setOpen(false)} isDisabled={pending}>
+                                    Cancel
+                                </Button>
+                                <Button size="sm" color="primary-destructive" onPress={confirm} isLoading={pending} showTextWhileLoading>
+                                    Delete
+                                </Button>
+                            </div>
+                        </div>
+                    </Dialog>
+                </Modal>
+            </ModalOverlay>
+        </>
+    );
+}
