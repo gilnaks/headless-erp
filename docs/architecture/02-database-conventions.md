@@ -127,3 +127,5 @@ bin: unique (org_id, item_id, warehouse_id)
 ## Seeds
 
 `supabase/seed/*.json` + `supabase/seed.sql` (local demo org). Reference catalogs (countries, currencies, standard CoA template, UOM list, UOM conversions) are loaded into **global** tables once; `app.provision_organization()` copies what each org needs.
+
+Reference data ships as a **generated migration**, not `seed.sql` (seeds never reach prod; migrations do, through CI). Vendored source files live in `supabase/seed/reference/` with their upstream commit SHAs in `SOURCES.json`; a Node script with no dependencies (`scripts/gen-reference-data.mjs`) turns them into an idempotent `insert … on conflict do update` migration (`0009_framework_reference_data.sql`). To update: refresh the source file, bump the SHA, regenerate, and add the regenerated SQL as a **new** migration if `0009` is already applied anywhere. Global tables have no `org_id`; RLS is forced with a `select … to authenticated using (true)` policy and writes revoked from API roles.
