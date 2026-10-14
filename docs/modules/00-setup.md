@@ -239,8 +239,13 @@ Frappe `User` is a site-wide record with roles; in our model identity is global 
 
 - Table per 01 doc: `(org_id, role, doctype, can_read, can_write, can_create, can_submit, can_cancel, can_amend, can_delete, can_report default true, can_export default true, if_owner default false)`, pk `(org_id, role, doctype)`. Only `permlevel 0` is ported (**Deviation**: no field-level permlevels, no `set_user_permissions`/`share`/`print`/`email`/`import` flags — print/email allowed whenever `can_read`).
 - Seeded per org from `supabase/seed/role_permissions.json` (extracted from every in-scope doctype JSON `permissions[]`). System Manager rows are seeded for all doctypes.
-- Editing: System Manager only. After an edit the Server Action forces a token refresh (claims cache).
+- Editing: System Manager only.
 - UI: matrix page (§8).
+- **Built (P1, `0108_setup_role_permission_manager.sql`):**
+  - Edits are plain RLS writes on `role_permissions` (System Manager policies from `0002`); a before insert/update trigger (API callers only) ports Frappe `validate_permissions`: `doctype_unknown` (missing or child doctype), `perm_not_submittable` (Submit/Cancel/Amend on a non-submittable doctype), `perm_dependency` (Submit/Cancel/Amend need Write, Cancel needs Submit, Amend needs Cancel). The matrix applies the same dependencies when a box is ticked or cleared (`permToggle` in `src/lib/role-permissions.ts`), so the trigger only fires for crafted requests.
+  - `app.reset_role_permissions(org, doctype)` → count: System Manager only (42501), refuses the Access doctypes (`permission_locked`); deletes the doctype's rows and re-inserts them from `role_permission_template` for roles that exist in the org. Scope is one doctype, like Frappe's reset.
+  - `public.permission_doctypes()` lists non-child doctypes with module, `is_submittable` and `locked` (`app.locked_permission_doctypes()`).
+  - Permissions are read live by `app.has_perm`, so no token refresh is needed after an edit (the JWT carries roles, not permissions).
 
 ### 2.9 User Permission → `user_permissions`
 
@@ -819,7 +824,8 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
   - Built as bespoke routes `src/app/(app)/[org]/setup/users/page.tsx` and `[userId]/page.tsx` (listed in `BUILT_PAGES` in `src/config/navigation.ts`) instead of a descriptor: a member is `org_members` + `auth.users` + `user_profile`, keyed by `user_id` rather than a doctype row id, and its email is only readable through the directory function.
   - List (`member-list.tsx`): search over name, email, profile and roles; Owner and status badges; rows open the panel.
   - Panel (`member-panel.tsx`): Role Profile select (choosing one shows and saves its roles; the Roles multi-select is read-only while a profile is set; clearing the profile keeps its roles as a starting point), Active toggle (disabled for the owner), Remove with a confirm dialog (hidden for the owner). Read-only with an info alert without write permission on User.
-- **Role Permissions matrix** (Frappe `permission-manager` page): filter by doctype or role; rows = doctypes (grouped by module), columns = read/write/create/submit/cancel/amend/delete/if_owner toggles; "Reset to defaults" restores the seed; "Add new rule" picks role × doctype. Edits write `role_permissions` and invalidate claims.
+- **Role Permissions matrix** (Frappe `permission-manager` page): filter by doctype or role; rows = doctypes (grouped by module), columns = read/write/create/submit/cancel/amend/delete/if_owner toggles; "Reset to defaults" restores the seed; "Add new rule" picks role × doctype. Edits write `role_permissions`.
+  - Built as the bespoke route `src/app/(app)/[org]/setup/role-permissions/page.tsx` (in `BUILT_PAGES`) with `permission-matrix.tsx`: the matrix edits many `role_permissions` rows at once, which no descriptor form models. System Manager only (others get an error alert, as Frappe restricts the page). Filters `?doctype=` / `?role=` (nuqs); nothing is listed until one is set. Each checkbox saves immediately; Submit/Cancel/Amend are disabled on non-submittable doctypes. Columns: Read, Write, Create, Delete, Submit, Cancel, Amend, Report, Export, Only If Creator. The Access doctypes are shown read-only with an info alert. "Reset to defaults" (confirm dialog) and "Add a new rule" (role × doctype, starts with Read).
 - **User Permissions**: list grouped by user; "Add" dialog = user, doctype (Company/Warehouse/Cost Center…), record, applicable_for (all / one doctype), is_default, hide_descendants.
 - **Holiday List form**: header fields + actions *Add Weekly Holidays*, *Add Local Holidays*, *Clear Table*; child grid; calendar preview coloured by `color`.
 - **Department / Company**: `TreeView` with company filter (Department tree root is `All Departments`; `get_children` hides disabled unless toggled).
@@ -835,6 +841,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 
 - **Deviation:** Site → Organization, Company → `companies` under `org_id`; Frappe `User`/`Role`/`User Permission` become `auth.users` + `user_profile` + `org_members.roles[]` + `roles` + `user_permissions` per org. Reason: multi-tenancy.
 - **Deviation:** Only `permlevel 0` role permissions; no `select/print/email/share/import/set_user_permissions` flags; print/email allowed with read. Reason: simplicity.
+- **Deviation:** Role permission edits change the org's `role_permissions` rows directly instead of creating Custom DocPerm copies; "Reset to defaults" re-copies the doctype's rows from `role_permission_template`. Reason: per-tenant table, same visible result.
 - **Deviation:** Roles seeded are the 19 standard ones; Analytics, Shop Floor, HR, Academics, Delivery, Customer/Supplier website roles omitted. Reason: scope.
 - **Deviation:** Every seeded (standard) role is protected from rename/delete, System Manager cannot be disabled, and the Access doctypes' permissions are fixed to System Manager (`permission_locked`). Reason: no Administrator account exists to recover from a lockout.
 - **Deviation (temporary):** Inviting a user creates a copyable link instead of sending a welcome email. Reason: email sending is deferred to the Email track (P1 decision); the invitation row and token are already what the email will carry.
@@ -894,7 +901,7 @@ Decisions (2026-10-14):
 - [ ] Designation: table, 31-row seed, list/form
 - [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`
 - [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type
-- [ ] Role Permissions matrix page + Server Actions + "reset to defaults"
+- [x] Role Permissions matrix page + Server Actions + "reset to defaults" — `0108_setup_role_permission_manager.sql` (§2.8, §8), per-doctype reset
 - [ ] User Permissions: list/form, picker for Company/Warehouse/Cost Center
 - [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
 - [ ] Letter Head: table, storage upload, preview, default trigger
