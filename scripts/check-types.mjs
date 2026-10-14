@@ -19,7 +19,8 @@ const format = (text) =>
 
 // Biome keeps an object expanded when the input breaks right after `{`, so those breaks are removed first. The CLI's
 // built-in generator (local) is newer than the hosted one (dev project): it adds `ComputedFields`, spells empty args
-// `Record<PropertyKey, never>` and types generated columns as `never` in Insert/Update. Those spellings are unified.
+// `Record<PropertyKey, never>`, types not-null json columns as `NonNullable<Json>` and generated columns as `never` in
+// Insert/Update. Those spellings are unified.
 const normalise = (text) =>
     format(
         text
@@ -30,6 +31,7 @@ const normalise = (text) =>
             .replace(/Omit<\s*(Database\[[^<>]*?\]\[["']Row["']\]),\s*Database\[[^<>]*?\]\[["']ComputedFields["']\],?\s*>/g, "$1")
             .replace(/ComputedFields: never;?/g, "")
             .replace(/Record<PropertyKey, never>/g, "never")
+            .replace(/NonNullable<Json>/g, "Json")
             .replace(/([{[])\s+/g, "$1 ")
             .replace(/\s+([}\]])/g, " $1")
             .replace(/([^,{;\s])\s*\n\s*("?\w+"?\??:)/g, "$1; $2"),

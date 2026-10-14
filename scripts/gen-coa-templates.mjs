@@ -25,7 +25,9 @@ const templates = new Map([
 const files = [];
 const duplicates = [];
 
-for (const file of readdirSync(join(coaDir, "verified")).filter((f) => f.endsWith(".json")).sort()) {
+for (const file of readdirSync(join(coaDir, "verified"))
+    .filter((f) => f.endsWith(".json"))
+    .sort()) {
     const text = minifyJson(read(join(coaDir, "verified", file)));
     const doc = JSON.parse(text);
     const tree = treeText(text);
