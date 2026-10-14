@@ -1,0 +1,45 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+    "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+    "files": {
+        "includes": ["**", "!src/types/database.ts", "!supabase", "!docs", "!public"]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 140
+    },
+    "javascript": {
+        "formatter": { "quoteStyle": "double", "semicolons": "always", "trailingCommas": "all" }
+    },
+    "css": {
+        "parser": { "tailwindDirectives": true }
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "suspicious": { "noExplicitAny": "error" },
+            "style": { "useImportType": "error" }
+        }
+    },
+    "overrides": [
+        {
+            "includes": [
+                "src/components/base/**",
+                "src/components/application/**",
+                "src/components/foundations/**",
+                "src/components/shared-assets/**",
+                "src/hooks/**",
+                "src/providers/**",
+                "src/styles/**",
+                "src/utils/**"
+            ],
+            "linter": { "enabled": false },
+            "formatter": { "enabled": false },
+            "assist": { "enabled": false }
+        }
+    ],
+    "assist": { "actions": { "source": { "organizeImports": "on" } } }
+}

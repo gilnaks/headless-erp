@@ -1,10 +1,10 @@
 {
-  "mcpServers": {
-    "supabase": {
-      "url": "https://mcp.supabase.com/mcp?features=database,docs,development,debugging,account"
-    },
-    "supabase-local": {
-      "url": "http://localhost:54321/mcp"
+    "mcpServers": {
+        "supabase": {
+            "url": "https://mcp.supabase.com/mcp?project_ref=oxkskzguqlwicieorkvh&features=database,docs,development,debugging"
+        },
+        "supabase-local": {
+            "url": "http://localhost:54321/mcp"
+        }
     }
-  }
 }

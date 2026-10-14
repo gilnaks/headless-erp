@@ -39,7 +39,7 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 ### Workflows
 
 `ci.yml` (on PR + push to main):
-1. `bun install` (or `pnpm`), `biome ci`, `tsc --noEmit`, `vitest run`.
+1. `npm ci`, `biome ci`, `tsc --noEmit`, `vitest run`.
 2. `supabase start` → `supabase db reset` (applies all migrations + seed) → `supabase test db` (pgTAP) → `supabase gen types --local` and fail if `src/types/database.ts` is stale.
 3. `next build` with `cacheComponents` on (catches dynamic-API misuse).
 4. Playwright smoke on the built app against local Supabase (login → onboarding → create & submit a Sales Invoice → check GL report).
@@ -60,7 +60,7 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
 
 ```toml
 [build]
-  command = "bun run build"
+  command = "npm run build"
   publish = ".next"
 [build.environment]
   NODE_VERSION = "22"
