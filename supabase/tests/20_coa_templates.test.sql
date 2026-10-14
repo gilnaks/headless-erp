@@ -57,7 +57,7 @@ select is(
   'every account of a country chart has a root type'
 );
 
-select set_config('test.org', public.create_organization('{"name":"CoA Org","slug":"coa-org","country":"Germany","default_currency":"EUR"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"CoA Org","slug":"coa-org","country":"Germany","default_currency":"EUR"}') ->> 'id', true);
 select throws_ok(
   $$insert into public.companies (org_id, company_name, abbr, chart_of_accounts) values (current_setting('test.org')::uuid, 'Bad Chart', 'BC', 'Nope')$$,
   'P0001', 'coa_unknown: Could not find Chart Of Accounts Template: Nope', 'a company needs a known chart template'

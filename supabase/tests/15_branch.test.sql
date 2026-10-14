@@ -9,10 +9,10 @@ insert into auth.users (id, email, aud, role) values
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000015b1","role":"authenticated"}', true);
-select set_config('test.org_b', public.create_organization('{"name":"Branch Org B","slug":"branch-org-b"}') ->> 'id', true);
+select set_config('test.org_b', app.create_organization('{"name":"Branch Org B","slug":"branch-org-b"}') ->> 'id', true);
 insert into public.branch (org_id, branch) values (current_setting('test.org_b')::uuid, 'Head Office');
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000015a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"Branch Org A","slug":"branch-org-a"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"Branch Org A","slug":"branch-org-a"}') ->> 'id', true);
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000015a2', '{Sales User}');
 

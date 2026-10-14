@@ -23,11 +23,11 @@ insert into auth.users (id, email, aud, role) values
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000019b1","role":"authenticated"}', true);
-select set_config('test.org_b', public.create_organization('{"name":"FY Org B","slug":"fy-org-b","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
+select set_config('test.org_b', app.create_organization('{"name":"FY Org B","slug":"fy-org-b","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
 insert into public.fiscal_year (org_id, year, year_start_date, year_end_date)
   values (current_setting('test.org_b')::uuid, 'Ending', (current_date + 2 - interval '1 year' + interval '1 day')::date, current_date + 2);
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000019a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"FY Org A","slug":"fy-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"FY Org A","slug":"fy-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000019a2', '{Stock User}'),
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000019a3', '{Manufacturing User}');

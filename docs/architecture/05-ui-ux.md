@@ -77,6 +77,17 @@ Single-doc form rendered from the settings descriptor, grouped by ERPNext's sect
 ### Onboarding wizard
 Steps: Account → Organization (name, slug, country, currency, time zone, language) → Company (name, abbr, fiscal year start, chart of accounts template [Standard | country verified template], bank account name) → Modules to enable → Invite teammates. Calls `app.provision_organization()` once at the end; shows progress like ERPNext's "Setting up the basics / Creating your company / Applying recommended settings".
 
+**Built (P1):** `/setup` (`src/app/(onboarding)/setup/setup-wizard.tsx`) is a client stepper, Organization → Company → Invite, after sign-up.
+- **Form:** one React Hook Form validated by `provisionOrganizationSchema`. Each step's Zod schema (`organizationStepSchema`, `companyStepSchema`, `inviteStepSchema` in `src/lib/schemas/organization.ts`) is checked with `trigger(<step>)` before Next, and Enter moves to the next step. A numbered step list marks the current step with `aria-current="step"`. Back keeps every value.
+- **Organization step:** the URL follows the name until it is edited.
+- **Company step:**
+  - The name is prefilled from the organization, and the abbreviation from its initials until edited.
+  - "Financial year begins on" defaults to the country's fiscal year containing today (`defaultFiscalYear`, the `erpnext.setup.fiscal_years` map in `src/lib/fiscal-year.ts`), and its hint shows the computed end.
+  - The chart combobox lists `coa_templates_for_country` and preselects the default. Below it, a read-only indented preview from `coa_template_preview` has loading, empty and error states.
+- **Invite step:** optional rows of email plus role profile, with profiles from `role_profile_template`. Duplicate emails are rejected.
+- **Submit:** the progress panel walks through the three stage labels while the `provisionOrganization` Server Action runs (`getClaims`, then the RPC, `refreshSession`, and a redirect to `/[org]`). Server errors map back onto their fields and reopen that step.
+- **Not built:** the Account step is the existing sign-up, the Modules step is dropped (00-setup §9), and the bank account field waits for B13 (P2).
+
 ## Charts (Recharts 3)
 
 - Always client components (`'use client'`), data passed as props from RSC.

@@ -13,11 +13,11 @@ insert into auth.users (id, email, aud, role) values
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000018b1","role":"authenticated"}', true);
-select set_config('test.org_b', public.create_organization('{"name":"HL Org B","slug":"hl-org-b","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
+select set_config('test.org_b', app.create_organization('{"name":"HL Org B","slug":"hl-org-b","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
 insert into public.holiday_list (org_id, holiday_list_name, from_date, to_date) values (current_setting('test.org_b')::uuid, 'Other', '2026-01-01', '2026-12-31');
 select set_config('test.list_b', (select id from public.holiday_list where holiday_list_name = 'Other')::text, true);
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000018a1","role":"authenticated"}', true);
-select set_config('test.org', public.create_organization('{"name":"HL Org A","slug":"hl-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
+select set_config('test.org', app.create_organization('{"name":"HL Org A","slug":"hl-org-a","country":"Netherlands","default_currency":"EUR"}') ->> 'id', true);
 insert into public.org_members (org_id, user_id, roles) values
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000018a2', '{Manufacturing User}'),
   (current_setting('test.org')::uuid, '00000000-0000-0000-0000-0000000018a3', '{Stock User}');

@@ -17,22 +17,22 @@ test("the start date fills the end date and name, and overlapping years need a c
     const org = await createOrganization(page, `Fiscal Org ${stamp}`);
 
     await page.goto(`${org}/accounts/fiscal-year/new`);
-    await setStart("2026-04-01", "2027-03-31");
-    await expect(yearName).toHaveValue("2026-2027");
+    await setStart("2030-04-01", "2031-03-31");
+    await expect(yearName).toHaveValue("2030-2031");
     await page.getByRole("button", { name: /^Save/ }).click();
     await saved(org);
 
     await page.goto(`${org}/accounts/fiscal-year/new`);
-    await setStart("2026-07-01", "2027-06-30");
-    await yearName.fill("Mid 2026");
+    await setStart("2030-07-01", "2031-06-30");
+    await yearName.fill("Mid 2030");
     await page.getByRole("button", { name: /^Save/ }).click();
-    await expect(page.getByText(/overlapping with 2026-2027\. To avoid please set company/).first()).toBeVisible();
+    await expect(page.getByText(/overlapping with 2030-2031\. To avoid please set company/).first()).toBeVisible();
 
     const company = `Fiscal Co ${stamp}`;
     await createCompany(page, org, company, `F${stamp.slice(-3).toUpperCase()}`);
     await page.goto(`${org}/accounts/fiscal-year/new`);
-    await setStart("2026-07-01", "2027-06-30");
-    await yearName.fill("Mid 2026");
+    await setStart("2030-07-01", "2031-06-30");
+    await yearName.fill("Mid 2030");
     await page.getByRole("button", { name: "Add row" }).click();
     await page.locator('[data-grid="companies"][data-col="company_id"] input:visible').first().pressSequentially("Fiscal Co");
     await page
@@ -43,6 +43,6 @@ test("the start date fills the end date and name, and overlapping years need a c
     await saved(org);
 
     await page.goto(`${org}/accounts/fiscal-year`);
-    await expect(page.getByRole("row", { name: /^2026-2027/ })).toBeVisible();
-    await expect(page.getByRole("row", { name: /^Mid 2026/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /^2030-2031/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /^Mid 2030/ })).toBeVisible();
 });

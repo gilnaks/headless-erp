@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { MIN_PASSWORD_LENGTH, passwordLoginSchema, signupSchema, updatePasswordSchema } from "./auth";
-import { createOrganizationSchema, RESERVED_SLUGS, SLUG_PATTERN, slugify } from "./organization";
+import {
+    companyAbbr,
+    companyStepSchema,
+    inviteStepSchema,
+    organizationStepSchema,
+    RESERVED_SLUGS,
+    SLUG_PATTERN,
+    slugify,
+} from "./organization";
 import { resetDoctypeSchema, ruleSchema, setPermissionSchema } from "./role-permissions";
 import { createInvitationSchema, removeMemberSchema, setMemberStatusSchema, updateMemberRolesSchema } from "./users";
 
@@ -34,15 +42,15 @@ describe("organization schema", () => {
     const valid = { name: "Acme", slug: "acme", country: "Netherlands", default_currency: "eur", time_zone: "Europe/Amsterdam" };
 
     it("accepts and normalises a valid organization", () => {
-        expect(createOrganizationSchema.parse(valid)).toMatchObject({ slug: "acme", default_currency: "EUR" });
+        expect(organizationStepSchema.parse(valid)).toMatchObject({ slug: "acme", default_currency: "EUR" });
     });
 
     it.each(["ab", "Has Space", "a".repeat(41), "under_score"])("rejects slug %s", (slug) => {
-        expect(createOrganizationSchema.safeParse({ ...valid, slug }).success).toBe(false);
+        expect(organizationStepSchema.safeParse({ ...valid, slug }).success).toBe(false);
     });
 
     it.each(RESERVED_SLUGS)("rejects reserved slug %s", (slug) => {
-        expect(createOrganizationSchema.safeParse({ ...valid, slug }).success).toBe(false);
+        expect(organizationStepSchema.safeParse({ ...valid, slug }).success).toBe(false);
     });
 
     it.each([
@@ -56,6 +64,46 @@ describe("organization schema", () => {
 
     it("slugify output satisfies the pattern for ordinary names", () => {
         expect(SLUG_PATTERN.test(slugify("Northwind Traders"))).toBe(true);
+    });
+});
+
+describe("onboarding schemas", () => {
+    const company = {
+        company_name: "Acme Trading",
+        abbr: "AT",
+        fy_start_date: "2026-04-01",
+        fy_end_date: "2027-03-31",
+        chart_of_accounts: "Standard",
+    };
+
+    it.each([
+        ["Acme Trading Europe", "ATE"],
+        ["  wayne  enterprises ", "WE"],
+        ["a b c d e f g h i j k l", "ABCDEFGHIJ"],
+    ])("companyAbbr(%s) = %s", (name, abbr) => {
+        expect(companyAbbr(name)).toBe(abbr);
+    });
+
+    it("accepts a valid company step", () => {
+        expect(companyStepSchema.safeParse(company).success).toBe(true);
+    });
+
+    it("rejects the name Company, long abbreviations and reversed dates", () => {
+        expect(companyStepSchema.safeParse({ ...company, company_name: " company " }).success).toBe(false);
+        expect(companyStepSchema.safeParse({ ...company, abbr: "ABCDEFGHIJK" }).success).toBe(false);
+        expect(companyStepSchema.safeParse({ ...company, fy_end_date: "2026-03-31" }).success).toBe(false);
+    });
+
+    it("normalises invites and rejects duplicates", () => {
+        expect(inviteStepSchema.parse([{ email: " Jane@Example.COM ", role_profile: "Sales" }])).toEqual([
+            { email: "jane@example.com", role_profile: "Sales" },
+        ]);
+        const twice = [
+            { email: "jane@example.com", role_profile: "Sales" },
+            { email: "JANE@example.com", role_profile: "Accounts" },
+        ];
+        expect(inviteStepSchema.safeParse(twice).success).toBe(false);
+        expect(inviteStepSchema.safeParse([{ email: "jane@example.com", role_profile: "" }]).success).toBe(false);
     });
 });
 

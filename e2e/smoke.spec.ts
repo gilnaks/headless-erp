@@ -9,6 +9,7 @@ test("sign in, create an organization and a company, see it in the list", async 
     const org = await createOrganization(page, `Smoke Org ${stamp}`);
 
     await page.goto(`${org}/setup/company`);
+    await expect(page.getByRole("row", { name: new RegExp(`Smoke Org ${stamp}`) })).toBeVisible();
     await page.getByRole("link", { name: "New Company" }).first().click();
     await expect(page.getByRole("heading", { name: "New Company" })).toBeVisible();
 
@@ -46,5 +47,6 @@ test("sign in, create an organization and a company, see it in the list", async 
     await search.pressSequentially("Global Defaults");
     await palette.getByRole("menuitem", { name: /^Global Defaults/ }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/setup/global-defaults$`));
-    await expect(page.getByRole("combobox", { name: label("Default Company") })).toHaveValue(companyName);
+    // The wizard's company stays the default.
+    await expect(page.getByRole("combobox", { name: label("Default Company") })).toHaveValue(`Smoke Org ${stamp}`);
 });

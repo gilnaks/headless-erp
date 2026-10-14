@@ -55,16 +55,16 @@ select throws_ok(
 -- Link validation + enabled currencies
 ------------------------------------------------------------------------------------------------------------------------
 select throws_ok(
-  $$select public.create_organization('{"name":"Bad Country","slug":"ref-bad-country","country":"Atlantis","default_currency":"USD"}')$$,
+  $$select app.create_organization('{"name":"Bad Country","slug":"ref-bad-country","country":"Atlantis","default_currency":"USD"}')$$,
   'P0001', 'country_unknown: Could not find Country: Atlantis', 'unknown country is rejected'
 );
 select throws_ok(
-  $$select public.create_organization('{"name":"Bad Currency","slug":"ref-bad-currency","country":"Philippines","default_currency":"XYZ"}')$$,
+  $$select app.create_organization('{"name":"Bad Currency","slug":"ref-bad-currency","country":"Philippines","default_currency":"XYZ"}')$$,
   'P0001', 'currency_unknown: Could not find Currency: XYZ', 'unknown currency is rejected'
 );
 
 select lives_ok(
-  $$select public.create_organization('{"name":"Ref A","slug":"ref-a","country":"Philippines","default_currency":"PHP"}')$$,
+  $$select app.create_organization('{"name":"Ref A","slug":"ref-a","country":"Philippines","default_currency":"PHP"}')$$,
   'valid country and currency are accepted'
 );
 

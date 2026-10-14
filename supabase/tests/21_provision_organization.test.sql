@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(26);
 
 insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-0000000021f1', 'founder21@test.local', 'authenticated', 'authenticated'),
@@ -113,6 +113,21 @@ select is(
   'abbreviation default takes the first letter of each word'
 );
 
+select ok(
+  app.has_perm((select id from public.organizations where slug = 'acme-21'), 'Company', 'create'),
+  'A3: default permissions are seeded (the owner can create companies)'
+);
+
+select throws_ok(
+  $$select public.provision_organization('{"org": {"name": "Bad", "slug": "a b"}, "company": {"company_name": "Bad"}}')$$,
+  'P0001', 'invalid_slug: use 3-40 lowercase letters, digits or dashes', 'the slug format is validated'
+);
+
+select throws_ok(
+  $$select public.provision_organization('{"org": {"name": "Sneaky", "slug": "login"}, "company": {"company_name": "Sneaky"}}')$$,
+  'P0001', 'slug_reserved: this URL is reserved; choose another', 'top-level route names are reserved'
+);
+
 select throws_ok(
   $$select public.provision_organization('{"org": {"name": "No Company", "slug": "no-company-21"}, "company": {}}')$$,
   'P0001', 'company_name_required: Company Name is required', 'company name is required'
@@ -158,6 +173,8 @@ select ok(
   and not has_function_privilege('anon', 'public.create_company(jsonb)', 'execute'),
   'anon cannot provision organizations or create companies'
 );
+
+select hasnt_function('public', 'create_organization', array['jsonb'], 'the P0 create_organization RPC is gone');
 
 select * from finish();
 rollback;
