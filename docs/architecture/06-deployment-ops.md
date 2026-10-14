@@ -31,7 +31,7 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 
 ## GitHub
 
-- Repo `gilnaks/headless-erp` (private; remote `origin`), default branch `main`, protected: PR required, CI green (`quality` + `db-and-e2e`), 1 review (or Bugbot) before merge. The earlier history came from `smarty72/headless-erp` (kept locally as remote `smarty72`, not pushed to).
+- Repo `gilnaks/headless-erp` (private; remote `origin`), default branch `main`. Workflow: one branch and one PR per item, squash-merged once CI (`quality` + `db-and-e2e`) and the Netlify deploy preview are green; never push to `main` directly. GitHub does not enforce this (see owner checklist step 2), so it is a team convention. The earlier history came from `smarty72/headless-erp` (kept locally as remote `smarty72`, not pushed to).
 - Conventional commits; `.github/pull_request_template.md` has an "ERPNext source files consulted" section and the `PLAN.md §8` checklist.
 - Labels per module; issues created per doctype from the module docs' checklists.
 - Dependabot (`.github/dependabot.yml`): weekly npm (minor + patch grouped) and GitHub Actions updates.
@@ -86,7 +86,7 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
 CI runs without any secrets. Deploys stay inert until these steps are done by the repo owner (`gilnaks`) in the GitHub UI:
 
 1. ~~Repository~~: done, `gilnaks/headless-erp` (private).
-2. **Branch protection** on `main` (Settings → Branches/Rulesets): require a PR, require status checks `quality` and `db-and-e2e`, require branches to be up to date, block force pushes.
+2. **Branch protection** on `main`: not available. GitHub only offers branch protection and rulesets on private repositories with GitHub Pro (or Team); the API returned 403 for this repo. Until the plan is upgraded, "PR only, squash-merge after `quality` + `db-and-e2e` + the Netlify preview are green, no force pushes" is a convention we follow, not something GitHub enforces. If the plan is upgraded: Settings → Rulesets → require a PR, require status checks `quality` and `db-and-e2e`, require branches to be up to date, block force pushes.
 3. **Production Supabase project**: create it (Pro plan for PITR), then in its dashboard enable the custom access token hook `app.custom_access_token_hook` (Auth → Hooks), set Site URL + redirect URLs to the production domain (`/auth/callback**`), configure SMTP, and enable leaked-password protection.
 4. **GitHub environment** `production` (Settings → Environments) with required reviewers and deployment branch `main`. Environment secrets: `SUPABASE_ACCESS_TOKEN` (personal access token), `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF` (prod ref).
 5. **Enable deploys**: repository variable `DEPLOY_DB_ENABLED=true` (Settings → Secrets and variables → Actions → Variables). The first run applies every migration to the empty prod project; check the dry-run output before approving.

@@ -294,6 +294,8 @@ const MultiSelectRoot = ({
                                     aria-label={label || "Options"}
                                     items={items}
                                     selectionMode="multiple"
+                                    // Escape closes the popover; the default ("clearSelection") would drop every pick.
+                                    escapeKeyBehavior="none"
                                     selectedKeys={selectedKeys}
                                     defaultSelectedKeys={defaultSelectedKeys}
                                     onSelectionChange={onSelectionChange}

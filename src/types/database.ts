@@ -51,6 +51,7 @@ export type Database = {
       has_role: { Args: { p_org: string; p_role: string }; Returns: boolean }
       is_member: { Args: { p_org: string }; Returns: boolean }
       jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
+      locked_permission_doctypes: { Args: never; Returns: string[] }
       next_name: {
         Args: {
           p_company: string
@@ -1074,6 +1075,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          id: string
           name: string
           org_id: string
           roles: string[]
@@ -1083,6 +1085,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          id?: string
           name: string
           org_id: string
           roles?: string[]
@@ -1092,6 +1095,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          id?: string
           name?: string
           org_id?: string
           roles?: string[]
@@ -1140,6 +1144,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           disabled: boolean
+          id: string
           is_standard: boolean
           name: string
           org_id: string
@@ -1150,6 +1155,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           disabled?: boolean
+          id?: string
           is_standard?: boolean
           name: string
           org_id: string
@@ -1160,6 +1166,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           disabled?: boolean
+          id?: string
           is_standard?: boolean
           name?: string
           org_id?: string

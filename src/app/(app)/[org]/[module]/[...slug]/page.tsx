@@ -61,7 +61,7 @@ async function FormRoute({ d, orgSlug, id }: { d: Doctype; orgSlug: string; id: 
 
     if (id === null) {
         if (!perms.create) return <NotPermitted action="create" doctype={d.doctype} />;
-        const referenceOptions = await getReferenceOptions(optionSourcesOf(d));
+        const referenceOptions = await getReferenceOptions(optionSourcesOf(d), org.id);
         return (
             <DocForm
                 doctype={d.doctype}
@@ -75,7 +75,7 @@ async function FormRoute({ d, orgSlug, id }: { d: Doctype; orgSlug: string; id: 
         );
     }
 
-    const [row, referenceOptions] = await Promise.all([getDoc(d, org.id, id), getReferenceOptions(optionSourcesOf(d))]);
+    const [row, referenceOptions] = await Promise.all([getDoc(d, org.id, id), getReferenceOptions(optionSourcesOf(d), org.id)]);
     if (!row) notFound();
     return (
         <DocForm
@@ -96,7 +96,7 @@ async function SingleRoute({ d, orgSlug }: { d: Doctype; orgSlug: string }) {
     const perms = await getDocPermissions(org.id, d.doctype);
     if (!perms.read) return <NotPermitted action="view" doctype={d.doctype} />;
 
-    const [row, referenceOptions] = await Promise.all([getSingleDoc(d, org.id), getReferenceOptions(optionSourcesOf(d))]);
+    const [row, referenceOptions] = await Promise.all([getSingleDoc(d, org.id), getReferenceOptions(optionSourcesOf(d), org.id)]);
     if (!row) notFound();
     return (
         <DocForm

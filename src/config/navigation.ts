@@ -518,6 +518,7 @@ export const MODULES: ModuleNav[] = [
                 icon: ShieldTick,
                 items: [
                     doctype("Role", "setup/roles", "P1"),
+                    doctype("Role Profile", "setup/role-profile", "P1"),
                     {
                         label: "Role Permissions",
                         path: "setup/role-permissions",

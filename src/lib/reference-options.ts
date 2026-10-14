@@ -1,7 +1,7 @@
 import type { SelectItemType } from "@/components/base/select/select";
 import type { Doctype, FieldDef, OptionSource } from "@/doctypes/define";
 
-/** Option lists for `Select` fields backed by a global reference table, keyed by source. */
+/** Option lists for `Select` / `MultiSelect` fields backed by a reference table, keyed by source. */
 export type ReferenceOptions = Partial<Record<OptionSource, SelectItemType[]>>;
 
 /** Value = ISO code; the name rides in `supportingText`, which the ComboBox also searches. */
@@ -15,7 +15,7 @@ export function countryItems(rows: { country_name: string }[]): SelectItemType[]
 }
 
 function sourceOf(f: FieldDef): OptionSource | null {
-    return f.type === "Select" && typeof f.options === "string" ? (f.options as OptionSource) : null;
+    return (f.type === "Select" || f.type === "MultiSelect") && typeof f.options === "string" ? (f.options as OptionSource) : null;
 }
 
 /** Reference sources a doctype's fields (header and child tables) need. */

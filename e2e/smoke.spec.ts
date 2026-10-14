@@ -1,36 +1,12 @@
-import { expect, type Page, test } from "@playwright/test";
-
-/** Required labels render a trailing "*". */
-const label = (text: string) => new RegExp(`^${text}\\s*\\*?$`, "i");
-
-async function pick(page: Page, combobox: string, search: string, option: RegExp) {
-    const input = page.getByRole("combobox", { name: label(combobox) });
-    await input.click();
-    await input.fill("");
-    await input.pressSequentially(search);
-    await page.getByRole("option", { name: option }).first().click();
-}
+import { expect, test } from "@playwright/test";
+import { createOrganization, label, pick, signIn } from "./helpers";
 
 test("sign in, create an organization and a company, see it in the list", async ({ page }) => {
-    const email = process.env.E2E_EMAIL ?? "";
-    const password = process.env.E2E_PASSWORD ?? "";
     const stamp = Date.now().toString(36);
-    const orgName = `Smoke Org ${stamp}`;
     const companyName = `Smoke Company ${stamp}`;
 
-    await page.goto("/login");
-    await page.getByRole("textbox", { name: label("Email") }).fill(email);
-    await page.getByRole("textbox", { name: label("Password") }).fill(password);
-    await page.getByRole("button", { name: "Sign in" }).click();
-
-    await expect(page).toHaveURL(/\/setup$/);
-    await page.getByRole("textbox", { name: label("Organization name") }).fill(orgName);
-    await pick(page, "Country", "Philippines", /^Philippines/);
-    await pick(page, "Default currency", "PHP", /^PHP/);
-    await page.getByRole("button", { name: "Create organization" }).click();
-
-    await expect(page).toHaveURL(new RegExp(`/smoke-org-${stamp}$`));
-    const org = new URL(page.url()).pathname;
+    await signIn(page, "E2E");
+    const org = await createOrganization(page, `Smoke Org ${stamp}`);
 
     await page.goto(`${org}/setup/company`);
     await page.getByRole("link", { name: "New Company" }).first().click();

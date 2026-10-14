@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, useContext, useMemo } from "react";
-import type { Key } from "react-aria-components";
+import type { Key, Selection } from "react-aria-components";
 import { type Control, type FieldValues, useController } from "react-hook-form";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { HintText } from "@/components/base/input/hint-text";
 import { Input } from "@/components/base/input/input";
+import { MultiSelect } from "@/components/base/select/multi-select";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import type { FieldDef, OptionSource } from "@/doctypes/define";
@@ -48,6 +49,8 @@ export function FieldRenderer(props: FieldRendererProps) {
             return <TextField {...props} />;
         case "Select":
             return Array.isArray(field.options) ? <FixedSelectField {...props} /> : <SourceSelectField {...props} />;
+        case "MultiSelect":
+            return <MultiSelectField {...props} />;
         default:
             return <InputField {...props} />;
     }
@@ -146,6 +149,45 @@ function FixedSelectField({ control, name, field, isDisabled, compact }: FieldRe
         >
             {(item) => <Select.Item id={item.id} label={item.label} />}
         </Select>
+    );
+}
+
+/** `text[]` column: a searchable checkbox list; the trigger shows the selected labels. */
+function MultiSelectField({ control, name, field, isDisabled, compact }: FieldRendererProps) {
+    const { field: f, fieldState } = useController({ control, name });
+    const sourced = useContext(ReferenceOptionsContext);
+    const items = useMemo(() => {
+        const listed = Array.isArray(field.options)
+            ? (field.options as readonly string[]).filter(Boolean).map((o) => ({ id: o, label: o }))
+            : (sourced[field.options as OptionSource] ?? []);
+        const values: string[] = Array.isArray(f.value) ? f.value : [];
+        // Keep stored values that are no longer offered (e.g. a disabled role) visible and removable.
+        const missing = values.filter((v) => !listed.some((i) => i.id === v)).map((v) => ({ id: v, label: v }));
+        return [...listed, ...missing];
+    }, [field.options, sourced, f.value]);
+    const selected: string[] = Array.isArray(f.value) ? f.value : [];
+    const set = (keys: string[]) => {
+        f.onChange(keys);
+        f.onBlur();
+    };
+    return (
+        <MultiSelect
+            label={compact ? undefined : field.label}
+            items={items}
+            size="sm"
+            placeholder={field.placeholder ?? "Select"}
+            isRequired={field.required}
+            isDisabled={isDisabled}
+            isInvalid={Boolean(fieldState.error)}
+            hint={compact ? undefined : (fieldState.error?.message ?? field.description)}
+            selectedKeys={new Set(selected)}
+            onSelectionChange={(keys: Selection) => set(keys === "all" ? items.map((i) => String(i.id)) : [...keys].map(String))}
+            onReset={() => set([])}
+            onSelectAll={() => set(items.map((i) => String(i.id)))}
+            selectedCountFormatter={() => selected.join(", ")}
+        >
+            {(item) => <MultiSelect.Item id={item.id} label={item.label} />}
+        </MultiSelect>
     );
 }
 

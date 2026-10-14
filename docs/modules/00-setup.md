@@ -21,7 +21,8 @@ Sidebar source: `erpnext/setup/sidebar/setup/setup.json`. Sections marked *out* 
 | Organization › Department | `/setup/department` (tree) | Department → `department` | P1 |
 | Organization › Designation | `/setup/designation` | Designation → `designation` | P1 |
 | Organization › Holiday List | `/setup/holiday-list` | Holiday List / Holiday → `holiday_list`, `holiday` | P1 |
-| Access › Role | `/setup/roles` | Role → `roles`; Role Profile → `role_profile` | P0/P1 |
+| Access › Role | `/setup/roles` | Role → `roles` | P0/P1 |
+| Access › Role Profile | `/setup/role-profile` | Role Profile → `role_profile` | P0/P1 |
 | Access › Role Permissions (page `permission-manager`) | `/setup/role-permissions` | Role Permission Manager → `role_permissions` matrix UI | P1 |
 | Access › User Permissions | `/setup/user-permissions` | User Permission → `user_permissions` | P1 |
 | Access › Authorization Rule | `/setup/authorization-rule` | Authorization Rule → `authorization_rule` (simplified, see §2.10) | P1 table/UI, enforcement P5/P6 |
@@ -219,6 +220,13 @@ Frappe `User` is a site-wide record with roles; in our model identity is global 
 | Purchase | Item Manager, Stock User, Purchase User, Purchase Manager |
 
 - Permissions: System Manager rwcd on roles/role_profile; everyone read.
+- **Built (P1, `0105_setup_roles.sql`):** both tables gained a uuid `id` (`unique (org_id, id)`; the primary key stays `(org_id, name)`), so they use the generic list/form at `/setup/roles` and `/setup/role-profile` (descriptors `src/doctypes/setup/role.ts`, `role-profile.ts`; `roles` is a `MultiSelect` over the org's enabled roles). Rules:
+  - Standard roles cannot be renamed or deleted and their `is_standard` flag cannot change (`role_standard`); roles created through the API are never standard. System Manager cannot be disabled (`role_protected`). Frappe protects only Administrator/Guest/All/Desk User; we protect every seeded role because provisioning and the permission templates refer to them by name.
+  - Renaming a custom role rewrites it in `role_profile.roles`, `org_members.roles` and `invitations.roles`; deleting strips it. `role_permissions` and the Company role columns follow through their foreign keys.
+  - Profile roles are de-duplicated (order kept) and must exist (`invalid_role`). Saving a profile re-syncs every member holding it (Frappe `RoleProfile.on_update`), and a member with a profile always carries exactly its roles: assigning roles by hand means clearing the profile in the same update (Frappe `User.validate`).
+  - Permissions for the Access doctypes (User, Role, Role Profile, User Permission) are fixed to System Manager: their `role_permission_template` rows are seeded, RLS checks the System Manager role, and any API change to their `role_permissions` rows raises `permission_locked`.
+  - **Deviation:** disabling a role keeps it on members and profiles (the permission helpers ignore disabled roles), so enabling it again restores access; Frappe deletes the Has Role rows. Reason: reversible, no data loss.
+  - Frappe Role / Role Profile / User behaviour above is ported from memory (no local Frappe clone).
 
 ### 2.8 Role Permission Manager → `role_permissions`
 
@@ -809,6 +817,8 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Site → Organization, Company → `companies` under `org_id`; Frappe `User`/`Role`/`User Permission` become `auth.users` + `user_profile` + `org_members.roles[]` + `roles` + `user_permissions` per org. Reason: multi-tenancy.
 - **Deviation:** Only `permlevel 0` role permissions; no `select/print/email/share/import/set_user_permissions` flags; print/email allowed with read. Reason: simplicity.
 - **Deviation:** Roles seeded are the 19 standard ones; Analytics, Shop Floor, HR, Academics, Delivery, Customer/Supplier website roles omitted. Reason: scope.
+- **Deviation:** Every seeded (standard) role is protected from rename/delete, System Manager cannot be disabled, and the Access doctypes' permissions are fixed to System Manager (`permission_locked`). Reason: no Administrator account exists to recover from a lockout.
+- **Deviation:** Disabling a role keeps it assigned (it simply grants nothing) instead of deleting the Has Role rows. Reason: reversible.
 - **Deviation:** Authorization Rule limited to Grand Total on SO/PO/SI/PI with role/user approver; discount-based rules, Quotation/DN/PR, employee/designation targets dropped. Reason: Pricing/HR out of scope.
 - **Deviation:** Print Format = one server-rendered modern template per doctype; no Print Format Builder, Jinja/JS formats, `Classic`/`Standard` legacy formats or raw printing. Reason: `05-ui-ux.md`, simplicity.
 - **Deviation:** Print Settings `print_style` fixed to Modern; Letter Head `header_script/footer_script` dropped; HTML sanitised. Reason: security.
@@ -863,7 +873,7 @@ Decisions (2026-10-14):
 - [ ] Department: table (tree), seed root + 13 per company, TreeView
 - [ ] Designation: table, 31-row seed, list/form
 - [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`
-- [ ] Roles: list/form (custom roles), Role Profile list/form
+- [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type
 - [ ] Role Permissions matrix page + Server Actions + "reset to defaults"
 - [ ] User Permissions: list/form, picker for Company/Warehouse/Cost Center
 - [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
