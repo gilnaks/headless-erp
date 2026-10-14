@@ -25,11 +25,22 @@ export const getRoleOptions = cache(async (orgId: string): Promise<SelectItemTyp
     return (data ?? []).map((r) => ({ id: r.name, label: r.name }));
 });
 
+/** Document types (child tables excluded); `targetsOnly` keeps those a User Permission can restrict. */
+const getDoctypeOptions = cache(async (targetsOnly: boolean): Promise<SelectItemType[]> => {
+    const supabase = await createClient();
+    let query = supabase.from("doctype_meta").select("doctype").eq("is_child", false).order("doctype");
+    if (targetsOnly) query = query.eq("user_permission_target", true);
+    const { data } = await query;
+    return (data ?? []).map((r) => ({ id: r.doctype, label: r.doctype }));
+});
+
 const LOADERS: Record<OptionSource, (orgId: string) => Promise<SelectItemType[]>> = {
     Currency: () => getCurrencies(),
     Country: () => getCountries(),
     TimeZone: async () => timeZoneOptions(),
     Role: getRoleOptions,
+    DocType: () => getDoctypeOptions(false),
+    UserPermissionTarget: () => getDoctypeOptions(true),
 };
 
 /** Loads only the option lists a form uses. */

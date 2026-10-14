@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { MemberPanel } from "@/components/erp/access/member-panel";
+import { MemberPermissions } from "@/components/erp/access/member-permissions";
 import { NotPermitted } from "@/components/erp/not-permitted";
 import { PageSkeleton } from "@/components/erp/shell/shell-skeleton";
 import { getDocPermissions, getOrgBySlug } from "@/lib/queries/doc";
 import { getRoleOptions } from "@/lib/queries/reference";
+import { getMemberPermissions } from "@/lib/queries/user-permissions";
 import { getMemberDirectory, getRoleProfiles } from "@/lib/queries/users";
 
 type MemberPageProps = { params: Promise<{ org: string; userId: string }> };
@@ -16,9 +18,15 @@ async function MemberRoute({ params }: MemberPageProps) {
     const perms = await getDocPermissions(org.id, "User");
     if (!perms.read) return <NotPermitted action="view" doctype="User" />;
 
-    const [members, roles, profiles] = await Promise.all([getMemberDirectory(org.id), getRoleOptions(org.id), getRoleProfiles(org.id)]);
+    const [members, roles, profiles, permPerms] = await Promise.all([
+        getMemberDirectory(org.id),
+        getRoleOptions(org.id),
+        getRoleProfiles(org.id),
+        getDocPermissions(org.id, "User Permission"),
+    ]);
     const member = members.find((m) => m.userId === userId);
     if (!member) notFound();
+    const permissions = permPerms.read ? await getMemberPermissions(org.id, member.userId) : null;
 
     return (
         <MemberPanel
@@ -29,7 +37,11 @@ async function MemberRoute({ params }: MemberPageProps) {
             roleOptions={roles.map((r) => ({ id: String(r.id), label: r.label ?? String(r.id) }))}
             profiles={profiles}
             canEdit={perms.write}
-        />
+        >
+            {permissions && (
+                <MemberPermissions orgSlug={org.slug} userId={member.userId} permissions={permissions} canEdit={permPerms.create} />
+            )}
+        </MemberPanel>
     );
 }
 

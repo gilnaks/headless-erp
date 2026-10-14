@@ -4,9 +4,10 @@ import { describe, expect, it } from "vitest";
 import { findLink } from "@/config/navigation";
 import { type ChildDoctype, type Doctype, defineDoctype, docPath, layoutFields } from "./define";
 import { DOCTYPES, getDoctype, getDoctypeByName } from "./registry";
-import { formToPayload, formValuesFor, newChildRow, schemaFor } from "./schema";
+import { formToPayload, formValuesFor, newChildRow, prefillValues, schemaFor } from "./schema";
 import { company } from "./setup/company";
 import { roleProfile } from "./setup/role-profile";
+import { userPermission } from "./setup/user-permission";
 
 const migrations = readdirSync(join(process.cwd(), "supabase/migrations"))
     .filter((f) => f.endsWith(".sql"))
@@ -140,6 +141,46 @@ describe("formToPayload (Company)", () => {
         expect(payload).not.toHaveProperty("create_chart_of_accounts_based_on");
         expect(payload).not.toHaveProperty("chart_of_accounts");
         expect(payload.company_name).toBe("Acme");
+    });
+});
+
+describe("DynamicLink (User Permission)", () => {
+    const schema = schemaFor(userPermission);
+    const userId = "00000000-0000-0000-0000-0000000000a1";
+    const companyId = "00000000-0000-0000-0000-0000000000c1";
+    const valid = {
+        user_id: userId,
+        doctype: "Company",
+        record_id: companyId,
+        applicable_for: "",
+        is_default: false,
+        hide_descendants: false,
+    };
+
+    it("needs a record id for the selected doctype", () => {
+        expect(schema.safeParse(valid).success).toBe(true);
+        expect(schema.safeParse({ ...valid, record_id: "Acme" }).success).toBe(false);
+        const missing = schema.safeParse({ ...valid, record_id: "" });
+        expect(missing.error?.issues[0]?.path).toEqual(["record_id"]);
+    });
+
+    it("sends an empty Applicable For as null (all document types)", () => {
+        expect(formToPayload(userPermission, valid, { isNew: true })).toEqual({ ...valid, applicable_for: null });
+    });
+
+    it("offers Hide Descendants for tree targets only", () => {
+        const dependsOn = userPermission.fields.hide_descendants.dependsOn;
+        expect(dependsOn?.({ doctype: "Company" })).toBe(true);
+        expect(dependsOn?.({ doctype: "Role" })).toBe(false);
+    });
+
+    it("prefills a new document from the URL query", () => {
+        expect(prefillValues(userPermission, { user_id: userId, is_default: "1", nope: "x" })).toEqual({
+            user_id: userId,
+            is_default: true,
+        });
+        expect(prefillValues(userPermission, {})).toBeNull();
+        expect(formValuesFor(userPermission, prefillValues(userPermission, { user_id: userId }) ?? undefined).user_id).toBe(userId);
     });
 });
 

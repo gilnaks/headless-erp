@@ -9,6 +9,8 @@ const USERS = [
     { env: "E2E_INVITER", local: "inviter", first_name: "Inviting", last_name: "Owner" },
     { env: "E2E_INVITEE", local: "invitee", first_name: "Invited", last_name: "Member" },
     { env: "E2E_PERMS", local: "perms", first_name: "Perms", last_name: "Admin" },
+    { env: "E2E_RESTRICTOR", local: "restrictor", first_name: "Restricting", last_name: "Owner" },
+    { env: "E2E_RESTRICTED", local: "restricted", first_name: "Restricted", last_name: "Member" },
 ] as const;
 
 /**

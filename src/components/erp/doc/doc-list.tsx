@@ -12,6 +12,7 @@ import { Input } from "@/components/base/input/input";
 import { NativeSelect } from "@/components/base/select/select-native";
 import { type Doctype, docPath, type FieldDef, type FieldValues } from "@/doctypes/define";
 import { getDoctypeByName } from "@/doctypes/registry";
+import { type LinkTitles, linkTitle } from "@/lib/link-titles";
 import { listParsers, PAGE_SIZES } from "@/lib/list-params";
 import { cx } from "@/utils/cx";
 
@@ -25,6 +26,8 @@ export type DocListProps = {
     sort: string;
     desc: boolean;
     canCreate: boolean;
+    /** Titles of the Link / DynamicLink values on this page (`getListLinkTitles`). */
+    titles?: LinkTitles;
 };
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -35,6 +38,7 @@ type RowItem = Row<typeof features, FieldValues>;
 type CellItem = ReturnType<RowItem["getAllCells"]>[number];
 type HeaderItem = Header<typeof features, FieldValues, unknown>;
 const NUMERIC = new Set(["Int", "Float", "Currency", "Percent"]);
+const NO_TITLES: LinkTitles = {};
 
 function formatCell(field: FieldDef | undefined, value: unknown): string {
     if (value === null || value === undefined || value === "") return "";
@@ -51,7 +55,7 @@ function formatCell(field: FieldDef | undefined, value: unknown): string {
  * Generic ERPNext list view: search, sortable columns, pagination and "+ New". Data is fetched on the server;
  * this component only edits the URL (`nuqs`, non-shallow) so the page re-renders with the new query.
  */
-export function DocList({ doctype, orgSlug, rows, count, page, pageSize, sort, desc, canCreate }: DocListProps) {
+export function DocList({ doctype, orgSlug, rows, count, page, pageSize, sort, desc, canCreate, titles = NO_TITLES }: DocListProps) {
     const d = getDoctypeByName(doctype) as Doctype;
     const [pending, startTransition] = useTransition();
     const [params, setParams] = useQueryStates(listParsers, { shallow: false, startTransition });
@@ -165,7 +169,7 @@ export function DocList({ doctype, orgSlug, rows, count, page, pageSize, sort, d
                                                 numeric && "text-right tabular-nums",
                                             )}
                                         >
-                                            {formatCell(field, cell.getValue())}
+                                            {linkTitle(field, row.original, cell.getValue(), titles) ?? formatCell(field, cell.getValue())}
                                         </Table.Cell>
                                     );
                                 }}

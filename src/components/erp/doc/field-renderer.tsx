@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from "react";
 import type { Key, Selection } from "react-aria-components";
-import { type Control, type FieldValues, useController } from "react-hook-form";
+import { type Control, type FieldValues, useController, useWatch } from "react-hook-form";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { HintText } from "@/components/base/input/hint-text";
 import { Input } from "@/components/base/input/input";
@@ -43,6 +43,8 @@ export function FieldRenderer(props: FieldRendererProps) {
             return null;
         case "Link":
             return <LinkField {...props} />;
+        case "DynamicLink":
+            return <DynamicLinkField {...props} />;
         case "Check":
             return <CheckField {...props} />;
         case "Text":
@@ -54,6 +56,12 @@ export function FieldRenderer(props: FieldRendererProps) {
         default:
             return <InputField {...props} />;
     }
+}
+
+/** ERPNext Dynamic Link: a Link whose target doctype is the value of `field.optionsField`. */
+function DynamicLinkField(props: FieldRendererProps) {
+    const target = useWatch({ control: props.control, name: props.field.optionsField ?? "" });
+    return <LinkField {...props} target={typeof target === "string" ? target : ""} />;
 }
 
 function labelProps(field: FieldDef, compact?: boolean) {

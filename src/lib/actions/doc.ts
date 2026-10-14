@@ -7,12 +7,14 @@ import { getDoctypeByName } from "@/doctypes/registry";
 import { formToPayload, schemaFor } from "@/doctypes/schema";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
-import { docTable, getOrgBySlug } from "@/lib/queries/doc";
+import type { LinkOption } from "@/lib/link-titles";
+import { getOrgBySlug } from "@/lib/queries/doc";
+import { getLinkTitles, searchLinkTitles } from "@/lib/queries/links";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export type LinkOption = { id: string; label: string };
+export type { LinkOption };
 
 function docTag(orgId: string, doctype: string): string {
     return `org:${orgId}:${doctype}`;
@@ -77,37 +79,21 @@ export async function deleteDoc(input: { orgSlug: string; doctype: string; id: s
 
 /**
  * Options for a Link field: records of `doctype` whose title matches `q`, plus the labels of `ids` (the current
- * value). Any doctype in `doctype_meta` works, so Links can target doctypes without a descriptor yet.
+ * value). Any doctype in `doctype_meta` works, so Links can target doctypes without a descriptor yet; `User` lists
+ * the organization's members.
  */
 export async function searchLink(input: { orgSlug: string; doctype: string; q?: string; ids?: string[] }): Promise<LinkOption[]> {
     await requireUser(`/${input.orgSlug}`);
     const org = await getOrgBySlug(input.orgSlug);
     if (!org) return [];
 
-    const supabase = await createClient();
-    const { data: meta } = await supabase
-        .from("doctype_meta")
-        .select("table_name, title_field")
-        .eq("doctype", input.doctype)
-        .eq("is_child", false)
-        .maybeSingle();
-    if (!meta) return [];
-
-    const title = meta.title_field ?? "name";
-    const term = (input.q ?? "").replace(/[%_\\]/g, (c) => `\\${c}`).trim();
     const ids = (input.ids ?? []).filter((id) => UUID.test(id));
-
-    const [found, selected] = await Promise.all([
-        docTable(supabase, meta.table_name).select(`id, ${title}`).eq("org_id", org.id).ilike(title, `%${term}%`).order(title).limit(20),
-        ids.length
-            ? docTable(supabase, meta.table_name).select(`id, ${title}`).eq("org_id", org.id).in("id", ids)
-            : Promise.resolve({ data: [] }),
+    const [selected, found] = await Promise.all([
+        getLinkTitles(org.id, input.doctype, ids),
+        searchLinkTitles(org.id, input.doctype, input.q ?? ""),
     ]);
 
     const options = new Map<string, LinkOption>();
-    const rows = [...(selected.data ?? []), ...(found.data ?? [])] as unknown as FieldValues[];
-    for (const row of rows) {
-        options.set(String(row.id), { id: String(row.id), label: String(row[title] ?? row.id) });
-    }
+    for (const option of [...selected, ...found]) options.set(option.id, option);
     return [...options.values()];
 }

@@ -21,15 +21,25 @@ async function OrgShell({ children, params }: OrgLayoutProps) {
     const org = orgs?.find((o) => o.slug === slug);
     if (!org) notFound();
 
-    const [{ data: companies }, { data: profile }, { data: member }, cookieStore] = await Promise.all([
+    const [{ data: companies }, { data: profile }, { data: member }, { data: defaultCompany }, cookieStore] = await Promise.all([
         supabase.from("companies").select("id, company_name, abbr").eq("org_id", org.id).order("company_name"),
         supabase.from("user_profile").select("full_name, avatar_url").eq("user_id", claims.userId).maybeSingle(),
         supabase.from("org_members").select("roles").eq("org_id", org.id).eq("user_id", claims.userId).maybeSingle(),
+        supabase
+            .from("user_permissions")
+            .select("record_id")
+            .eq("org_id", org.id)
+            .eq("user_id", claims.userId)
+            .eq("doctype", "Company")
+            .eq("is_default", true)
+            .maybeSingle(),
         cookies(),
     ]);
 
+    // Chosen company, else the default Company User Permission (Frappe session default), else the first one.
     const cookieCompany = cookieStore.get(COMPANY_COOKIE)?.value;
-    const companyId = companies?.find((c) => c.id === cookieCompany)?.id ?? companies?.[0]?.id ?? null;
+    const visible = (id: string | undefined) => companies?.find((c) => c.id === id)?.id;
+    const companyId = visible(cookieCompany) ?? visible(defaultCompany?.record_id) ?? companies?.[0]?.id ?? null;
     // The token's roles are a snapshot from sign-in; the membership row is current.
     const roles = member?.roles ?? claims.orgs[org.id] ?? [];
     const stale = member ? rolesDiffer(claims.orgs[org.id], member.roles) : false;

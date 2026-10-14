@@ -103,6 +103,13 @@ app.record_allowed(org_id, doctype, record_id, applicable_for) -- user_permissio
 app.company_allowed(org_id, company_id, applicable_for)    -- shortcut for the most common user permission
 ```
 
+`app.allowed_records` (from `0109`) uses the caller's rows for `doctype` whose `applicable_for` is null or equals
+`applicable_for` (default: `doctype` itself, so a doctype's own list honours rows scoped to it). On tree doctypes
+(`doctype_meta.is_tree`) each record expands to its descendants through the `path` ltree unless the row has
+`hide_descendants`. It runs once per row in `company_allowed(org_id, id)` policies, which is fine for masters such
+as Company; high-volume transaction tables should compare against the array once per statement
+(`company_id = any ((select app.allowed_records(...))::uuid[])` plus the null-allowed and unrestricted cases).
+
 Performance: policies compare the row's `org_id` against an array computed once per statement — `org_id = any ((select app.orgs_with_perm('Sales Invoice', 'read'))::uuid[])` (the cast makes it a scalar subquery; without it Postgres treats `any (select …)` as a row set) — instead of calling `app.has_perm(org_id, …)` per row. `app.has_perm()` remains the API for `app.*` functions. `org_id` is the leading column of every index. Policies are granted `to authenticated` only; `anon` never sees tenant rows.
 
 ## Policy template (apply to EVERY tenant table)
