@@ -1,0 +1,3 @@
+-- Local/CI seed, run after migrations by `supabase db reset`.
+-- Global reference data (countries, currencies, UOMs) ships in migration 0009 so every
+-- environment gets it; tenant data is never seeded here (tests create their own).
