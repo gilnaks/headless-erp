@@ -1018,6 +1018,21 @@ export type Database = {
           },
         ]
       }
+      role_profile_template: {
+        Row: {
+          name: string
+          roles: string[]
+        }
+        Insert: {
+          name: string
+          roles?: string[]
+        }
+        Update: {
+          name?: string
+          roles?: string[]
+        }
+        Relationships: []
+      }
       role_template: {
         Row: {
           name: string
