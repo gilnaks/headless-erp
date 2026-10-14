@@ -53,7 +53,11 @@ idx int not null, …fields…
 unique (parent_id, idx) deferrable initially deferred
 ```
 
-Tree doctypes add `parent_id uuid`, `is_group boolean`, `lft/rgt` are **not** used; instead `path ltree` maintained by trigger `app.tree_maintain_path()`; subtree query: `where path <@ (select path from account where id = $1)`.
+Tree doctypes add `parent_id uuid`, `is_group boolean`, `lft/rgt` are **not** used; instead `path extensions.ltree not null` maintained by the generic triggers from `0004_framework_tree_and_role_templates.sql`: `before insert or update … app.tree_maintain_path('<DocType>')` (parent must exist in the same org and be a group, no cycles, a group with children cannot become a leaf, `path` is always recomputed so direct writes are ignored) and `after update … app.tree_update_descendants()` (re-paths the subtree on re-parent, as definer so rows hidden by user permissions move too). Subtree query: `where path <@ (select path from account where id = $1)`; index `using gist (path)`.
+
+**Cross-tenant links:** every table gets `unique (org_id, id)`, and links to tenant tables are composite FKs `foreign key (org_id, <x>_id) references <t> (org_id, id)` so a row can never point at another org's record, regardless of RLS.
+
+**Default permissions:** each doctype migration upserts its rows into the global `role_permission_template` (from the ERPNext doctype JSON `permissions`, permlevel 0) and ends with `select app.sync_role_permissions();`, which copies missing standard roles (`role_template`) and permission rows into every org without overwriting tenant edits. Provisioning calls it for the new org.
 
 Settings ("Single") doctypes: table `<module>_settings` with `org_id` primary key (or `(org_id, company_id)` when ERPNext stores company-specific values), one row inserted by provisioning with ERPNext defaults.
 

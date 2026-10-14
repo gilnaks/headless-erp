@@ -13,13 +13,17 @@ alwaysApply: false
   `created_at/created_by/updated_at/updated_by`. Transactional docs add `company_id`, `name` (null until submit),
   `naming_series`, `docstatus smallint check (docstatus in (0,1,2))`, `status`, `amended_from`, `posting_date`.
 - Child tables: `parent_id uuid not null references <parent>(id) on delete cascade`, `idx int`, `org_id`.
+- Every table has `unique (org_id, id)`; links to tenant tables are composite FKs `(org_id, <x>_id) → <t>(org_id, id)`.
+- Tree doctypes: `parent_id`, `is_group`, `path extensions.ltree not null` + triggers `app.tree_maintain_path('<DocType>')`
+  (before insert or update) and `app.tree_update_descendants()` (after update — never `after update of path`).
 - Money/qty: `numeric(21,9)`. Enum-like fields: `text` + `check` with ERPNext labels verbatim.
 - Every migration ends with:
   ```sql
   alter table <t> enable row level security; alter table <t> force row level security;
   -- select/insert/update/delete policies using (select app.has_perm(org_id,'<DocType>','<action>'))
   insert into doctype_meta (...) on conflict do update ...;
-  insert into role_permissions (...) on conflict do nothing;   -- from ERPNext doctype JSON permissions
+  insert into role_permission_template (...) on conflict do update ...;   -- from ERPNext doctype JSON permissions
+  select app.sync_role_permissions();                                     -- copies into every org
   ```
 - Child-table policies delegate to the parent via `exists (select 1 from <parent> p where p.id = parent_id)`.
 - Ledger tables (`gl_entry`, `stock_ledger_entry`, `payment_ledger_entry`, `bin`): select policies only; writes only from

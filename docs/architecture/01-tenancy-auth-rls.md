@@ -132,7 +132,7 @@ Rules:
 
 ## Default role → doctype matrix
 
-Seeded per org from a JSON generated out of the ERPNext doctype JSON `permissions` arrays (script in `scripts/extract-erpnext-perms.ps1`, output `supabase/seed/role_permissions.json`). Only roles in this list are seeded: System Manager, Accounts Manager, Accounts User, Auditor, Sales Manager, Sales User, Purchase Manager, Purchase User, Stock Manager, Stock User, Item Manager, Manufacturing Manager, Manufacturing User, Projects Manager, Projects User, Maintenance Manager, Maintenance User, Quality Manager (only for Quality Inspection if pulled in), Employee (read-only self stuff; minimal). The org owner is always System Manager.
+Seeded per org from the global `role_permission_template` table, which each doctype migration fills from its ERPNext doctype JSON `permissions` array; `app.sync_role_permissions(org_id | null)` copies missing rows into orgs (existing tenants receive new doctypes' defaults; tenant edits are never overwritten). Only roles in this list are seeded: System Manager, Accounts Manager, Accounts User, Auditor, Sales Manager, Sales User, Purchase Manager, Purchase User, Stock Manager, Stock User, Item Manager, Manufacturing Manager, Manufacturing User, Projects Manager, Projects User, Maintenance Manager, Maintenance User, Quality Manager (only for Quality Inspection if pulled in), Employee (read-only self stuff; minimal). The org owner is always System Manager.
 
 Role Profiles (quick-assign bundles, from `setup/install.py`): Inventory, Manufacturing, Accounts, Sales, Purchase.
 
