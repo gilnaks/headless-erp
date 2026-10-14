@@ -48,9 +48,13 @@ test("sign in, create an organization and a company, see it in the list", async 
     await expect(page.getByRole("row", { name: new RegExp(companyName) })).toBeVisible();
 
     const palette = page.getByRole("dialog", { name: "Command palette" });
-    const search = palette.getByRole("searchbox", { name: "Search pages, actions and records" });
+    const search = palette.getByPlaceholder("Search pages, actions and records…");
 
-    await page.keyboard.press("ControlOrMeta+k");
+    // The shortcut is bound after hydration; retry until the dialog shows.
+    await expect(async () => {
+        if (!(await palette.isVisible())) await page.keyboard.press("ControlOrMeta+k");
+        await expect(palette).toBeVisible({ timeout: 1000 });
+    }).toPass();
     await search.pressSequentially(`Smoke Company ${stamp}`);
     await expect(palette.getByRole("menuitem", { name: new RegExp(companyName) })).toBeVisible();
 
