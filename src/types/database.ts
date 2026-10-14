@@ -40,6 +40,10 @@ export type Database = {
         Args: { p_exclude?: string[]; p_keys: string[]; p_table: string }
         Returns: string[]
       }
+      enable_org_currency: {
+        Args: { p_code: string; p_org: string }
+        Returns: undefined
+      }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
         Returns: boolean
@@ -85,6 +89,10 @@ export type Database = {
       tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }
       user_roles: { Args: { p_org: string }; Returns: string[] }
+      validate_country_currency: {
+        Args: { p_country: string; p_currency: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
@@ -425,6 +433,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "companies_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "companies_default_currency_fkey"
+            columns: ["default_currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+          {
             foreignKeyName: "companies_org_id_exception_budget_approver_role_fkey"
             columns: ["org_id", "exception_budget_approver_role"]
             isOneToOne: false
@@ -459,7 +481,71 @@ export type Database = {
             referencedRelation: "roles"
             referencedColumns: ["org_id", "name"]
           },
+          {
+            foreignKeyName: "companies_reporting_currency_fkey"
+            columns: ["reporting_currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
         ]
+      }
+      country: {
+        Row: {
+          code: string | null
+          country_name: string
+          date_format: string
+          time_format: string
+          time_zones: string[]
+        }
+        Insert: {
+          code?: string | null
+          country_name: string
+          date_format?: string
+          time_format?: string
+          time_zones?: string[]
+        }
+        Update: {
+          code?: string | null
+          country_name?: string
+          date_format?: string
+          time_format?: string
+          time_zones?: string[]
+        }
+        Relationships: []
+      }
+      currency: {
+        Row: {
+          code: string
+          currency_name: string
+          fraction: string | null
+          fraction_units: number | null
+          number_format: string | null
+          smallest_currency_fraction_value: number | null
+          symbol: string | null
+          symbol_on_right: boolean
+        }
+        Insert: {
+          code: string
+          currency_name: string
+          fraction?: string | null
+          fraction_units?: number | null
+          number_format?: string | null
+          smallest_currency_fraction_value?: number | null
+          symbol?: string | null
+          symbol_on_right?: boolean
+        }
+        Update: {
+          code?: string
+          currency_name?: string
+          fraction?: string | null
+          fraction_units?: number | null
+          number_format?: string | null
+          smallest_currency_fraction_value?: number | null
+          symbol?: string | null
+          symbol_on_right?: boolean
+        }
+        Relationships: []
       }
       doctype_meta: {
         Row: {
@@ -611,6 +697,48 @@ export type Database = {
           },
         ]
       }
+      org_currency: {
+        Row: {
+          code: string
+          created_at: string
+          enabled: boolean
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          enabled?: boolean
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_currency_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "org_currency_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           created_at: string
@@ -714,7 +842,22 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "organizations_default_currency_fkey"
+            columns: ["default_currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       role_permission_template: {
         Row: {
@@ -927,6 +1070,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      uom_conversion_template: {
+        Row: {
+          category: string
+          from_uom: string
+          to_uom: string
+          value: number
+        }
+        Insert: {
+          category: string
+          from_uom: string
+          to_uom: string
+          value: number
+        }
+        Update: {
+          category?: string
+          from_uom?: string
+          to_uom?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      uom_template: {
+        Row: {
+          category: string | null
+          must_be_whole_number: boolean
+          uom_name: string
+        }
+        Insert: {
+          category?: string | null
+          must_be_whole_number?: boolean
+          uom_name: string
+        }
+        Update: {
+          category?: string | null
+          must_be_whole_number?: boolean
+          uom_name?: string
+        }
+        Relationships: []
       }
       user_permissions: {
         Row: {
