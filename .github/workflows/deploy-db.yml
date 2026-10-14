@@ -1,0 +1,46 @@
+name: Deploy database
+
+# Applies migrations to the production Supabase project after CI passes on main.
+# Inert until the owner sets the repository variable DEPLOY_DB_ENABLED=true, creates the `production`
+# environment (with required reviewers) and adds its secrets; see docs/architecture/06-deployment-ops.md.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-db
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: migrate production
+    if: >-
+      vars.DEPLOY_DB_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.120.0
+      - name: Link production project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - name: Pending migrations (dry run)
+        run: supabase db push --dry-run --password "$SUPABASE_DB_PASSWORD"
+      - name: Apply migrations
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD"
