@@ -4,6 +4,12 @@ import type { Database } from "@/types/database";
 export type TableName = keyof Database["public"]["Tables"];
 type Columns<T extends TableName> = keyof Database["public"]["Tables"][T]["Row"] & string;
 
+type PublicFunctions = Database["public"]["Functions"];
+/** Public RPCs shaped like `app.create_company(p jsonb) returns {id, name}`. */
+export type CreateRpc = {
+    [K in keyof PublicFunctions]: PublicFunctions[K]["Args"] extends { p: unknown } ? K : never;
+}[keyof PublicFunctions];
+
 /** ERPNext fieldtypes implemented so far; add more when a doctype needs them (docs/architecture/05-ui-ux.md). */
 export type FieldType =
     | "Data"
@@ -121,6 +127,8 @@ export type Doctype = {
     /** Form actions, shown in the form header menu while the document is editable. */
     actions: FormAction[];
     triggers: Record<string, FieldTrigger>;
+    /** RPC that creates new documents instead of `save_doc` (creation side effects, e.g. `create_company`). */
+    create?: CreateRpc;
 };
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
@@ -143,6 +151,7 @@ type DoctypeBase<T extends TableName, C extends string> = {
     tree?: { parentField: Columns<T>; groupField: Columns<T>; filters?: Columns<T>[]; disabledField?: Columns<T> };
     actions?: FormAction[];
     triggers?: Partial<Record<Columns<T> | C, FieldTrigger>>;
+    create?: CreateRpc;
 };
 
 /** `C` = Table field names (child row arrays), which are not columns of the parent table. */
@@ -174,6 +183,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         ...(input.tree ? { tree: input.tree } : {}),
         actions: input.actions ?? [],
         triggers: (input.triggers ?? {}) as Record<string, FieldTrigger>,
+        ...(input.create ? { create: input.create } : {}),
     };
 }
 

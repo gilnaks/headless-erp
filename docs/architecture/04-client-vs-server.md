@@ -29,7 +29,7 @@ Never: trust client-computed amounts; call Supabase with the service role from a
 | Print | — | `/print/[doctype]/[id]` Server Component, letter head applied | `window.print()` |
 | Email send | — | Edge Function / Server Action with provider key | compose dialog |
 | Scheduled statuses (Overdue, Expired, depreciation) | `pg_cron` → SQL | — | — |
-| Onboarding provisioning | `app.provision_organization(jsonb)` | Server Action (service role) | wizard steps in Zustand |
+| Onboarding provisioning | `app.provision_organization(jsonb)` (security definer) | Server Action as the signed-in user | wizard steps in one React Hook Form |
 | File uploads (item images, attachments) | Storage RLS by org prefix | signed upload URL via Server Action | drag & drop |
 
 ## Caching in Next.js 16 (Cache Components)
