@@ -31,22 +31,25 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 
 ## GitHub
 
-- Repo `headless-erp` (private), default branch `main`, protected: PR required, CI green, 1 review (or Bugbot) before merge.
-- Conventional commits; PR template with a "ERPNext source files consulted" section and a checklist from `PLAN.md §8`.
+- Repo `smarty72/headless-erp`, default branch `main`, protected: PR required, CI green (`quality` + `db-and-e2e`), 1 review (or Bugbot) before merge. The repo is currently **public**; the original plan said private (owner decision, see the checklist below). Either way nothing secret or tenant-related is committed.
+- Conventional commits; `.github/pull_request_template.md` has an "ERPNext source files consulted" section and the `PLAN.md §8` checklist.
 - Labels per module; issues created per doctype from the module docs' checklists.
-- Dependabot for npm + GitHub Actions.
+- Dependabot (`.github/dependabot.yml`): weekly npm (minor + patch grouped) and GitHub Actions updates.
 
 ### Workflows
 
-`ci.yml` (on PR + push to main):
-1. `npm ci`, `biome ci`, `tsc --noEmit`, `vitest run`.
-2. `supabase start` → `supabase db reset` (applies all migrations + seed) → `supabase test db` (pgTAP) → `supabase gen types --local` and fail if `src/types/database.ts` is stale.
-3. `next build` with `cacheComponents` on (catches dynamic-API misuse).
-4. Playwright smoke on the built app against local Supabase (login → onboarding → create & submit a Sales Invoice → check GL report).
+`ci.yml` (on every PR + push to `main`; newer runs on the same ref cancel older ones):
+1. Job `quality`: `npm ci`, `npx biome ci .`, `npm run typecheck`, `npm test` (Vitest, excludes `*.db.test.ts`).
+2. Job `db-and-e2e` (one job so local Supabase starts once; CLI pinned to the `supabase` devDependency version):
+   - `supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api,mailpit` → `supabase db reset` (every migration from scratch + `supabase/seed.sql`, which is intentionally empty) → `supabase test db` (pgTAP via pg_prove).
+   - Local URL and keys from `supabase status -o env` are exported as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`.
+   - `node scripts/check-types.mjs` regenerates types from the local DB and fails if `src/types/database.ts` is stale (the `PostgrestVersion` line is ignored because the committed file comes from the dev project). Locally without Docker: `npm run db:types:check -- --linked`.
+   - `npm run test:db` (`vitest.db.config.ts` → `src/doctypes/doctypes.db.test.ts`): every registered descriptor has a matching `doctype_meta` row (table, module, submittable, title field; child tables with `parent_doctype` + `child_field`) and every field / list column exists (zero-row PostgREST select).
+   - `npm run build` (`cacheComponents` on, catches dynamic-API misuse), then `npm run e2e`: Playwright (Chromium) starts `next start` and runs `e2e/smoke.spec.ts`: sign in → `/setup` creates an organization → New Company → Save → the company is in the list. Sign-up needs email confirmation, so `e2e/global-setup.ts` creates a confirmed user with the admin API. The HTML report and traces are uploaded as an artifact when the job fails. The smoke grows to "create & submit a Sales Invoice → check GL report" in P5.
 
-`deploy-db.yml` (on push to `main`, after `ci.yml`): `supabase link --project-ref $PROD_REF` → `supabase db push` (migrations only) → `supabase functions deploy` → `supabase gen types` sanity. Manual approval environment gate `production`.
+`deploy-db.yml` (after `ci.yml` succeeds on `main`, or `workflow_dispatch`): job runs only when the repository variable `DEPLOY_DB_ENABLED` is `true`, in environment `production` (manual approval) → checkout the CI commit → `supabase link --project-ref $SUPABASE_PROJECT_REF` → `supabase db push --dry-run` → `supabase db push` (migrations only). `supabase functions deploy` is added when the first Edge Function exists. Until the owner completes the checklist below the workflow is skipped.
 
-`backup.yml` (nightly, `workflow_dispatch`):
+`backup.yml` (nightly, `workflow_dispatch`, not built yet; lands before the first production tenant):
 - `supabase db dump --role-only` / `--schema-only` → commit to `backups/schema/` in a dedicated **private** `headless-erp-backups` repo (text diffs of schema drift are useful).
 - `supabase db dump --data-only` (excluding `auth`, `storage` internals) → `gpg --symmetric` with `BACKUP_PASSPHRASE` → upload as a 90-day GitHub Actions artifact **and** to a Supabase Storage bucket `backups` (private) in a *different* Supabase project or an S3-compatible bucket. Never commit plaintext tenant data to git.
 - Restore drill documented in `docs/runbooks/restore.md` and executed quarterly against a scratch project.
@@ -73,10 +76,24 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 ```
 
-- Env vars set per context (production / deploy-preview). Deploy previews point to the Supabase dev project.
+- Env vars set per context (production / deploy-preview / branch-deploy) in the Netlify UI, never in `netlify.toml`. Deploy previews point to the Supabase dev project.
 - `proxy.ts` runs on Netlify Edge; keep it dependency-light (only `@supabase/ssr`).
 - Content Security Policy added in P11 after inventorying third-party origins (Supabase URL, fonts).
 - Scheduled work does **not** use Netlify functions; it uses `pg_cron` in Supabase (and Supabase Edge Functions for email) so the schedule survives independent of the web host.
+
+## Setup checklist (owner)
+
+CI runs without any secrets. Deploys stay inert until these steps are done by a repo admin (the agent's GitHub account cannot manage secrets):
+
+1. **Visibility**: decide public vs private for `smarty72/headless-erp` (Settings → General). Update the GitHub section above if it stays public.
+2. **Branch protection** on `main` (Settings → Branches/Rulesets): require a PR, require status checks `quality` and `db-and-e2e`, require branches to be up to date, block force pushes.
+3. **Production Supabase project**: create it (Pro plan for PITR), then in its dashboard enable the custom access token hook `app.custom_access_token_hook` (Auth → Hooks), set Site URL + redirect URLs to the production domain (`/auth/callback**`), configure SMTP, and enable leaked-password protection.
+4. **GitHub environment** `production` (Settings → Environments) with required reviewers and deployment branch `main`. Environment secrets: `SUPABASE_ACCESS_TOKEN` (personal access token), `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF` (prod ref).
+5. **Enable deploys**: repository variable `DEPLOY_DB_ENABLED=true` (Settings → Secrets and variables → Actions → Variables). The first run applies every migration to the empty prod project; check the dry-run output before approving.
+6. **Netlify site** connected to the repo (build settings come from `netlify.toml`). Env vars per context:
+   - production: prod `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL` (production domain), `EMAIL_PROVIDER_API_KEY` when email lands;
+   - deploy-preview / branch-deploy: the dev project (oxkskzguqlwicieorkvh) values, `APP_URL` unset (the app falls back to the request origin); add `https://deploy-preview-*--<site>.netlify.app/auth/callback**` to the dev project's redirect URLs.
+7. Verify: open a PR → CI green + Netlify preview; merge → approve `deploy-db` → `/health` returns `{ ok: true }` on production.
 
 ## Observability
 
