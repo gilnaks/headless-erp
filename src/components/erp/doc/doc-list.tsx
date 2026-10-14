@@ -39,6 +39,7 @@ const NUMERIC = new Set(["Int", "Float", "Currency", "Percent"]);
 function formatCell(field: FieldDef | undefined, value: unknown): string {
     if (value === null || value === undefined || value === "") return "";
     if (field?.type === "Check") return value ? "Yes" : "No";
+    if (Array.isArray(value)) return value.join(", ");
     if (field && NUMERIC.has(field.type)) {
         const n = Number(value);
         return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: field.type === "Int" ? 0 : 2 }) : String(value);

@@ -5,10 +5,22 @@ export type TableName = keyof Database["public"]["Tables"];
 type Columns<T extends TableName> = keyof Database["public"]["Tables"][T]["Row"] & string;
 
 /** ERPNext fieldtypes implemented so far; add more when a doctype needs them (docs/architecture/05-ui-ux.md). */
-export type FieldType = "Data" | "Text" | "Select" | "Link" | "Date" | "Check" | "Int" | "Float" | "Currency" | "Percent" | "Table";
+export type FieldType =
+    | "Data"
+    | "Text"
+    | "Select"
+    | "MultiSelect"
+    | "Link"
+    | "Date"
+    | "Check"
+    | "Int"
+    | "Float"
+    | "Currency"
+    | "Percent"
+    | "Table";
 
-/** Option lists resolved at runtime instead of being inlined (no reference tables yet). */
-export type OptionSource = "Currency" | "Country" | "TimeZone";
+/** Option lists resolved at runtime instead of being inlined. `Role` is per organization; the others are global. */
+export type OptionSource = "Currency" | "Country" | "TimeZone" | "Role";
 
 export type FieldValues = Record<string, unknown>;
 
@@ -20,7 +32,7 @@ export type FieldDef = {
     readOnly?: boolean;
     /** Editable on new documents only (ERPNext `set_only_once`). */
     setOnlyOnce?: boolean;
-    /** Select: fixed labels (ERPNext `options`) or a runtime source. */
+    /** Select / MultiSelect (`text[]` column): fixed labels (ERPNext `options`) or a runtime source. */
     options?: readonly string[] | OptionSource;
     /** Link: target doctype. Table: child doctype. */
     target?: string;

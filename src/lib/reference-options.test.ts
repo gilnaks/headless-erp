@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defineChildDoctype } from "@/doctypes/define";
 import { company } from "@/doctypes/setup/company";
+import { roleProfile } from "@/doctypes/setup/role-profile";
 import { countryItems, currencyItems, optionSourcesOf } from "./reference-options";
 
 describe("reference option items", () => {
@@ -18,6 +19,10 @@ describe("reference option items", () => {
 describe("optionSourcesOf", () => {
     it("lists each reference source a doctype uses once", () => {
         expect(optionSourcesOf(company).sort()).toEqual(["Country", "Currency"]);
+    });
+
+    it("includes MultiSelect sources", () => {
+        expect(optionSourcesOf(roleProfile)).toEqual(["Role"]);
     });
 
     it("includes child table fields and ignores fixed option lists", () => {

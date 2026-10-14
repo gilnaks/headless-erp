@@ -2,8 +2,8 @@ import { z } from "zod";
 import type { ChildDoctype, Doctype, FieldDef, FieldValues } from "./define";
 
 /**
- * Form values are input-shaped: text-like and numeric fields are strings ("" = empty), Check is boolean, Table is an
- * array of row objects. `schemaFor` validates that shape (client resolver and Server Action share it) and
+ * Form values are input-shaped: text-like and numeric fields are strings ("" = empty), Check is boolean, MultiSelect
+ * is an array of strings, Table is an array of row objects. `schemaFor` validates that shape (client resolver and Server Action share it) and
  * `formToPayload` converts it to the jsonb sent to `app.save_doc`.
  */
 
@@ -13,6 +13,11 @@ const NUMBER = /^-?\d+(\.\d+)?$/;
 const INT = /^-?\d+$/;
 
 const NUMERIC_TYPES = new Set(["Int", "Float", "Currency", "Percent"]);
+const ARRAY_TYPES = new Set(["Table", "MultiSelect"]);
+
+function stringItems(value: unknown): string[] {
+    return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string" && v.trim() !== "").map((v) => v.trim()) : [];
+}
 
 function isEmpty(value: unknown): boolean {
     return value === undefined || value === null || value === "";
@@ -24,6 +29,12 @@ function valueSchema(field: FieldDef): z.ZodType {
             return z.boolean();
         case "Table":
             return z.array(z.record(z.string(), z.unknown()));
+        case "MultiSelect": {
+            const items = z.array(z.string());
+            if (!Array.isArray(field.options)) return items;
+            const options = field.options as readonly string[];
+            return items.refine((vs) => vs.every((v) => options.includes(v)), `${field.label} must be among: ${options.join(", ")}`);
+        }
         case "Int":
             return z.string().regex(INT, `${field.label} must be a whole number`).or(z.literal(""));
         case "Float":
@@ -60,7 +71,7 @@ function objectSchema(fields: Record<string, FieldDef>, extra: Record<string, z.
             if (!field.required || field.readOnly) continue;
             if (field.dependsOn && !field.dependsOn(values)) continue;
             const value = values[name];
-            const missing = field.type === "Table" ? !Array.isArray(value) || value.length === 0 : isEmpty(value);
+            const missing = ARRAY_TYPES.has(field.type) ? !Array.isArray(value) || value.length === 0 : isEmpty(value);
             if (missing) ctx.addIssue({ code: "custom", path: [name], message: `${field.label} is required` });
         }
     });
@@ -79,6 +90,7 @@ export function schemaFor(d: Doctype) {
 function toInput(field: FieldDef, value: unknown): unknown {
     if (field.type === "Check") return isEmpty(value) ? Boolean(field.default) : Boolean(value);
     if (field.type === "Table") return Array.isArray(value) ? value : [];
+    if (field.type === "MultiSelect") return stringItems(value);
     if (isEmpty(value)) return field.default === undefined ? "" : String(field.default);
     return String(value);
 }
@@ -106,6 +118,7 @@ export function newChildRow(child: ChildDoctype): FieldValues {
 
 function toPayload(field: FieldDef, value: unknown): unknown {
     if (field.type === "Check") return Boolean(value);
+    if (field.type === "MultiSelect") return [...new Set(stringItems(value))];
     if (isEmpty(value)) return null;
     if (NUMERIC_TYPES.has(field.type)) return Number(value);
     return typeof value === "string" ? value.trim() : value;

@@ -6,6 +6,7 @@ import { type ChildDoctype, type Doctype, defineDoctype, docPath, layoutFields }
 import { DOCTYPES, getDoctype, getDoctypeByName } from "./registry";
 import { formToPayload, formValuesFor, newChildRow, schemaFor } from "./schema";
 import { company } from "./setup/company";
+import { roleProfile } from "./setup/role-profile";
 
 const migrations = readdirSync(join(process.cwd(), "supabase/migrations"))
     .filter((f) => f.endsWith(".sql"))
@@ -139,6 +140,49 @@ describe("formToPayload (Company)", () => {
         expect(payload).not.toHaveProperty("create_chart_of_accounts_based_on");
         expect(payload).not.toHaveProperty("chart_of_accounts");
         expect(payload.company_name).toBe("Acme");
+    });
+});
+
+describe("MultiSelect (Role Profile)", () => {
+    const schema = schemaFor(roleProfile);
+
+    it("loads text[] values as string arrays and starts empty", () => {
+        expect(formValuesFor(roleProfile).roles).toEqual([]);
+        expect(formValuesFor(roleProfile, { name: "Sales", roles: ["Sales User", "Stock User"] }).roles).toEqual([
+            "Sales User",
+            "Stock User",
+        ]);
+    });
+
+    it("accepts arrays of strings and rejects other shapes", () => {
+        expect(schema.safeParse({ name: "Sales", roles: ["Sales User"] }).success).toBe(true);
+        expect(schema.safeParse({ name: "Sales", roles: "Sales User" }).success).toBe(false);
+    });
+
+    it("trims and de-duplicates values in the payload", () => {
+        const payload = formToPayload(
+            roleProfile,
+            { name: " Sales ", roles: [" Sales User", "Sales User", "", "Stock User"] },
+            { isNew: true },
+        );
+        expect(payload).toEqual({ name: "Sales", roles: ["Sales User", "Stock User"] });
+    });
+
+    it("validates fixed options and treats an empty array as missing", () => {
+        const fixture = defineDoctype({
+            doctype: "Fixture Profile",
+            table: "role_profile",
+            module: "setup",
+            slug: "fixture-profile",
+            titleField: "name",
+            fields: { roles: { type: "MultiSelect", label: "Roles", options: ["A", "B"], required: true } },
+            tabs: [{ label: "Details", sections: [{ columns: [["roles"]] }] }],
+            listView: { columns: ["name"], searchFields: ["name"], defaultSort: { field: "name" } },
+        });
+        const s = schemaFor(fixture);
+        expect(s.safeParse({ roles: ["A"] }).success).toBe(true);
+        expect(s.safeParse({ roles: ["C"] }).error?.issues[0].path).toEqual(["roles"]);
+        expect(s.safeParse({ roles: [] }).error?.issues[0].message).toBe("Roles is required");
     });
 });
 
