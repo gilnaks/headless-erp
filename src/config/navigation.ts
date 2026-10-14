@@ -197,7 +197,7 @@ export const MODULES: ModuleNav[] = [
                 icon: Database01,
                 items: [
                     doctype("Company", "setup/company", "P1"),
-                    doctype("Fiscal Year", "accounts/fiscal-year", "P2"),
+                    doctype("Fiscal Year", "accounts/fiscal-year", "P1"),
                     doctype("Chart of Cost Centers", "accounts/cost-center", "P2", "Cost Center"),
                     doctype("Mode of Payment", "accounts/mode-of-payment", "P2"),
                     doctype("Payment Terms Template", "accounts/payment-terms-template", "P2"),

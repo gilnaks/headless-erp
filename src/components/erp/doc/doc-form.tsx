@@ -103,6 +103,18 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
         }
     };
 
+    // Field triggers react to user edits only; values they set do not re-trigger.
+    useEffect(() => {
+        const subscription = form.watch((all, { name, type }) => {
+            const trigger = type === "change" && name ? d.triggers[name] : undefined;
+            if (!trigger) return;
+            for (const [field, value] of Object.entries(trigger(all))) {
+                if (form.getValues(field) !== value) form.setValue(field, value, { shouldDirty: true });
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [form, d]);
+
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {

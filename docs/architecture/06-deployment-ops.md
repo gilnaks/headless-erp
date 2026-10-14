@@ -79,7 +79,7 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
 - Env vars set per context (production / deploy-preview / branch-deploy) in the Netlify UI, never in `netlify.toml`. Deploy previews point to the Supabase dev project.
 - `proxy.ts` runs on Netlify Edge; keep it dependency-light (only `@supabase/ssr`).
 - Content Security Policy added in P11 after inventorying third-party origins (Supabase URL, fonts).
-- Scheduled work does **not** use Netlify functions; it uses `pg_cron` in Supabase (and Supabase Edge Functions for email) so the schedule survives independent of the web host.
+- Scheduled work does **not** use Netlify functions; it uses `pg_cron` in Supabase (and Supabase Edge Functions for email) so the schedule survives independent of the web host. Migrations enable the extension themselves (`create extension if not exists pg_cron`, `0114`) and register jobs with `cron.schedule`, so a new project needs no dashboard step; check jobs with `select * from cron.job` and runs with `cron.job_run_details`.
 
 ## Setup checklist (owner)
 

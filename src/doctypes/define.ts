@@ -85,6 +85,12 @@ export type FormAction = {
     run: (values: FieldValues, ctx: FormActionContext) => FieldValues | Promise<FieldValues>;
 };
 
+/**
+ * A field change handler (ERPNext `frappe.ui.form.on(doctype, { <field>(frm) {...} })`): runs when the user edits
+ * the field and returns the fields to set.
+ */
+export type FieldTrigger = (values: FieldValues) => FieldValues;
+
 export type ChildDoctype = {
     doctype: string;
     table: TableName;
@@ -112,6 +118,7 @@ export type Doctype = {
     tree?: TreeOptions;
     /** Form actions, shown in the form header menu while the document is editable. */
     actions: FormAction[];
+    triggers: Record<string, FieldTrigger>;
 };
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
@@ -133,6 +140,7 @@ type DoctypeBase<T extends TableName, C extends string> = {
     errorFields?: Record<string, Columns<T> | C>;
     tree?: { parentField: Columns<T>; groupField: Columns<T>; filters?: Columns<T>[]; disabledField?: Columns<T> };
     actions?: FormAction[];
+    triggers?: Partial<Record<Columns<T> | C, FieldTrigger>>;
 };
 
 /** `C` = Table field names (child row arrays), which are not columns of the parent table. */
@@ -163,6 +171,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         errorFields: input.errorFields ?? {},
         ...(input.tree ? { tree: input.tree } : {}),
         actions: input.actions ?? [],
+        triggers: (input.triggers ?? {}) as Record<string, FieldTrigger>,
     };
 }
 
