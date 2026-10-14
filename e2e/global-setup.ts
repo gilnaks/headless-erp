@@ -6,6 +6,7 @@ const USERS = [
     { env: "E2E", local: "smoke", first_name: "Smoke", last_name: "Test" },
     { env: "E2E_ACCESS", local: "access", first_name: "Access", last_name: "Admin" },
     { env: "E2E_USERS", local: "users", first_name: "Users", last_name: "Admin" },
+    { env: "E2E_INVITER", local: "inviter", first_name: "Inviting", last_name: "Owner" },
     { env: "E2E_INVITEE", local: "invitee", first_name: "Invited", last_name: "Member" },
 ] as const;
 

@@ -29,6 +29,15 @@ export type Database = {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
       }
+      create_invitation: {
+        Args: {
+          p_email: string
+          p_org: string
+          p_role_profile: string
+          p_roles: string[]
+        }
+        Returns: Json
+      }
       create_organization: { Args: { p: Json }; Returns: Json }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       delete_doc: {
@@ -49,6 +58,7 @@ export type Database = {
         Returns: boolean
       }
       has_role: { Args: { p_org: string; p_role: string }; Returns: boolean }
+      invitation_preview: { Args: { p_token: string }; Returns: Json }
       is_member: { Args: { p_org: string }; Returns: boolean }
       jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
       locked_permission_doctypes: { Args: never; Returns: string[] }
@@ -90,6 +100,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      resend_invitation: { Args: { p_id: string }; Returns: Json }
       reserved_slugs: { Args: never; Returns: string[] }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
       save_doc_children: {
@@ -719,6 +730,8 @@ export type Database = {
           expires_at: string
           id: string
           org_id: string
+          revoked_at: string | null
+          role_profile: string | null
           roles: string[]
           token: string
           updated_at: string
@@ -733,6 +746,8 @@ export type Database = {
           expires_at?: string
           id?: string
           org_id: string
+          revoked_at?: string | null
+          role_profile?: string | null
           roles?: string[]
           token?: string
           updated_at?: string
@@ -747,6 +762,8 @@ export type Database = {
           expires_at?: string
           id?: string
           org_id?: string
+          revoked_at?: string | null
+          role_profile?: string | null
           roles?: string[]
           token?: string
           updated_at?: string
@@ -759,6 +776,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_role_profile_fkey"
+            columns: ["org_id", "role_profile"]
+            isOneToOne: false
+            referencedRelation: "role_profile"
+            referencedColumns: ["org_id", "name"]
           },
         ]
       }
@@ -1400,11 +1424,21 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      create_invitation: {
+        Args: {
+          p_email: string
+          p_org: string
+          p_role_profile: string
+          p_roles: string[]
+        }
+        Returns: Json
+      }
       create_organization: { Args: { p: Json }; Returns: Json }
       delete_doc: {
         Args: { p_doctype: string; p_id: string }
         Returns: undefined
       }
+      invitation_preview: { Args: { p_token: string }; Returns: Json }
       org_member_directory: {
         Args: { p_org: string }
         Returns: {
@@ -1420,6 +1454,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      resend_invitation: { Args: { p_id: string }; Returns: Json }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
     }
     Enums: {

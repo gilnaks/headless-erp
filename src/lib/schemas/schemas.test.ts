@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MIN_PASSWORD_LENGTH, passwordLoginSchema, signupSchema, updatePasswordSchema } from "./auth";
 import { createOrganizationSchema, RESERVED_SLUGS, SLUG_PATTERN, slugify } from "./organization";
-import { removeMemberSchema, setMemberStatusSchema, updateMemberRolesSchema } from "./users";
+import { createInvitationSchema, removeMemberSchema, setMemberStatusSchema, updateMemberRolesSchema } from "./users";
 
 describe("auth schemas", () => {
     it("normalises email", () => {
@@ -78,5 +78,24 @@ describe("user schemas", () => {
 
     it("needs a user to remove", () => {
         expect(removeMemberSchema.safeParse({ orgSlug: "acme" }).success).toBe(false);
+    });
+});
+
+describe("invitation schema", () => {
+    const base = { orgSlug: "acme", email: " Jane@Example.COM ", roleProfile: null, roles: ["Sales User"] };
+
+    it("normalises the email", () => {
+        expect(createInvitationSchema.parse(base).email).toBe("jane@example.com");
+    });
+
+    it("needs roles or a profile", () => {
+        const result = createInvitationSchema.safeParse({ ...base, roles: [] });
+        expect(result.success).toBe(false);
+        expect(result.error?.issues[0]?.path).toEqual(["roles"]);
+        expect(createInvitationSchema.safeParse({ ...base, roles: [], roleProfile: "Sales" }).success).toBe(true);
+    });
+
+    it("rejects a malformed email", () => {
+        expect(createInvitationSchema.safeParse({ ...base, email: "jane" }).success).toBe(false);
     });
 });

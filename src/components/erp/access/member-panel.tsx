@@ -2,55 +2,41 @@
 
 import { ChevronLeft, Trash01 } from "@untitledui/icons";
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
-import { Heading as AriaHeading, type Key, type Selection } from "react-aria-components";
+import { useState, useTransition } from "react";
+import { Heading as AriaHeading } from "react-aria-components";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { MultiSelect } from "@/components/base/select/multi-select";
-import { Select } from "@/components/base/select/select";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { FormAlert } from "@/components/erp/form-alert";
 import { removeMember, setMemberStatus, updateMemberRoles } from "@/lib/actions/setup/users";
 import type { Member, RoleProfileOption } from "@/lib/queries/users";
 import { formatDateTime, MemberStatusBadge } from "./member-badges";
+import { type RoleOption, RolePicker, useRoleAssignment } from "./role-picker";
 
 type MemberPanelProps = {
     orgSlug: string;
     member: Member;
-    roleOptions: { id: string; label: string }[];
+    roleOptions: RoleOption[];
     profiles: RoleProfileOption[];
     canEdit: boolean;
 };
 
-const NONE = "__none__";
-const sameRoles = (a: string[], b: string[]) => a.length === b.length && [...a].sort().every((r, i) => r === [...b].sort()[i]);
+const sameRoles = (a: string[], b: string[]) => {
+    const sorted = [...b].sort();
+    return a.length === b.length && [...a].sort().every((r, i) => r === sorted[i]);
+};
 
 /** Frappe User form, reduced to what an organization controls: roles (or a role profile), status and membership. */
 export function MemberPanel({ orgSlug, member, roleOptions, profiles, canEdit }: MemberPanelProps) {
-    const [profile, setProfile] = useState<string | null>(member.roleProfile);
-    const [roles, setRoles] = useState<string[]>(member.roles);
+    const assignment = useRoleAssignment({ profile: member.roleProfile, roles: member.roles }, profiles);
+    const { profile, roles } = assignment;
     const [error, setError] = useState<string | null>(null);
     const [rolesError, setRolesError] = useState<string | null>(null);
     const [saving, startSaving] = useTransition();
     const [statusPending, startStatus] = useTransition();
 
-    const profileRoles = profile ? (profiles.find((p) => p.name === profile)?.roles ?? []) : null;
-    const shownRoles = profileRoles ?? roles;
     const dirty = profile !== member.roleProfile || (!profile && !sameRoles(roles, member.roles));
-
-    const roleItems = useMemo(() => {
-        const missing = shownRoles.filter((r) => !roleOptions.some((o) => o.id === r)).map((r) => ({ id: r, label: r }));
-        return [...roleOptions, ...missing];
-    }, [roleOptions, shownRoles]);
-    const profileItems = useMemo(() => [{ id: NONE, label: "None" }, ...profiles.map((p) => ({ id: p.name, label: p.name }))], [profiles]);
-
-    const onProfileChange = (key: Key | null) => {
-        const next = key == null || key === NONE ? null : String(key);
-        // Clearing the profile keeps its roles as a starting point for hand-picked roles.
-        if (!next && profileRoles) setRoles(profileRoles);
-        setProfile(next);
-    };
 
     const save = () =>
         startSaving(async () => {
@@ -136,41 +122,15 @@ export function MemberPanel({ orgSlug, member, roleOptions, profiles, canEdit }:
 
             <section className="flex flex-col gap-3 border-b border-secondary py-5">
                 <h2 className="text-sm font-semibold text-primary">Roles</h2>
-                <div className="grid gap-x-8 gap-y-4 lg:grid-cols-2">
-                    <Select
-                        label="Role Profile"
-                        items={profileItems}
-                        size="sm"
-                        placeholder="None"
-                        isDisabled={!canEdit}
-                        hint="Assigns the profile's roles; edit the profile to change them for everyone holding it."
-                        selectedKey={profile ?? NONE}
-                        onSelectionChange={onProfileChange}
-                    >
-                        {(item) => <Select.Item id={item.id} label={item.label} />}
-                    </Select>
-                    <MultiSelect
-                        label="Roles"
-                        items={roleItems}
-                        size="sm"
-                        placeholder="Select"
-                        isDisabled={!canEdit || Boolean(profile)}
-                        isInvalid={Boolean(rolesError)}
-                        hint={
-                            rolesError ??
-                            (profile ? "Set by the role profile." : member.isOwner ? "The owner always keeps System Manager." : undefined)
-                        }
-                        selectedKeys={new Set(shownRoles)}
-                        onSelectionChange={(keys: Selection) =>
-                            setRoles(keys === "all" ? roleItems.map((i) => i.id) : [...keys].map(String))
-                        }
-                        onReset={() => setRoles([])}
-                        onSelectAll={() => setRoles(roleItems.map((i) => i.id))}
-                        selectedCountFormatter={() => shownRoles.join(", ")}
-                    >
-                        {(item) => <MultiSelect.Item id={item.id} label={item.label} />}
-                    </MultiSelect>
-                </div>
+                <RolePicker
+                    assignment={assignment}
+                    profiles={profiles}
+                    roleOptions={roleOptions}
+                    isDisabled={!canEdit}
+                    rolesError={rolesError}
+                    rolesHint={member.isOwner ? "The owner always keeps System Manager." : undefined}
+                    className="lg:grid-cols-2"
+                />
             </section>
 
             <section className="flex flex-col gap-3 border-b border-secondary py-5">

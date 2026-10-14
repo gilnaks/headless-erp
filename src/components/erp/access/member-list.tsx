@@ -1,7 +1,7 @@
 "use client";
 
 import { SearchLg } from "@untitledui/icons";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Table } from "@/components/application/table/table";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -9,12 +9,12 @@ import { Input } from "@/components/base/input/input";
 import type { Member } from "@/lib/queries/users";
 import { formatDateTime, MemberStatusBadge, RoleBadges } from "./member-badges";
 
-type MemberListProps = { orgSlug: string; members: Member[] };
+type MemberListProps = { orgSlug: string; members: Member[]; actions?: ReactNode };
 
 const matches = (m: Member, term: string) => [m.fullName, m.email, m.roleProfile, ...m.roles].some((v) => v?.toLowerCase().includes(term));
 
 /** Frappe User list for one organization: members with their roles, status and last sign-in. */
-export function MemberList({ orgSlug, members }: MemberListProps) {
+export function MemberList({ orgSlug, members, actions }: MemberListProps) {
     const [search, setSearch] = useState("");
     const term = search.trim().toLowerCase();
     const rows = useMemo(() => (term ? members.filter((m) => matches(m, term)) : members), [members, term]);
@@ -23,6 +23,7 @@ export function MemberList({ orgSlug, members }: MemberListProps) {
         <div className="flex flex-col gap-4">
             <header className="flex flex-wrap items-center gap-3">
                 <h1 className="flex-1 text-lg font-semibold text-primary">Users</h1>
+                {actions}
             </header>
 
             <Input

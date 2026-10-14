@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import type { InvitationRow } from "@/lib/invitations";
 import { createClient } from "@/lib/supabase/server";
 
 export type Member = {
@@ -35,6 +36,19 @@ export const getMemberDirectory = cache(async (orgId: string): Promise<Member[]>
         createdAt: m.created_at,
         lastSignInAt: m.last_sign_in_at,
     }));
+});
+
+/** Newest first; RLS returns rows (and tokens) to System Managers only. */
+export const getInvitations = cache(async (orgId: string): Promise<InvitationRow[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from("invitations")
+        .select("id, email, roles, role_profile, token, expires_at, accepted_at, revoked_at, created_at")
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: false })
+        .limit(100);
+    if (error) throw new Error("Could not load invitations");
+    return data ?? [];
 });
 
 export const getRoleProfiles = cache(async (orgId: string): Promise<RoleProfileOption[]> => {
