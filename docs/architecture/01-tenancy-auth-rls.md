@@ -72,21 +72,34 @@ Add `org_ids` and a lightweight `roles` map to the JWT via a Supabase **Custom A
 { "app": { "orgs": { "<org_uuid>": ["Accounts Manager","Stock User"] } } }
 ```
 
-RLS helpers read the claim first and fall back to `org_members` when the claim is absent (e.g. right after a role change — we also force a token refresh client-side after role edits).
+The claim is for **UI hints only** (`can()` to hide buttons). RLS helpers always read `org_members`/`role_permissions` (security definer, PK-indexed), so removing a member or a role takes effect immediately instead of when the access token expires. We still force a token refresh client-side after role edits so the UI hints catch up.
+
+The hook is enabled in `supabase/config.toml` (`[auth.hook.custom_access_token]`) and pushed to hosted projects with `supabase config push`.
+
+## Function privileges & RPC surface
+
+- Schema `app` is **not** an exposed API schema. Supabase grants `EXECUTE` on new functions to `anon`/`authenticated` through role-level default privileges, so every `app` function is revoked from `public, anon, authenticated` and granted back explicitly (`0003_framework_function_grants.sql`): RLS helpers → `authenticated` (policies run as the caller), the token hook → `supabase_auth_admin` only, trigger functions → nobody.
+- Callable entry points (`accept_invitation`, later `save_doc`, `submit_doc`, `cancel_doc`, `amend_doc`, `map_doc`) are thin `security invoker` wrappers in `public` that delegate to the `security definer` implementation in `app`, so Server Actions call `supabase.rpc('submit_doc', …)` and the advisors stay clean.
+- pgTAP (`00_rls_coverage.test.sql`) fails if `anon` can execute any `app` function or if a `public` function is `security definer`. Known exception: `public.rls_auto_enable()`, the Supabase-managed event-trigger function behind the "auto-enable RLS" project setting (hosted only, not callable as RPC).
 
 ## RLS helper functions (schema `app`, `security definer`, `stable`)
 
+Implemented in `supabase/migrations/0002_framework_tenancy.sql`:
+
 ```sql
-app.current_user_id()                 -- auth.uid()
-app.user_org_ids()                    -- uuid[] from JWT claim or org_members
+app.user_org_ids()                    -- uuid[] of orgs where the user is an active member
 app.is_member(org_id)                 -- boolean
-app.user_roles(org_id)                -- text[]
-app.has_perm(org_id, doctype, action) -- action in read|write|create|submit|cancel|amend|delete
-app.record_allowed(org_id, doctype, record_id)  -- user_permissions check (empty = allowed)
-app.company_allowed(org_id, company_id)         -- shortcut for the most common user permission
+app.user_roles(org_id)                -- text[] (disabled roles excluded)
+app.orgs_with_perm(doctype, action)   -- uuid[] of orgs where the user has the permission
+app.orgs_with_role(role)              -- uuid[] of orgs where the user holds the role
+app.has_perm(org_id, doctype, action) -- action in read|write|create|submit|cancel|amend|delete|report|export
+app.has_role(org_id, role)            -- boolean
+app.allowed_records(org_id, doctype, applicable_for)       -- uuid[] or null (= unrestricted)
+app.record_allowed(org_id, doctype, record_id, applicable_for) -- user_permissions check (none = allowed)
+app.company_allowed(org_id, company_id, applicable_for)    -- shortcut for the most common user permission
 ```
 
-Performance: functions are `stable`, wrapped as `(select app.is_member(org_id))` in policies so Postgres evaluates them once per statement; `org_id` is the leading column of every index.
+Performance: policies compare the row's `org_id` against an array computed once per statement — `org_id = any ((select app.orgs_with_perm('Sales Invoice', 'read'))::uuid[])` (the cast makes it a scalar subquery; without it Postgres treats `any (select …)` as a row set) — instead of calling `app.has_perm(org_id, …)` per row. `app.has_perm()` remains the API for `app.*` functions. `org_id` is the leading column of every index. Policies are granted `to authenticated` only; `anon` never sees tenant rows.
 
 ## Policy template (apply to EVERY tenant table)
 
@@ -94,19 +107,19 @@ Performance: functions are `stable`, wrapped as `(select app.is_member(org_id))`
 alter table sales_invoice enable row level security;
 alter table sales_invoice force row level security;
 
-create policy si_select on sales_invoice for select using (
-  (select app.has_perm(org_id, 'Sales Invoice', 'read'))
-  and (select app.company_allowed(org_id, company_id))
+create policy si_select on sales_invoice for select to authenticated using (
+  org_id = any ((select app.orgs_with_perm('Sales Invoice', 'read'))::uuid[])
+  and app.company_allowed(org_id, company_id)
 );
-create policy si_insert on sales_invoice for insert with check (
-  (select app.has_perm(org_id, 'Sales Invoice', 'create'))
-  and (select app.company_allowed(org_id, company_id)) and docstatus = 0
+create policy si_insert on sales_invoice for insert to authenticated with check (
+  org_id = any ((select app.orgs_with_perm('Sales Invoice', 'create'))::uuid[])
+  and app.company_allowed(org_id, company_id) and docstatus = 0
 );
-create policy si_update on sales_invoice for update using (
-  (select app.has_perm(org_id, 'Sales Invoice', 'write')) and docstatus = 0
+create policy si_update on sales_invoice for update to authenticated using (
+  org_id = any ((select app.orgs_with_perm('Sales Invoice', 'write'))::uuid[]) and docstatus = 0
 ) with check (docstatus = 0);
-create policy si_delete on sales_invoice for delete using (
-  (select app.has_perm(org_id, 'Sales Invoice', 'delete')) and docstatus = 0
+create policy si_delete on sales_invoice for delete to authenticated using (
+  org_id = any ((select app.orgs_with_perm('Sales Invoice', 'delete'))::uuid[]) and docstatus = 0
 );
 ```
 

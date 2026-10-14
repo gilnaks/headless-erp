@@ -26,6 +26,9 @@ alwaysApply: false
   `security definer` functions in schema `app`.
 - `security definer` functions: `set search_path = app, public, pg_temp`, first statement checks `app.has_perm(...)`,
   lock the header row `for update`, raise with `using errcode = 'P0001', message = '<machine_key>: <human text>'`.
+- Every new `app.*` function: `revoke execute ... from public, anon, authenticated` then grant only what is needed
+  (Supabase's role-level default privileges otherwise grant it to anon). `app` is not exposed; RPC entry points are
+  `public.<fn>` `security invoker` wrappers over the `app` implementation.
 - Idempotent DDL (`if not exists`, `drop policy if exists`), no `execute_sql` DDL against prod, never disable RLS.
 - Indexes: `(org_id, name)`, `(org_id, company_id, docstatus, posting_date desc)` + the ledger indexes in
   `docs/architecture/02-database-conventions.md`.

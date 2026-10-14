@@ -827,7 +827,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 
 ### P0 (foundation; tables that the shell needs)
 
-- [ ] `organizations`, `org_members`, `roles`, `role_permissions`, `user_permissions`, `invitations`, `user_profile` migrations + RLS + `app.has_perm/record_allowed/company_allowed` (per `01-tenancy-auth-rls.md`)
+- [x] `organizations`, `org_members`, `roles`, `role_permissions`, `user_permissions`, `invitations`, `user_profile` migrations + RLS + `app.has_perm/record_allowed/company_allowed` (per `01-tenancy-auth-rls.md`) — `0002_framework_tenancy.sql`, `0003_framework_function_grants.sql`; also `role_profile` table, `doctype_meta`, `app.accept_invitation()` + `public.accept_invitation()` RPC, custom access token hook
 - [ ] `companies` table (full column set §2.1, tree trigger, validations as constraints/triggers) + RLS
 - [ ] Global tables `country`, `currency`, `org_currency`, `uom_template`, `coa_template` + seeds (`supabase/seed/`)
 - [ ] `role_profile` table + seed; `supabase/seed/role_permissions.json` extraction script output
