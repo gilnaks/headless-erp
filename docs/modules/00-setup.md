@@ -828,9 +828,9 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 ### P0 (foundation; tables that the shell needs)
 
 - [x] `organizations`, `org_members`, `roles`, `role_permissions`, `user_permissions`, `invitations`, `user_profile` migrations + RLS + `app.has_perm/record_allowed/company_allowed` (per `01-tenancy-auth-rls.md`) — `0002_framework_tenancy.sql`, `0003_framework_function_grants.sql`; also `role_profile` table, `doctype_meta`, `app.accept_invitation()` + `public.accept_invitation()` RPC, custom access token hook
-- [ ] `companies` table (full column set §2.1, tree trigger, validations as constraints/triggers) + RLS
+- [x] `companies` table (full column set §2.1, tree trigger, validations as constraints/triggers) + RLS — `0100_setup_company.sql`: `validate_abbr`, `validate_coa_input`, `set_chart_of_accounts`, `validate_parent_company`, `set_reporting_currency`, `validate_sdbnb_configuration` (account required). Deferred to the migrations that create the referenced tables: FKs on the `*_account_id` / `*_cost_center_id` / `*_warehouse_id` / letter head / holiday list / terms / contact / payment terms columns, `validate_default_accounts`, `validate_advance_account_currency` (P3 `account`), `validate_warehouses` (P2 `warehouse`), `validate_currency` (first submittable transaction), `cant_change_valuation_method` + `validate_perpetual_inventory` + `validate_inventory_account_settings` (P4 `stock_ledger_entry`), SDBNB outstanding-DN check (P5), `on_trash` cascades
 - [ ] Global tables `country`, `currency`, `org_currency`, `uom_template`, `coa_template` + seeds (`supabase/seed/`)
-- [ ] `role_profile` table + seed; `supabase/seed/role_permissions.json` extraction script output
+- [ ] `role_profile` table + seed; default permissions via `role_permission_template` (table + `app.sync_role_permissions()` done in `0004`; each doctype migration adds its rows — Company done)
 - [ ] `system_settings`, `global_defaults` tables + defaults
 - [ ] Auth: email+password, magic link, `proxy.ts` session refresh, `acceptInvitation()`, custom access token hook
 - [ ] Custom claims + token refresh after role edits

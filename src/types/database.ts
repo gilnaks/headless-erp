@@ -50,6 +50,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
+      tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }
       user_roles: { Args: { p_org: string }; Returns: string[] }
     }
@@ -62,6 +64,372 @@ export type Database = {
   }
   public: {
     Tables: {
+      companies: {
+        Row: {
+          abbr: string
+          accounts_frozen_till_date: string | null
+          accumulated_depreciation_account_id: string | null
+          allow_account_creation_against_child_company: boolean
+          asset_received_but_not_billed_id: string | null
+          auto_err_frequency: string | null
+          auto_exchange_rate_revaluation: boolean
+          bank_charges_account_id: string | null
+          book_advance_payments_in_separate_party_account: boolean
+          capital_work_in_progress_account_id: string | null
+          chart_of_accounts: string | null
+          company_description: string | null
+          company_logo: string | null
+          company_name: string
+          cost_center_id: string | null
+          country: string
+          create_chart_of_accounts_based_on: string
+          created_at: string
+          created_by: string | null
+          credit_limit: number
+          date_of_commencement: string | null
+          date_of_establishment: string | null
+          date_of_incorporation: string | null
+          default_advance_paid_account_id: string | null
+          default_advance_received_account_id: string | null
+          default_bank_account_id: string | null
+          default_buying_terms_id: string | null
+          default_cash_account_id: string | null
+          default_currency: string
+          default_deferred_expense_account_id: string | null
+          default_deferred_revenue_account_id: string | null
+          default_discount_account_id: string | null
+          default_expense_account_id: string | null
+          default_fg_warehouse_id: string | null
+          default_finance_book_id: string | null
+          default_holiday_list_id: string | null
+          default_in_transit_warehouse_id: string | null
+          default_income_account_id: string | null
+          default_inventory_account_id: string | null
+          default_letter_head_id: string | null
+          default_manufacturing_variance_account_id: string | null
+          default_operating_cost_account_id: string | null
+          default_payable_account_id: string | null
+          default_provisional_account_id: string | null
+          default_purchase_price_variance_account_id: string | null
+          default_receivable_account_id: string | null
+          default_sales_contact_id: string | null
+          default_scrap_warehouse_id: string | null
+          default_selling_terms_id: string | null
+          default_warehouse_for_sales_return_id: string | null
+          default_warehouse_id: string | null
+          default_wip_warehouse_id: string | null
+          depreciation_cost_center_id: string | null
+          depreciation_expense_account_id: string | null
+          disable_sdbnb_in_sr: boolean
+          disabled: boolean
+          disposal_account_id: string | null
+          domain: string | null
+          email: string | null
+          enable_item_wise_inventory_account: boolean
+          enable_perpetual_inventory: boolean
+          enable_provisional_accounting_for_non_stock_items: boolean
+          enable_stock_delivered_but_not_billed: boolean
+          exception_budget_approver_role: string | null
+          exchange_gain_account_id: string | null
+          exchange_gain_loss_account_id: string | null
+          exchange_loss_account_id: string | null
+          existing_company_id: string | null
+          expenses_added_to_stock_account_id: string | null
+          expenses_added_to_stock_contra_account_id: string | null
+          fax: string | null
+          id: string
+          is_group: boolean
+          monthly_sales_target: number
+          name: string
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          payment_terms_id: string | null
+          phone_no: string | null
+          purchase_expense_account_id: string | null
+          purchase_expense_contra_account_id: string | null
+          reconciliation_takes_effect_on: string
+          registration_details: string | null
+          reporting_currency: string | null
+          role_allowed_for_frozen_entries: string | null
+          round_off_account_id: string | null
+          round_off_cost_center_id: string | null
+          round_off_for_opening_id: string | null
+          sales_monthly_history: Json | null
+          sample_retention_warehouse_id: string | null
+          series_for_depreciation_entry: string | null
+          service_expense_account_id: string | null
+          stock_adjustment_account_id: string | null
+          stock_delivered_but_not_billed_id: string | null
+          stock_received_but_not_billed_id: string | null
+          submit_err_jv: boolean
+          tax_id: string | null
+          total_monthly_sales: number
+          transactions_annual_history: Json | null
+          unrealized_exchange_gain_loss_account_id: string | null
+          unrealized_profit_loss_account_id: string | null
+          updated_at: string
+          updated_by: string | null
+          valuation_method: string
+          website: string | null
+          write_off_account_id: string | null
+        }
+        Insert: {
+          abbr: string
+          accounts_frozen_till_date?: string | null
+          accumulated_depreciation_account_id?: string | null
+          allow_account_creation_against_child_company?: boolean
+          asset_received_but_not_billed_id?: string | null
+          auto_err_frequency?: string | null
+          auto_exchange_rate_revaluation?: boolean
+          bank_charges_account_id?: string | null
+          book_advance_payments_in_separate_party_account?: boolean
+          capital_work_in_progress_account_id?: string | null
+          chart_of_accounts?: string | null
+          company_description?: string | null
+          company_logo?: string | null
+          company_name: string
+          cost_center_id?: string | null
+          country: string
+          create_chart_of_accounts_based_on?: string
+          created_at?: string
+          created_by?: string | null
+          credit_limit?: number
+          date_of_commencement?: string | null
+          date_of_establishment?: string | null
+          date_of_incorporation?: string | null
+          default_advance_paid_account_id?: string | null
+          default_advance_received_account_id?: string | null
+          default_bank_account_id?: string | null
+          default_buying_terms_id?: string | null
+          default_cash_account_id?: string | null
+          default_currency: string
+          default_deferred_expense_account_id?: string | null
+          default_deferred_revenue_account_id?: string | null
+          default_discount_account_id?: string | null
+          default_expense_account_id?: string | null
+          default_fg_warehouse_id?: string | null
+          default_finance_book_id?: string | null
+          default_holiday_list_id?: string | null
+          default_in_transit_warehouse_id?: string | null
+          default_income_account_id?: string | null
+          default_inventory_account_id?: string | null
+          default_letter_head_id?: string | null
+          default_manufacturing_variance_account_id?: string | null
+          default_operating_cost_account_id?: string | null
+          default_payable_account_id?: string | null
+          default_provisional_account_id?: string | null
+          default_purchase_price_variance_account_id?: string | null
+          default_receivable_account_id?: string | null
+          default_sales_contact_id?: string | null
+          default_scrap_warehouse_id?: string | null
+          default_selling_terms_id?: string | null
+          default_warehouse_for_sales_return_id?: string | null
+          default_warehouse_id?: string | null
+          default_wip_warehouse_id?: string | null
+          depreciation_cost_center_id?: string | null
+          depreciation_expense_account_id?: string | null
+          disable_sdbnb_in_sr?: boolean
+          disabled?: boolean
+          disposal_account_id?: string | null
+          domain?: string | null
+          email?: string | null
+          enable_item_wise_inventory_account?: boolean
+          enable_perpetual_inventory?: boolean
+          enable_provisional_accounting_for_non_stock_items?: boolean
+          enable_stock_delivered_but_not_billed?: boolean
+          exception_budget_approver_role?: string | null
+          exchange_gain_account_id?: string | null
+          exchange_gain_loss_account_id?: string | null
+          exchange_loss_account_id?: string | null
+          existing_company_id?: string | null
+          expenses_added_to_stock_account_id?: string | null
+          expenses_added_to_stock_contra_account_id?: string | null
+          fax?: string | null
+          id?: string
+          is_group?: boolean
+          monthly_sales_target?: number
+          name: string
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          payment_terms_id?: string | null
+          phone_no?: string | null
+          purchase_expense_account_id?: string | null
+          purchase_expense_contra_account_id?: string | null
+          reconciliation_takes_effect_on?: string
+          registration_details?: string | null
+          reporting_currency?: string | null
+          role_allowed_for_frozen_entries?: string | null
+          round_off_account_id?: string | null
+          round_off_cost_center_id?: string | null
+          round_off_for_opening_id?: string | null
+          sales_monthly_history?: Json | null
+          sample_retention_warehouse_id?: string | null
+          series_for_depreciation_entry?: string | null
+          service_expense_account_id?: string | null
+          stock_adjustment_account_id?: string | null
+          stock_delivered_but_not_billed_id?: string | null
+          stock_received_but_not_billed_id?: string | null
+          submit_err_jv?: boolean
+          tax_id?: string | null
+          total_monthly_sales?: number
+          transactions_annual_history?: Json | null
+          unrealized_exchange_gain_loss_account_id?: string | null
+          unrealized_profit_loss_account_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valuation_method?: string
+          website?: string | null
+          write_off_account_id?: string | null
+        }
+        Update: {
+          abbr?: string
+          accounts_frozen_till_date?: string | null
+          accumulated_depreciation_account_id?: string | null
+          allow_account_creation_against_child_company?: boolean
+          asset_received_but_not_billed_id?: string | null
+          auto_err_frequency?: string | null
+          auto_exchange_rate_revaluation?: boolean
+          bank_charges_account_id?: string | null
+          book_advance_payments_in_separate_party_account?: boolean
+          capital_work_in_progress_account_id?: string | null
+          chart_of_accounts?: string | null
+          company_description?: string | null
+          company_logo?: string | null
+          company_name?: string
+          cost_center_id?: string | null
+          country?: string
+          create_chart_of_accounts_based_on?: string
+          created_at?: string
+          created_by?: string | null
+          credit_limit?: number
+          date_of_commencement?: string | null
+          date_of_establishment?: string | null
+          date_of_incorporation?: string | null
+          default_advance_paid_account_id?: string | null
+          default_advance_received_account_id?: string | null
+          default_bank_account_id?: string | null
+          default_buying_terms_id?: string | null
+          default_cash_account_id?: string | null
+          default_currency?: string
+          default_deferred_expense_account_id?: string | null
+          default_deferred_revenue_account_id?: string | null
+          default_discount_account_id?: string | null
+          default_expense_account_id?: string | null
+          default_fg_warehouse_id?: string | null
+          default_finance_book_id?: string | null
+          default_holiday_list_id?: string | null
+          default_in_transit_warehouse_id?: string | null
+          default_income_account_id?: string | null
+          default_inventory_account_id?: string | null
+          default_letter_head_id?: string | null
+          default_manufacturing_variance_account_id?: string | null
+          default_operating_cost_account_id?: string | null
+          default_payable_account_id?: string | null
+          default_provisional_account_id?: string | null
+          default_purchase_price_variance_account_id?: string | null
+          default_receivable_account_id?: string | null
+          default_sales_contact_id?: string | null
+          default_scrap_warehouse_id?: string | null
+          default_selling_terms_id?: string | null
+          default_warehouse_for_sales_return_id?: string | null
+          default_warehouse_id?: string | null
+          default_wip_warehouse_id?: string | null
+          depreciation_cost_center_id?: string | null
+          depreciation_expense_account_id?: string | null
+          disable_sdbnb_in_sr?: boolean
+          disabled?: boolean
+          disposal_account_id?: string | null
+          domain?: string | null
+          email?: string | null
+          enable_item_wise_inventory_account?: boolean
+          enable_perpetual_inventory?: boolean
+          enable_provisional_accounting_for_non_stock_items?: boolean
+          enable_stock_delivered_but_not_billed?: boolean
+          exception_budget_approver_role?: string | null
+          exchange_gain_account_id?: string | null
+          exchange_gain_loss_account_id?: string | null
+          exchange_loss_account_id?: string | null
+          existing_company_id?: string | null
+          expenses_added_to_stock_account_id?: string | null
+          expenses_added_to_stock_contra_account_id?: string | null
+          fax?: string | null
+          id?: string
+          is_group?: boolean
+          monthly_sales_target?: number
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          payment_terms_id?: string | null
+          phone_no?: string | null
+          purchase_expense_account_id?: string | null
+          purchase_expense_contra_account_id?: string | null
+          reconciliation_takes_effect_on?: string
+          registration_details?: string | null
+          reporting_currency?: string | null
+          role_allowed_for_frozen_entries?: string | null
+          round_off_account_id?: string | null
+          round_off_cost_center_id?: string | null
+          round_off_for_opening_id?: string | null
+          sales_monthly_history?: Json | null
+          sample_retention_warehouse_id?: string | null
+          series_for_depreciation_entry?: string | null
+          service_expense_account_id?: string | null
+          stock_adjustment_account_id?: string | null
+          stock_delivered_but_not_billed_id?: string | null
+          stock_received_but_not_billed_id?: string | null
+          submit_err_jv?: boolean
+          tax_id?: string | null
+          total_monthly_sales?: number
+          transactions_annual_history?: Json | null
+          unrealized_exchange_gain_loss_account_id?: string | null
+          unrealized_profit_loss_account_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valuation_method?: string
+          website?: string | null
+          write_off_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_org_id_exception_budget_approver_role_fkey"
+            columns: ["org_id", "exception_budget_approver_role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "companies_org_id_existing_company_id_fkey"
+            columns: ["org_id", "existing_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_org_id_role_allowed_for_frozen_entries_fkey"
+            columns: ["org_id", "role_allowed_for_frozen_entries"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+        ]
+      }
       doctype_meta: {
         Row: {
           allow_on_submit: string[]
@@ -273,6 +641,59 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permission_template: {
+        Row: {
+          can_amend: boolean
+          can_cancel: boolean
+          can_create: boolean
+          can_delete: boolean
+          can_export: boolean
+          can_read: boolean
+          can_report: boolean
+          can_submit: boolean
+          can_write: boolean
+          doctype: string
+          if_owner: boolean
+          role: string
+        }
+        Insert: {
+          can_amend?: boolean
+          can_cancel?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_export?: boolean
+          can_read?: boolean
+          can_report?: boolean
+          can_submit?: boolean
+          can_write?: boolean
+          doctype: string
+          if_owner?: boolean
+          role: string
+        }
+        Update: {
+          can_amend?: boolean
+          can_cancel?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_export?: boolean
+          can_read?: boolean
+          can_report?: boolean
+          can_submit?: boolean
+          can_write?: boolean
+          doctype?: string
+          if_owner?: boolean
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permission_template_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "role_template"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           can_amend: boolean
@@ -378,6 +799,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_template: {
+        Row: {
+          name: string
+        }
+        Insert: {
+          name: string
+        }
+        Update: {
+          name?: string
+        }
+        Relationships: []
       }
       roles: {
         Row: {
