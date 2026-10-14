@@ -23,6 +23,8 @@ const AUTH_MESSAGES: Record<string, string> = {
     email_not_confirmed: "Confirm your email address first. Check your inbox for the link.",
     user_already_exists: "An account with this email already exists. Sign in instead.",
     email_exists: "An account with this email already exists. Sign in instead.",
+    email_address_invalid: "This email address cannot be used. Check it for typos or use another one.",
+    email_address_not_authorized: "Emails can only be sent to team addresses until outgoing mail (SMTP) is configured.",
     weak_password: "Choose a stronger password.",
     same_password: "The new password must differ from the current one.",
     over_email_send_rate_limit: "Too many emails sent. Wait a minute and try again.",
