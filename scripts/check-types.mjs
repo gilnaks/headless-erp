@@ -1,9 +1,10 @@
 // Fails when src/types/database.ts is stale against the local database (after `supabase db reset`).
-// Local generation emits unformatted TypeScript while the committed file comes from the dev project (formatted), so
-// both sides go through Biome's formatter first; the PostgREST version line is ignored because it differs between
-// local and hosted Supabase. Pass `--linked` to compare against the dev project instead.
+// Local generation emits unformatted TypeScript without the `__InternalSupabase` block, while the committed file comes
+// from the dev project, so both sides are formatted with Biome and stripped of that block and of comments before
+// comparing. Pass `--linked` to compare against the dev project instead. On failure the generated file is written to
+// test-results/ (uploaded by CI).
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const source = process.argv.includes("--linked") ? "--linked" : "--local";
 const shell = process.platform === "win32";
@@ -18,27 +19,30 @@ const format = (text) =>
 
 const normalise = (text) =>
     format(text.replace(/\r\n/g, "\n"))
-        .replace(/PostgrestVersion: "[^"]*"/, 'PostgrestVersion: "*"')
+        .replace(/^\s*__InternalSupabase: \{[^}]*\};\n/m, "")
         .split("\n")
-        .filter((line) => line.trim() !== "");
+        .filter((line) => line.trim() !== "" && !line.trim().startsWith("//"));
 
-const generated = normalise(
-    execFileSync("npx", ["supabase", "gen", "types", "typescript", source, "--schema", "public,app"], {
-        encoding: "utf8",
-        shell,
-        maxBuffer: 64 * 1024 * 1024,
-    }),
-);
+const raw = execFileSync("npx", ["supabase", "gen", "types", "typescript", source, "--schema", "public,app"], {
+    encoding: "utf8",
+    shell,
+    maxBuffer: 64 * 1024 * 1024,
+});
+const generated = normalise(raw);
 const committed = normalise(readFileSync("src/types/database.ts", "utf8"));
 
-const diffs = [];
-for (let i = 0; i < Math.max(generated.length, committed.length); i++) {
-    if (generated[i] !== committed[i]) diffs.push(`line ${i + 1}\n  committed: ${committed[i] ?? "<eof>"}\n  generated: ${generated[i] ?? "<eof>"}`);
-}
+const first = generated.findIndex((line, i) => line !== committed[i]);
+const mismatch = first !== -1 || generated.length !== committed.length;
 
-if (diffs.length) {
-    console.error(`src/types/database.ts is stale (${diffs.length} differing lines after formatting). First differences:\n`);
-    console.error(diffs.slice(0, 10).join("\n"));
+if (mismatch) {
+    const at = first === -1 ? Math.min(generated.length, committed.length) : first;
+    mkdirSync("test-results", { recursive: true });
+    writeFileSync("test-results/database.generated.ts", raw);
+    console.error(`src/types/database.ts is stale (first difference at normalised line ${at + 1}):\n`);
+    for (let i = Math.max(0, at - 3); i < at + 8; i++) {
+        const mark = generated[i] === committed[i] ? " " : "!";
+        console.error(`${mark} committed: ${committed[i] ?? "<eof>"}\n${mark} generated: ${generated[i] ?? "<eof>"}`);
+    }
     console.error("\nRegenerate with `npm run db:types:linked` (dev project) or `npm run db:types` (local) and commit.");
     process.exit(1);
 }
