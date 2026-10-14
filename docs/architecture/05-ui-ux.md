@@ -59,6 +59,7 @@ Toolbar (search, filter chips with ERPNext-like filter builder, sort, column pic
 
 ### `TreeView` (CoA, Cost Centers, Warehouses, Item Groups, Customer/Supplier Groups, Territories, Departments, Tasks, BOM explode)
 Expandable rows with balances/totals, inline add child, drag to re-parent (groups only), group vs ledger badges.
+- Built (P1, Department): `tree-view.tsx` on React Aria `Tree`. A descriptor with `tree: { parentField, groupField, filters?, disabledField? }` gets a List / Tree toggle (`view-toggle.tsx`, `?view=tree`) on its list route, like ERPNext's `/view/tree`. The server loads every node once (`listTreeNodes`, up to `TREE_LIMIT`); filtering and nesting are client-side (`src/doctypes/tree.ts`, Vitest): Link filters (`?company_id=`, nuqs) keep matches plus their ancestors, "Include disabled" (`?disabled=true`) shows disabled nodes. All groups start expanded; ←/→ collapse/expand, ↑/↓ move, Enter opens the form. Group rows show "Add child" on hover/focus, which opens `new?<parentField>=<id>&<filter>=<value>` (the node's filter values, else the active filter) through the form's query prefill. Folder/file icons mark groups vs leaves; a "Disabled" badge marks disabled nodes. Not yet: balances, drag to re-parent, lazy loading.
 
 ### `ReportView`
 Filters bar (from report descriptor), results table with grouping/indent for tree reports, totals row, export CSV/XLSX, print; chart toggle (Recharts) when the ERPNext report defines a chart.

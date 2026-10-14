@@ -54,6 +54,24 @@ export async function listDocs(d: Doctype, orgId: string, params: ListParams): P
     return { rows: (data ?? []) as unknown as FieldValues[], count: count ?? 0, page, pageSize, sort, desc };
 }
 
+/** Upper bound on nodes the Tree view loads at once (it filters and nests on the client). */
+export const TREE_LIMIT = 5000;
+
+/** Every node of a tree doctype with the columns the Tree view needs (title, parent, group, filters, disabled). */
+export async function listTreeNodes(d: Doctype, orgId: string): Promise<FieldValues[]> {
+    if (!d.tree) return [];
+    const { parentField, groupField, filters = [], disabledField } = d.tree;
+    const columns = [...new Set(["id", d.titleField, parentField, groupField, ...filters, ...(disabledField ? [disabledField] : [])])];
+    const supabase = await createClient();
+    const { data, error } = await docTable(supabase, d.table)
+        .select(columns.join(", "))
+        .eq("org_id", orgId)
+        .order(d.titleField)
+        .limit(TREE_LIMIT);
+    if (error) throw new Error(`Could not load the ${d.doctype} tree`);
+    return (data ?? []) as unknown as FieldValues[];
+}
+
 /** Header row plus child rows (ordered by idx), or null when missing or not visible. */
 export async function getDoc(d: Doctype, orgId: string, id: string): Promise<FieldValues | null> {
     const supabase = await createClient();

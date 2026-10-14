@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { DocForm } from "@/components/erp/doc/doc-form";
 import { DocList } from "@/components/erp/doc/doc-list";
+import { TreeView } from "@/components/erp/doc/tree-view";
 import { NotPermitted } from "@/components/erp/not-permitted";
 import { PlaceholderPage } from "@/components/erp/placeholder-page";
 import { PageSkeleton } from "@/components/erp/shell/shell-skeleton";
@@ -9,8 +10,8 @@ import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
 import type { Doctype } from "@/doctypes/define";
 import { getDoctype } from "@/doctypes/registry";
 import { prefillValues } from "@/doctypes/schema";
-import { loadListParams } from "@/lib/list-params";
-import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs } from "@/lib/queries/doc";
+import { loadListParams, loadViewParams } from "@/lib/list-params";
+import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs, listTreeNodes } from "@/lib/queries/doc";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { optionSourcesOf } from "@/lib/reference-options";
@@ -42,6 +43,12 @@ async function ListRoute({ d, orgSlug, searchParams }: { d: Doctype; orgSlug: st
     if (!org) notFound();
     const perms = await getDocPermissions(org.id, d.doctype);
     if (!perms.read) return <NotPermitted action="view" doctype={d.doctype} />;
+
+    if (d.tree && (await loadViewParams(searchParams)).view === "tree") {
+        const rows = await listTreeNodes(d, org.id);
+        const titles = await getListLinkTitles(d, org.id, rows, d.tree.filters ?? []);
+        return <TreeView doctype={d.doctype} orgSlug={org.slug} rows={rows} titles={titles} canCreate={perms.create} />;
+    }
 
     const { q, sort, desc, page, size } = await loadListParams(searchParams);
     const list = await listDocs(d, org.id, { q, sort: sort ?? undefined, desc, page, pageSize: size });

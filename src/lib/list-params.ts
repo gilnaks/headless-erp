@@ -12,3 +12,11 @@ export const listParsers = {
 };
 
 export const loadListParams = createLoader(listParsers);
+
+/** `?view=tree` switches a tree doctype's list route to the Tree view (ERPNext `/app/<doctype>/view/tree`). */
+export const viewParsers = { view: parseAsString };
+
+export const loadViewParams = createLoader(viewParsers);
+
+/** Tree view URL state: "Include disabled" (filter fields are added per doctype). */
+export const treeParsers = { disabled: parseAsBoolean.withDefault(false) };
