@@ -8,7 +8,7 @@ import { Autocomplete, Header, Menu, MenuItem, MenuSection, SearchField } from "
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Badge } from "@/components/base/badges/badges";
 import { InputBase } from "@/components/base/input/input";
-import { MODULES, moduleLinks, orgHref } from "@/config/navigation";
+import { BUILT_PAGES, MODULES, moduleLinks, orgHref } from "@/config/navigation";
 import { docPath } from "@/doctypes/define";
 import { DOCTYPES, getDoctypeByName } from "@/doctypes/registry";
 import { type SearchHit, searchDocs } from "@/lib/actions/search";
@@ -24,7 +24,7 @@ const GO_TO: Entry[] = (() => {
         for (const link of moduleLinks(module)) {
             if (seen.has(link.path)) continue;
             seen.add(link.path);
-            const built = link.target.kind === "doctype" && Boolean(getDoctypeByName(link.target.doctype));
+            const built = BUILT_PAGES.has(link.path) || (link.target.kind === "doctype" && Boolean(getDoctypeByName(link.target.doctype)));
             const label = link.label === "Home" || link.label === "Dashboard" ? `${module.label} ${link.label}` : link.label;
             entries.push({ id: `go:${link.path}`, label, detail: module.label, badge: built ? undefined : link.phase, path: link.path });
         }

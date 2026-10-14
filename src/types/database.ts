@@ -61,6 +61,21 @@ export type Database = {
         }
         Returns: string
       }
+      org_member_directory: {
+        Args: { p_org: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          is_owner: boolean
+          last_sign_in_at: string
+          role_profile: string
+          roles: string[]
+          status: string
+          user_id: string
+        }[]
+      }
       orgs_with_perm: {
         Args: { p_action: string; p_doctype: string }
         Returns: string[]
@@ -1389,6 +1404,21 @@ export type Database = {
       delete_doc: {
         Args: { p_doctype: string; p_id: string }
         Returns: undefined
+      }
+      org_member_directory: {
+        Args: { p_org: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          is_owner: boolean
+          last_sign_in_at: string
+          role_profile: string
+          roles: string[]
+          status: string
+          user_id: string
+        }[]
       }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
     }

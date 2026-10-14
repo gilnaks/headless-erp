@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MIN_PASSWORD_LENGTH, passwordLoginSchema, signupSchema, updatePasswordSchema } from "./auth";
 import { createOrganizationSchema, RESERVED_SLUGS, SLUG_PATTERN, slugify } from "./organization";
+import { removeMemberSchema, setMemberStatusSchema, updateMemberRolesSchema } from "./users";
 
 describe("auth schemas", () => {
     it("normalises email", () => {
@@ -54,5 +55,28 @@ describe("organization schema", () => {
 
     it("slugify output satisfies the pattern for ordinary names", () => {
         expect(SLUG_PATTERN.test(slugify("Northwind Traders"))).toBe(true);
+    });
+});
+
+describe("user schemas", () => {
+    const member = { orgSlug: "acme", userId: "00000000-0000-0000-0000-0000000011a1" };
+
+    it("trims and dedupes roles and treats a blank profile as none", () => {
+        const parsed = updateMemberRolesSchema.parse({ ...member, roleProfile: " ", roles: [" Sales User", "Sales User", "Auditor"] });
+        expect(parsed).toMatchObject({ roleProfile: null, roles: ["Sales User", "Auditor"] });
+    });
+
+    it("rejects malformed user ids and blank roles", () => {
+        expect(updateMemberRolesSchema.safeParse({ ...member, userId: "nope", roleProfile: null, roles: [] }).success).toBe(false);
+        expect(updateMemberRolesSchema.safeParse({ ...member, roleProfile: null, roles: [" "] }).success).toBe(false);
+    });
+
+    it("only allows active or disabled status", () => {
+        expect(setMemberStatusSchema.safeParse({ ...member, status: "disabled" }).success).toBe(true);
+        expect(setMemberStatusSchema.safeParse({ ...member, status: "invited" }).success).toBe(false);
+    });
+
+    it("needs a user to remove", () => {
+        expect(removeMemberSchema.safeParse({ orgSlug: "acme" }).success).toBe(false);
     });
 });

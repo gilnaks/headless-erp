@@ -599,6 +599,9 @@ export function moduleForPath(path: string): ModuleNav | undefined {
     return first === "" ? getModule("setup") : getModule(first);
 }
 
+/** Bespoke routes under `src/app/(app)/[org]` (not descriptors); see docs/modules/00-setup.md §8 for why each exists. */
+export const BUILT_PAGES: ReadonlySet<string> = new Set(["setup/users"]);
+
 export function orgHref(orgSlug: string, path: string): string {
     return path ? `/${orgSlug}/${path}` : `/${orgSlug}`;
 }
