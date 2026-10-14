@@ -1,3 +1,4 @@
+import { fiscalYear } from "./accounts/fiscal-year";
 import type { Doctype } from "./define";
 import { branch } from "./setup/branch";
 import { company } from "./setup/company";
@@ -22,6 +23,7 @@ export const DOCTYPES: readonly Doctype[] = [
     designation,
     department,
     holidayList,
+    fiscalYear,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {

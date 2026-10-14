@@ -25,6 +25,7 @@ export type Database = {
         Args: { p_doctype: string; p_for?: string; p_org: string }
         Returns: string[]
       }
+      auto_create_fiscal_year: { Args: never; Returns: number }
       company_allowed: {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
@@ -52,6 +53,11 @@ export type Database = {
       enable_org_currency: {
         Args: { p_code: string; p_org: string }
         Returns: undefined
+      }
+      fiscal_year_check_overlap: { Args: { p_fy: string }; Returns: undefined }
+      fiscal_year_name: {
+        Args: { p_end: string; p_start: string }
+        Returns: string
       }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
@@ -802,6 +808,98 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "doctype_meta"
             referencedColumns: ["doctype"]
+          },
+        ]
+      }
+      fiscal_year: {
+        Row: {
+          auto_created: boolean
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          is_short_year: boolean
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+          year: string
+          year_end_date: string
+          year_start_date: string
+        }
+        Insert: {
+          auto_created?: boolean
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_short_year?: boolean
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+          year: string
+          year_end_date: string
+          year_start_date: string
+        }
+        Update: {
+          auto_created?: boolean
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_short_year?: boolean
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          year?: string
+          year_end_date?: string
+          year_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_year_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_year_company: {
+        Row: {
+          company_id: string
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_year_company_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "fiscal_year_company_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_year"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

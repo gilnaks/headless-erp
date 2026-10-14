@@ -584,6 +584,12 @@ Module Accounts (`erpnext/accounts/doctype/fiscal_year/fiscal_year.py`), but cre
 Scheduled job `app.auto_create_fiscal_year()` (daily; ERPNext `daily_maintenance`): for every non-short FY with `year_end_date <= today + 3 days`, insert the next year (`start = end + 1`, `end = start + 1y − 1d`, same companies, `auto_created = true`, `disabled` copied) if that `year` name does not already exist.
 
 - Permissions: System Manager rwcd; read for Sales User, Purchase User, Accounts User, Stock User, Employee, Accounts Manager, Stock Manager, Auditor.
+- **Built (0114):** `public.fiscal_year` (`year` unique per org, case-insensitive) and child `public.fiscal_year_company` (`company_id`, unique per year; deleting a company removes its rows). Route `/[org]/accounts/fiscal-year` (Accounting › Setup, as in ERPNext).
+  - `app.fiscal_year_validate` (before trigger) ports `validate_dates` (`fiscal_year_dates`: "Year End Date must be after Year Start Date", "Fiscal Year End Date should be one year after Fiscal Year Start Date" unless `is_short_year`) and names an empty `year` with `app.fiscal_year_name(start, end)` (`get_fy_details`).
+  - `app.fiscal_year_check_overlap` ports `validate_overlap` (`fiscal_year_overlap`) as a deferred constraint trigger on the year and its company rows (document-level validation, 02-database-conventions).
+  - `app.auto_create_fiscal_year()` runs daily through `pg_cron` (job `auto-create-fiscal-year`); a next year that would conflict is skipped.
+  - Form: changing Year Start Date sets Year End Date (start + 12 months − 1 day, unless short year) and re-derives a generated Year Name (`fiscal_year.js`; descriptor `triggers`). **Deviation:** a new form does not prefill the start date (`year_start()`); Year Name may be left empty.
+  - Descriptor `src/doctypes/accounts/fiscal-year.ts`; pgTAP `19_fiscal_year.test.sql`; e2e `fiscal-year.spec.ts`.
 
 ### 2.24 Terms and Conditions → `terms_and_conditions`
 
@@ -940,7 +946,7 @@ Decisions (2026-10-14):
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
 - [ ] Global Defaults + System Settings pages (**done in P0**, single-doctype forms); Settings pointer list in sidebar
 - [ ] Address + Contact + `contact_email` + `contact_phone` + `dynamic_link`: tables, naming, preferred/primary triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS
-- [ ] Fiscal Year + Fiscal Year Company: tables, validations, `app.auto_create_fiscal_year()` pg_cron daily
+- [x] Fiscal Year + Fiscal Year Company: tables, validations, `app.auto_create_fiscal_year()` pg_cron daily — `0114_accounts_fiscal_year.sql` (§2.23), descriptor `fiscal-year.ts`, field triggers
 - [ ] Terms and Conditions: table, validation, renderer
 - [ ] Home page: onboarding checklist (`onboarding_progress`), number-card + P&L chart placeholders wired to `app.home_number_cards()` / `app.report_profit_and_loss()` as modules land
 - [ ] `doctype_meta` rows + `role_permissions` upserts for every table above; `supabase gen types`; descriptors in `src/doctypes/setup/*.ts`

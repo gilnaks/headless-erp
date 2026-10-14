@@ -125,6 +125,10 @@ bin: unique (org_id, item_id, warehouse_id)
 4. Applied to the hosted project only by CI (`deploy-db.yml`) or, when working interactively against the **dev** project, by `supabase db push --linked` (keeps the `NNNN` versions in sync with git; preferred over the MCP `apply_migration`, which records timestamp versions) — never DDL against prod. A new framework migration numbered below an already-applied module migration (e.g. `0005` after `0100`) needs `--include-all`.
 5. Without Docker, run pgTAP against the linked dev project with `npm run db:test:linked` (`scripts/pgtap-remote.ps1`: each file runs in its own transaction and is rolled back), advisors with `supabase db advisors --linked`, types with `npm run db:types:linked`.
 
+## Scheduled jobs
+
+ERPNext scheduler events become `pg_cron` jobs (enabled in `0114`): an `app.<job>()` function (`security definer`, execute revoked from API roles, loops over every organization and isolates each row in a `begin … exception` block so one bad row does not stop the run) scheduled by name in the migration that creates it, `select cron.schedule('<job-name>', '<cron>', 'select app.<job>()')` (re-running replaces the job). pgTAP calls the function directly as `postgres` and asserts on the test organization's rows only. First job: `auto-create-fiscal-year` (daily 00:15 UTC).
+
 ## Seeds
 
 `supabase/seed/*.json` + `supabase/seed.sql` (local demo org). Reference catalogs (countries, currencies, standard CoA template, UOM list, UOM conversions) are loaded into **global** tables once; `app.provision_organization()` copies what each org needs.

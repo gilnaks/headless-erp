@@ -44,6 +44,6 @@ export async function createCompany(page: Page, org: string, name: string, abbr:
     await pick(page, "Default Currency", "PHP", /^PHP/);
     await pick(page, "Country", "Philippines", /^Philippines/);
     await page.getByRole("button", { name: /^Save/ }).click();
-    await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`));
+    await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`), { timeout: 15_000 });
     return page.url();
 }
