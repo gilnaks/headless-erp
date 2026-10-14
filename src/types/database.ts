@@ -46,10 +46,12 @@ export type Database = {
           name: string
         }[]
       }
+      company_abbr: { Args: { p_company_name: string }; Returns: string }
       company_allowed: {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
       }
+      create_company: { Args: { p: Json }; Returns: Json }
       create_invitation: {
         Args: {
           p_email: string
@@ -126,6 +128,7 @@ export type Database = {
         Returns: string[]
       }
       orgs_with_role: { Args: { p_role: string }; Returns: string[] }
+      provision_organization: { Args: { p: Json }; Returns: Json }
       record_allowed: {
         Args: {
           p_doctype: string
@@ -1934,6 +1937,7 @@ export type Database = {
           name: string
         }[]
       }
+      create_company: { Args: { p: Json }; Returns: Json }
       create_invitation: {
         Args: {
           p_email: string
@@ -1973,6 +1977,7 @@ export type Database = {
           module: string
         }[]
       }
+      provision_organization: { Args: { p: Json }; Returns: Json }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reset_role_permissions: {
         Args: { p_doctype: string; p_org: string }

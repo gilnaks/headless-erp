@@ -3,7 +3,8 @@ import { defineDoctype } from "../define";
 /**
  * Company (erpnext/setup/doctype/company/company.json). Tabs follow ERPNext's Tab Breaks; Link fields to Account,
  * Cost Center, Warehouse, Letter Head, Terms and Payment Terms join the form when those tables exist
- * (P1-P4). Validations live in `app.companies_validate` (supabase/migrations/0100_setup_company.sql).
+ * (P1-P4). Validations live in `app.companies_validate` (supabase/migrations/0100_setup_company.sql); new companies go
+ * through `app.create_company` (0116), which grows the Company.on_update side effects.
  */
 export const company = defineDoctype({
     doctype: "Company",
@@ -11,6 +12,7 @@ export const company = defineDoctype({
     module: "setup",
     slug: "company",
     titleField: "company_name",
+    create: "create_company",
     fields: {
         company_name: { type: "Data", label: "Company", required: true },
         abbr: { type: "Data", label: "Abbr", required: true, description: "Used as a suffix in account and cost center names." },

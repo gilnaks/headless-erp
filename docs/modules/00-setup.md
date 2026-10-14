@@ -613,7 +613,24 @@ Scheduled job `app.auto_create_fiscal_year()` (daily; ERPNext `daily_maintenance
 
 Mirrors `setup_wizard.get_setup_stages()`: **Setting up the basics** (`install_fixtures.install(country)`) → **Creating your company** (`install_company`) → **Applying recommended settings** (`install_defaults`) → (Personalizing = telemetry, skipped) → (Demo data, skipped; P11 generator). Runs as one `security definer` transaction called from the onboarding Server Action after verifying the caller; idempotent per `org_id` (re-run = no-op when `organizations.provisioned_at` is set).
 
-Input `p`: `{ org: {name, slug, country, currency, time_zone, language}, owner_user_id, company: {company_name, abbr, fy_start_date, fy_end_date, chart_of_accounts, bank_account}, modules: [...], invites: [{email, roles[]}] }`.
+Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language}, company: {company_name, abbr, fy_start_date, fy_end_date, chart_of_accounts, domain}, invites: [{email, roles[], role_profile}] }`. The owner is the caller (`auth.uid()`); there is no `modules` key (the wizard's Modules step is dropped) and `bank_account` arrives with B13.
+
+**Built (0116, staged):** `app.provision_organization(p)` (`security definer`, one transaction; public RPC `provision_organization`) runs:
+- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, the 31 designations and the `All Departments` root. A1-A4 and A18 are done; A5-A17 and A19-A22 wait for their tables.
+- **Stage B:**
+  - B1: a Fiscal Year from `fy_start_date` / `fy_end_date` (the end defaults to one year later; skipped without a start date, as in `install_company`).
+  - B2: the company through `app.create_company`. The abbreviation defaults to the word initials (`app.company_abbr`), currency and country default to the organization's, `chart_of_accounts` defaults to `Standard`, `enable_perpetual_inventory = true` and `create_chart_of_accounts_based_on = 'Standard Template'`.
+  - B8 (departments) and B11 (`org_currency`) run through the companies insert triggers.
+  - B3-B7, B9, B10 and B13 need the P2 account, cost center, warehouse, tax and mode-of-payment tables and are added by those migrations.
+- **Stage C:**
+  - C3: `global_defaults` gets `default_company_id`, `default_currency` and `country`.
+  - C5: one `app.create_invitation` per invite (link only, §3.4).
+  - C6: `provisioned_at = now()`.
+  - C1, C2 and C4 wait for their tables.
+- **Idempotency:** re-running for a slug the caller owns that is already provisioned returns `{id, slug, company_id}` unchanged; any other existing slug fails with `slug_taken`.
+- **Atomicity:** any error, such as an invalid invite or an unknown chart, rolls back the whole organization.
+- **Existing organizations:** those created before 0116 had `provisioned_at` backfilled to `created_at`.
+- **Tests:** pgTAP `21_provision_organization.test.sql`.
 
 **Stage A — basics (org-level fixtures)**
 
@@ -767,6 +784,12 @@ Template selection (`get_charts_for_country(country, with_standard)`): verified 
 
 Same as Stage B (B2–B13) without the Fiscal Year (B1); `global_defaults.default_company_id` unchanged. When `parent_company` is given: `create_chart_of_accounts_based_on = 'Existing Company'`, `existing_company = parent` (`set_chart_of_accounts`) and the chart is copied from the parent's account tree (`get_account_tree_from_existing_company`, same `account_type/root_type/tax_rate/account_number/account_currency` per node); `reporting_currency` = parent's. Changing `country` later re-runs B7 (`frappe.flags.country_change`). ERPNext's `create_default_tax_template` is also exposed as a form action ("Create Default Tax Template") → `app.create_default_tax_templates(company_id)`.
 
+**Built (0116):**
+- `app.create_company(p)` (`security invoker`, so RLS authorizes; public RPC `create_company`) inserts the company through `app.save_doc` and returns `{id, name}`.
+- The Company descriptor's `create: "create_company"` hook makes the Company form's "new" path call it (05-ui-ux).
+- Departments (B8) and the org currency (B11) come from the insert triggers. The default company is set only when the organization has none.
+- The P2 side effects (B3-B7, B9, B10, B13) and the parent-company chart copy are added to this function by the migrations that create their tables.
+
 ### 3.4 Invite flow
 
 Owner/System Manager → `invitations(org_id, email, roles[], role_profile?, token, expires_at = now + 7 days)` → email via platform sender using template `Invitation` with `/invite/[token]` → recipient signs up/in → Server Action `acceptInvitation(token)`: verifies not expired/accepted, inserts `org_members(status = active, roles)`, `user_profile` if missing, sets `accepted_at`, forces token refresh. Resend / revoke actions on the Users page. Mirrors Frappe's "Add User → welcome email" (`invite_users` onboarding step: *Invite your team — Add the people you work with and choose what they can see*).
@@ -916,9 +939,9 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - [x] `role_profile` table + seed; default permissions via `role_permission_template` (table + `app.sync_role_permissions()` done in `0004`; each doctype migration adds its rows — Company done) — `0102_setup_role_profiles.sql`: global `role_profile_template` (5 ERPNext profiles), copied into every org by `app.sync_role_permissions()` without overwriting tenant edits
 - [x] `system_settings`, `global_defaults` tables + defaults — `0103_setup_global_defaults.sql`, `0104_setup_system_settings.sql` (§2.17–2.18): single doctypes seeded per org, pages at `/[org]/setup/global-defaults` and `/[org]/setup/system-settings`
 - [x] Auth: email+password, magic link, `proxy.ts` session refresh, `acceptInvitation()`, custom access token hook — `/login` (Password / Email link tabs), `/signup`, `/forgot-password`, `/update-password`, `/auth/callback` (PKCE `code` or `token_hash`), `/auth/signout`, `/invite/[token]`; Server Actions in `src/lib/actions/auth.ts` + `organization.ts`
-- [x] P0 precursor of §3.1 Stage A: `app.create_organization(jsonb)` (`0005`, reserved slugs `0006`) creates the org, seeds role permissions and makes the caller owner + System Manager; `/setup` form calls it and refreshes the session. P1 replaces it with `app.provision_organization()`
+- [x] P0 precursor of §3.1 Stage A: `app.create_organization(jsonb)` (`0005`, reserved slugs `0006`) creates the org, seeds role permissions and makes the caller owner + System Manager; `/setup` form calls it and refreshes the session. P1 wraps it as Stage A of `app.provision_organization()` (0116)
 - [x] App shell: icon rail (org switcher, 7 modules + Setup), module sidebar from `src/config/navigation.ts` (ERPNext sidebars, out-of-scope items removed, phase per PLAN §7), top bar (company switcher → `hx_company` cookie, Ctrl/⌘K command palette with Go to / Create / Records, user menu), placeholder pages `/[org]/[module]/[...slug]`, `src/stores/session.ts` + `ui.ts`
-- [x] Doctype framework proven on Company — `0007_framework_naming.sql` (`naming_series`, `app.next_name`), `0008_framework_doc_engine.sql` (`app.save_doc` / `app.delete_doc`), `src/doctypes/` (`defineDoctype`, `schemaFor`, registry, `setup/company.ts`: Details tab + Chart of Accounts section only; Accounts/Stock default Link fields wait for their tables), generic `DocList` / `DocForm` / `ChildTable` / `LinkField` on `/[org]/setup/company[/new|/<id>]`. **Company "new" currently goes through `save_doc` (plain insert, no CoA/fiscal year/warehouses); P1 swaps the create path for `app.create_company()`.**
+- [x] Doctype framework proven on Company — `0007_framework_naming.sql` (`naming_series`, `app.next_name`), `0008_framework_doc_engine.sql` (`app.save_doc` / `app.delete_doc`), `src/doctypes/` (`defineDoctype`, `schemaFor`, registry, `setup/company.ts`: Details tab + Chart of Accounts section only; Accounts/Stock default Link fields wait for their tables), generic `DocList` / `DocForm` / `ChildTable` / `LinkField` on `/[org]/setup/company[/new|/<id>]`. Company "new" goes through `app.create_company()` (descriptor `create` hook, 0116).
 - [x] CI and deploys (`06-deployment-ops.md`): `.github/workflows/ci.yml` (Biome, tsc, Vitest; clean `supabase db reset` + pgTAP, types drift check, doctype/DB consistency suite `src/doctypes/doctypes.db.test.ts`, `next build`, Playwright smoke `e2e/smoke.spec.ts`), gated `deploy-db.yml`, Dependabot, PR template. Netlify site and production secrets are owner setup steps
 - [x] Custom claims + token refresh after role edits — the org layout uses `org_members.roles`; `ClaimsRefresher` refreshes the session once when the JWT `app.orgs` roles are stale (`01-tenancy-auth-rls.md`)
 - [x] Command palette (Ctrl/⌘K): Go to, Create, Records (`searchDocs`) — `05-ui-ux.md`
@@ -931,8 +954,8 @@ Decisions (2026-10-14):
 - **Email sending deferred:** Email Account and Email Template tables and UI are built; the provider (Edge Function, Vault) comes later.
 - **Workflow:** one branch and PR per item, merged when CI is green.
 
-- [ ] `app.provision_organization(jsonb)` implementing §3.1 Stages A–C (idempotent, single transaction) + pgTAP test asserting counts/names of every seeded record and every `companies.*_account_id` default
-- [ ] `app.create_company(jsonb)` (§3.3) incl. parent-company CoA copy and "Create Default Tax Template" action
+- [x] `app.provision_organization(jsonb)` implementing §3.1 Stages A–C (idempotent, single transaction) + pgTAP test asserting counts/names of every seeded record — `0116_setup_provision_organization.sql`, `21_provision_organization.test.sql`; staged: the P1 steps (A1-A4, A18, B1, B2, B8, B11, C3, C5, C6) are built, and each P2+ migration adds its steps and assertions, including every `companies.*_account_id` default
+- [ ] `app.create_company(jsonb)` (§3.3) incl. parent-company CoA copy and "Create Default Tax Template" action — the function and the Company form's create hook are built (0116); the chart, defaults, parent copy and tax templates wait for the P2 tables
 - [x] CoA template loader: global `coa_template` table (generated migration like `0009`), `supabase/seed/coa/verified/*.json` (73 files) + the two standard Python charts; `app.coa_template_preview(key)`, `app.coa_templates_for_country(country)` — `0115_setup_coa_templates.sql` (§3.2, 1.5 MB: 41 templates), `scripts/gen-coa-templates.mjs`, Company `ChartOfAccounts` select
 - [ ] Country-wise tax seed (`country_wise_tax.json`) → `app.create_default_tax_templates(company_id)`
 - [ ] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings"

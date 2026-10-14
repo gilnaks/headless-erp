@@ -21,8 +21,8 @@ function docTag(orgId: string, doctype: string): string {
 }
 
 /**
- * Generic save (frappe `Document.save`): Zod parse with the doctype's schema, then `app.save_doc` (RLS authorizes).
- * New documents redirect to their form; edits refresh the current route.
+ * Generic save (frappe `Document.save`): Zod parse with the doctype's schema, then `app.save_doc` (RLS authorizes), or
+ * the descriptor's `create` RPC for new documents. New documents redirect to their form; edits refresh the route.
  */
 export async function saveDoc(input: {
     orgSlug: string;
@@ -45,7 +45,10 @@ export async function saveDoc(input: {
     const payload = { ...formToPayload(d, parsed.data as FieldValues, { isNew }), ...(isNew ? { org_id: org.id } : { id: input.id }) };
 
     const supabase = await createClient();
-    const { data, error } = await supabase.rpc("save_doc", { p_doctype: d.doctype, p_payload: payload });
+    const { data, error } =
+        isNew && d.create
+            ? await supabase.rpc(d.create, { p: payload })
+            : await supabase.rpc("save_doc", { p_doctype: d.doctype, p_payload: payload });
     if (error) {
         const { code, message } = dbError(error);
         const field = d.errorFields[code];
