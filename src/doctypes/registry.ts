@@ -1,6 +1,7 @@
 import type { Doctype } from "./define";
 import { branch } from "./setup/branch";
 import { company } from "./setup/company";
+import { department } from "./setup/department";
 import { designation } from "./setup/designation";
 import { globalDefaults } from "./setup/global-defaults";
 import { role } from "./setup/role";
@@ -18,6 +19,7 @@ export const DOCTYPES: readonly Doctype[] = [
     userPermission,
     branch,
     designation,
+    department,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {

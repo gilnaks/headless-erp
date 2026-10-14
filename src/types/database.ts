@@ -116,6 +116,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      seed_department_root: { Args: { p_org: string }; Returns: string }
+      seed_departments: { Args: { p_company: string }; Returns: undefined }
       seed_designations: { Args: { p_org: string }; Returns: undefined }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tree_label: { Args: { p_id: string }; Returns: unknown }
@@ -616,6 +618,76 @@ export type Database = {
           symbol_on_right?: boolean
         }
         Relationships: []
+      }
+      department: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          department_name: string
+          disabled: boolean
+          id: string
+          is_group: boolean
+          name: string
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department_name: string
+          disabled?: boolean
+          id?: string
+          is_group?: boolean
+          name: string
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          department_name?: string
+          disabled?: boolean
+          id?: string
+          is_group?: boolean
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "department_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "department"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
       }
       designation: {
         Row: {

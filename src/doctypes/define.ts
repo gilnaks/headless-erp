@@ -59,6 +59,18 @@ export type ListView = {
     defaultSort: { field: string; desc?: boolean };
 };
 
+/** ERPNext tree doctype (`is_tree`, NestedSet): drives the Tree view (`?view=tree`). */
+export type TreeOptions = {
+    /** Self Link to the parent node (ERPNext `nsm_parent_field`). */
+    parentField: string;
+    /** Check field: only groups can have children ("Add child"). */
+    groupField: string;
+    /** Link fields offered as tree filters (ERPNext treeview `filters`); copied onto new child nodes. */
+    filters?: string[];
+    /** Check field hiding nodes unless "Include disabled" is on. */
+    disabledField?: string;
+};
+
 export type ChildDoctype = {
     doctype: string;
     table: TableName;
@@ -83,6 +95,7 @@ export type Doctype = {
     listView: ListView;
     /** Maps `code` of a `code: message` database error to the field it belongs to. */
     errorFields: Record<string, string>;
+    tree?: TreeOptions;
 };
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
@@ -102,6 +115,7 @@ type DoctypeBase<T extends TableName, C extends string> = {
     children?: Record<C, ChildDoctype>;
     tabs: LayoutOf<Columns<T> | C>;
     errorFields?: Record<string, Columns<T>>;
+    tree?: { parentField: Columns<T>; groupField: Columns<T>; filters?: Columns<T>[]; disabledField?: Columns<T> };
 };
 
 /** `C` = Table field names (child row arrays), which are not columns of the parent table. */
@@ -130,6 +144,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         tabs: input.tabs as FormTab[],
         listView: input.listView ?? { columns: [], searchFields: [], defaultSort: { field: "id" } },
         errorFields: input.errorFields ?? {},
+        ...(input.tree ? { tree: input.tree } : {}),
     };
 }
 

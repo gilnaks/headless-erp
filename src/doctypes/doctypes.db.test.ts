@@ -53,6 +53,7 @@ describe.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s", (_, d) => {
             is_single: d.single,
         });
         if (!d.single) expect(meta?.title_field).toBe(d.titleField);
+        expect(meta?.is_tree).toBe(Boolean(d.tree));
     });
 
     it("uses only real columns for fields, list view and title", async () => {
@@ -67,6 +68,7 @@ describe.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s", (_, d) => {
             ...d.listView.columns,
             ...d.listView.searchFields,
             d.listView.defaultSort.field,
+            ...(d.tree ? [d.tree.parentField, d.tree.groupField, ...(d.tree.filters ?? []), d.tree.disabledField ?? "id"] : []),
         ]);
     });
 

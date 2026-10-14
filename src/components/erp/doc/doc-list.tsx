@@ -10,6 +10,7 @@ import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Input } from "@/components/base/input/input";
 import { NativeSelect } from "@/components/base/select/select-native";
+import { ViewToggle } from "@/components/erp/doc/view-toggle";
 import { type Doctype, docPath, type FieldDef, type FieldValues } from "@/doctypes/define";
 import { getDoctypeByName } from "@/doctypes/registry";
 import { type LinkTitles, linkTitle } from "@/lib/link-titles";
@@ -94,6 +95,7 @@ export function DocList({ doctype, orgSlug, rows, count, page, pageSize, sort, d
         <div className="flex flex-col gap-4">
             <header className="flex flex-wrap items-center gap-3">
                 <h1 className="flex-1 text-lg font-semibold text-primary">{d.doctype}</h1>
+                {d.tree && <ViewToggle view="list" />}
                 {canCreate && (
                     <Button size="sm" iconLeading={Plus} href={`${baseHref}/new`}>
                         New {d.doctype}

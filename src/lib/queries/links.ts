@@ -54,8 +54,13 @@ export async function searchLinkTitles(orgId: string, doctype: string, q: string
 }
 
 /** Titles for every Link / DynamicLink cell of a list page, one query per target doctype. */
-export async function getListLinkTitles(d: Doctype, orgId: string, rows: FieldValues[]): Promise<LinkTitles> {
-    const requests = [...linkRequests(d.fields, d.listView.columns, rows)];
+export async function getListLinkTitles(
+    d: Doctype,
+    orgId: string,
+    rows: FieldValues[],
+    columns: string[] = d.listView.columns,
+): Promise<LinkTitles> {
+    const requests = [...linkRequests(d.fields, columns, rows)];
     const resolved = await Promise.all(requests.map(([doctype, ids]) => getLinkTitles(orgId, doctype, ids)));
     const titles: LinkTitles = {};
     requests.forEach(([doctype], i) => {

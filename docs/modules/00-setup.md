@@ -160,6 +160,13 @@ Additionally owned by this doc (not sidebar items):
 
 - Permissions (JSON): HR User/HR Manager/Academics User rwcd; read-less rows for Employee, Accounts User, Projects Manager/User, Quality Manager. We seed System Manager rwcd + read for Projects Manager/User and Accounts User (used as a filter dimension on Project/Task).
 - List/tree: name, company, is_group.
+- **Built (0112):** `public.department` (`department_name`, computed `name`, `parent_id`, `company_id`, `is_group`, `disabled`, `path`) with the `0004` tree triggers, `unique (org_id, name)` and one root per org (`parent_id is null`).
+  - `app.department_validate` (security definer) ports `autoname`/`before_rename`/`validate`: trims the name, sets `name = department_name || ' - ' || abbr` on every save (so renames keep the suffix) and an empty parent becomes the root.
+  - `app.department_guard` (security invoker, API callers only): non-root departments need a company (`company_required`); the root cannot be changed or deleted (`department_root`). Seeds and cascades bypass it.
+  - Seeds: `organizations_seed_department_root` creates "All Departments" (`is_group`); `companies_seed_departments` adds the 13 `create_default_departments` rows under it; the migration backfilled existing orgs and companies.
+  - Deleting a company deletes its departments (`on delete cascade`, as `company.py on_trash`). Deleting a group with children fails (self FK).
+  - **Deviation:** changing a company's abbreviation re-derives its department names (`companies_rename_departments`); ERPNext keeps the old names.
+  - Descriptor `department.ts` with `tree: { parentField: "parent_id", groupField: "is_group", filters: ["company_id"], disabledField: "disabled" }` (Tree view, §8); pgTAP `17_department.test.sql`; e2e `department.spec.ts`.
 
 ### 2.4 Designation → `designation`
 
@@ -839,6 +846,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
   - Built on the generic `DocList` / `DocForm` (not a dialog): the list shows the user's name and email and the record's title instead of ids, sorted by doctype. The member panel shows a "User Permissions" section (not a tab: the panel is one scrolling page of sections) with each row and an "Add user permission" button.
 - **Holiday List form**: header fields + actions *Add Weekly Holidays*, *Add Local Holidays*, *Clear Table*; child grid; calendar preview coloured by `color`.
 - **Department / Company**: `TreeView` with company filter (Department tree root is `All Departments`; `get_children` hides disabled unless toggled).
+  - Built: both list routes have a List / Tree toggle (`?view=tree`). Department filters by Company (`?company_id=`), keeping the root above the company's departments, and has "Include disabled". "Add child" on a group opens the new form with the parent and company prefilled (the root takes the company from the filter, as `add_node` does). See 05-ui-ux `TreeView`.
 - **Letter Head**: live preview of header/footer over an A4 frame; Image vs HTML toggle.
 - **Print Format**: read-only registry list with "Set as default" per doctype and a preview link to `/print/<doctype>/<sample>`.
 - **Email Account**: provider toggle (Resend / SMTP), "Send test email" action (Edge Function), default-outgoing switch.
@@ -907,7 +915,7 @@ Decisions (2026-10-14):
 - [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail
 - [x] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — `0106_setup_users.sql` (§2.6, §8), `0107_setup_invitations.sql` (§3.4, link-only delivery)
 - [x] Branch: table, descriptor, list/form — `0110_setup_branch.sql` (§2.2), descriptor `branch.ts`
-- [ ] Department: table (tree), seed root + 13 per company, TreeView
+- [x] Department: table (tree), seed root + 13 per company, TreeView — `0112_setup_department.sql` (§2.3), descriptor `department.ts`, generic `tree-view.tsx`
 - [x] Designation: table, 31-row seed, list/form — `0111_setup_designation.sql` (§2.4), org seed trigger + backfill
 - [ ] Holiday List + Holiday: tables, validations trigger, actions (weekly off, local holidays, clear), `app.is_holiday()`
 - [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type

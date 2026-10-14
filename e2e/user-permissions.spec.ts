@@ -1,20 +1,10 @@
 import { expect, type Page, test } from "@playwright/test";
-import { createOrganization, credentials, label, pick, signIn } from "./helpers";
+import { createCompany, createOrganization, credentials, label, pick, signIn } from "./helpers";
 
 async function switchUser(page: Page, prefix: string) {
     await page.context().clearCookies();
     await signIn(page, prefix);
     await expect(page).not.toHaveURL(/\/login/);
-}
-
-async function createCompany(page: Page, org: string, name: string, abbr: string) {
-    await page.goto(`${org}/setup/company/new`);
-    await page.getByRole("textbox", { name: label("Company") }).fill(name);
-    await page.getByRole("textbox", { name: label("Abbr") }).fill(abbr);
-    await pick(page, "Default Currency", "PHP", /^PHP/);
-    await pick(page, "Country", "Philippines", /^Philippines/);
-    await page.getByRole("button", { name: /^Save/ }).click();
-    await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`));
 }
 
 test("a Company user permission shows names in the list and limits the member to that company", async ({ page }) => {

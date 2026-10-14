@@ -35,3 +35,15 @@ export async function createOrganization(page: Page, name: string): Promise<stri
     await expect(page).toHaveURL(new RegExp(`/${slug}$`));
     return new URL(page.url()).pathname;
 }
+
+/** Creates a company in `org` (path from `createOrganization`) and returns its form URL. */
+export async function createCompany(page: Page, org: string, name: string, abbr: string): Promise<string> {
+    await page.goto(`${org}/setup/company/new`);
+    await page.getByRole("textbox", { name: label("Company") }).fill(name);
+    await page.getByRole("textbox", { name: label("Abbr") }).fill(abbr);
+    await pick(page, "Default Currency", "PHP", /^PHP/);
+    await pick(page, "Country", "Philippines", /^Philippines/);
+    await page.getByRole("button", { name: /^Save/ }).click();
+    await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`));
+    return page.url();
+}
