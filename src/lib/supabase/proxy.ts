@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { orgsFromClaims } from "@/lib/auth/orgs";
 import type { Database } from "@/types/database";
 import { supabasePublishableKey, supabaseUrl } from "./env";
 
-const PUBLIC_PREFIXES = ["/login", "/signup", "/invite", "/auth", "/health"];
+const PUBLIC_PREFIXES = ["/login", "/signup", "/forgot-password", "/invite", "/auth", "/health"];
 
 function isPublic(pathname: string): boolean {
     return pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -35,16 +36,28 @@ export async function updateSession(request: NextRequest) {
     if (!userId && !isPublic(pathname)) {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
-        url.searchParams.set("next", pathname);
+        url.search = "";
+        url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
         return NextResponse.redirect(url);
     }
 
     if (userId && (pathname === "/login" || pathname === "/signup")) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/";
-        url.search = "";
-        return NextResponse.redirect(url);
+        return redirectKeepingCookies(request, response, "/");
+    }
+
+    if (userId && pathname === "/" && Object.keys(orgsFromClaims(data?.claims as Record<string, unknown>)).length === 0) {
+        return redirectKeepingCookies(request, response, "/setup");
     }
 
     return response;
+}
+
+/** Redirects while carrying over any session cookies refreshed above. */
+function redirectKeepingCookies(request: NextRequest, response: NextResponse, pathname: string) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname;
+    url.search = "";
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    return redirect;
 }
