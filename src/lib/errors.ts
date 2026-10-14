@@ -50,5 +50,7 @@ export function dbError(error: { code?: string; message?: string } | null | unde
     const match = /^([a-z_]+):\s*(.+)$/.exec(message);
     if (error?.code === "P0001" && match) return { code: match[1], message: match[2] };
     if (error?.code === "42501") return { code: "permission_denied", message: "You do not have permission to do this." };
+    if (error?.code === "23505") return { code: "duplicate", message: "A record with this name already exists." };
+    if (error?.code === "23503") return { code: "linked", message: "Cannot delete or change this because other records are linked to it." };
     return { code: "unknown", message: "Something went wrong. Try again." };
 }

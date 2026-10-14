@@ -13,8 +13,16 @@ describe("dbError", () => {
         expect(dbError({ code: "42501", message: "permission denied for table x" }).code).toBe("permission_denied");
     });
 
-    it("hides raw database errors", () => {
+    it("maps unique and foreign key violations without leaking constraint names", () => {
         expect(dbError({ code: "23505", message: 'duplicate key value violates unique constraint "x"' })).toEqual({
+            code: "duplicate",
+            message: "A record with this name already exists.",
+        });
+        expect(dbError({ code: "23503", message: 'update or delete on table "companies" violates foreign key' }).code).toBe("linked");
+    });
+
+    it("hides other raw database errors", () => {
+        expect(dbError({ code: "22P02", message: 'invalid input syntax for type uuid: "x"' })).toEqual({
             code: "unknown",
             message: "Something went wrong. Try again.",
         });

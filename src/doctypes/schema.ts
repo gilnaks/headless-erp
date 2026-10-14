@@ -1,0 +1,135 @@
+import { z } from "zod";
+import type { ChildDoctype, Doctype, FieldDef, FieldValues } from "./define";
+
+/**
+ * Form values are input-shaped: text-like and numeric fields are strings ("" = empty), Check is boolean, Table is an
+ * array of row objects. `schemaFor` validates that shape (client resolver and Server Action share it) and
+ * `formToPayload` converts it to the jsonb sent to `app.save_doc`.
+ */
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const NUMBER = /^-?\d+(\.\d+)?$/;
+const INT = /^-?\d+$/;
+
+const NUMERIC_TYPES = new Set(["Int", "Float", "Currency", "Percent"]);
+
+function isEmpty(value: unknown): boolean {
+    return value === undefined || value === null || value === "";
+}
+
+function valueSchema(field: FieldDef): z.ZodType {
+    switch (field.type) {
+        case "Check":
+            return z.boolean();
+        case "Table":
+            return z.array(z.record(z.string(), z.unknown()));
+        case "Int":
+            return z.string().regex(INT, `${field.label} must be a whole number`).or(z.literal(""));
+        case "Float":
+        case "Currency":
+        case "Percent":
+            return z.string().regex(NUMBER, `${field.label} must be a number`).or(z.literal(""));
+        case "Link":
+            return z
+                .string()
+                .regex(UUID, `Select a valid ${field.target ?? field.label}`)
+                .or(z.literal(""));
+        case "Date":
+            return z.string().regex(DATE, `${field.label} must be a date (YYYY-MM-DD)`).or(z.literal(""));
+        case "Select":
+            if (Array.isArray(field.options)) {
+                const options = field.options as readonly string[];
+                return z
+                    .string()
+                    .refine((v) => v === "" || options.includes(v), `${field.label} must be one of: ${options.filter(Boolean).join(", ")}`);
+            }
+            return z.string();
+        default:
+            return z.string();
+    }
+}
+
+function objectSchema(fields: Record<string, FieldDef>, extra: Record<string, z.ZodType> = {}) {
+    const shape: Record<string, z.ZodType> = { ...extra };
+    for (const [name, field] of Object.entries(fields)) {
+        shape[name] = field.readOnly ? z.unknown().optional() : valueSchema(field);
+    }
+    return z.object(shape).superRefine((values, ctx) => {
+        for (const [name, field] of Object.entries(fields)) {
+            if (!field.required || field.readOnly) continue;
+            if (field.dependsOn && !field.dependsOn(values)) continue;
+            const value = values[name];
+            const missing = field.type === "Table" ? !Array.isArray(value) || value.length === 0 : isEmpty(value);
+            if (missing) ctx.addIssue({ code: "custom", path: [name], message: `${field.label} is required` });
+        }
+    });
+}
+
+export function childSchemaFor(child: ChildDoctype) {
+    return objectSchema(child.fields, { id: z.string().optional() });
+}
+
+export function schemaFor(d: Doctype) {
+    const childSchemas = Object.fromEntries(Object.entries(d.children).map(([name, child]) => [name, z.array(childSchemaFor(child))]));
+    const base = objectSchema(d.fields);
+    return Object.keys(childSchemas).length ? base.and(z.object(childSchemas)) : base;
+}
+
+function toInput(field: FieldDef, value: unknown): unknown {
+    if (field.type === "Check") return isEmpty(value) ? Boolean(field.default) : Boolean(value);
+    if (field.type === "Table") return Array.isArray(value) ? value : [];
+    if (isEmpty(value)) return field.default === undefined ? "" : String(field.default);
+    return String(value);
+}
+
+function rowToInput(fields: Record<string, FieldDef>, row: FieldValues | undefined): FieldValues {
+    const out: FieldValues = {};
+    for (const [name, field] of Object.entries(fields)) out[name] = toInput(field, row?.[name]);
+    return out;
+}
+
+/** Form default values from a stored row (or ERPNext defaults for a new document). */
+export function formValuesFor(d: Doctype, row?: FieldValues): FieldValues {
+    const values = rowToInput(d.fields, row);
+    for (const [name, child] of Object.entries(d.children)) {
+        const rows = Array.isArray(row?.[name]) ? (row?.[name] as FieldValues[]) : [];
+        values[name] = rows.map((r) => ({ ...(r.id ? { id: String(r.id) } : {}), ...rowToInput(child.fields, r) }));
+    }
+    return values;
+}
+
+/** A blank child row with ERPNext defaults. */
+export function newChildRow(child: ChildDoctype): FieldValues {
+    return rowToInput(child.fields, undefined);
+}
+
+function toPayload(field: FieldDef, value: unknown): unknown {
+    if (field.type === "Check") return Boolean(value);
+    if (isEmpty(value)) return null;
+    if (NUMERIC_TYPES.has(field.type)) return Number(value);
+    return typeof value === "string" ? value.trim() : value;
+}
+
+function rowToPayload(fields: Record<string, FieldDef>, values: FieldValues, isNew: boolean): FieldValues {
+    const out: FieldValues = {};
+    for (const [name, field] of Object.entries(fields)) {
+        if (field.readOnly || field.type === "Table" || !(name in values)) continue;
+        if (field.setOnlyOnce && !isNew) continue;
+        out[name] = toPayload(field, values[name]);
+    }
+    return out;
+}
+
+/** Validated form values -> `app.save_doc` payload (read-only fields dropped, "" -> null, numbers parsed). */
+export function formToPayload(d: Doctype, values: FieldValues, options: { isNew: boolean }): FieldValues {
+    const payload = rowToPayload(d.fields, values, options.isNew);
+    for (const [name, child] of Object.entries(d.children)) {
+        const rows = Array.isArray(values[name]) ? (values[name] as FieldValues[]) : [];
+        payload[name] = rows.map((r) => ({
+            ...(typeof r.id === "string" && UUID.test(r.id) ? { id: r.id } : {}),
+            ...rowToPayload(child.fields, r, true),
+        }));
+    }
+    return payload;
+}
