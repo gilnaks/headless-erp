@@ -8,7 +8,7 @@ type Columns<T extends TableName> = keyof Database["public"]["Tables"][T]["Row"]
 export type FieldType = "Data" | "Text" | "Select" | "Link" | "Date" | "Check" | "Int" | "Float" | "Currency" | "Percent" | "Table";
 
 /** Option lists resolved at runtime instead of being inlined (no reference tables yet). */
-export type OptionSource = "Currency" | "Country";
+export type OptionSource = "Currency" | "Country" | "TimeZone";
 
 export type FieldValues = Record<string, unknown>;
 

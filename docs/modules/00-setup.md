@@ -32,7 +32,7 @@ Sidebar source: `erpnext/setup/sidebar/setup/setup.json`. Sections marked *out* 
 | Email › Email Template | `/setup/email-template` | Email Template → `email_template` | P1 |
 | Email › Email Digest | `/setup/email-digest` | Email Digest / Email Digest Recipient → `email_digest`, `email_digest_recipient` | P1 (job wired as modules land) |
 | Settings › Global Defaults | `/setup/global-defaults` | Global Defaults (single) → `global_defaults` | P0 ✅ |
-| Settings › System | `/setup/system-settings` | System Settings (Frappe, subset) → `system_settings` | P1 |
+| Settings › System | `/setup/system-settings` | System Settings (Frappe, subset) → `system_settings` | P0 ✅ |
 | Settings › Accounts / Selling / Buying / Stock / Manufacturing / Projects | `/[org]/<module>/settings` | pointer links only — each is owned by its module doc (`01-accounts.md` … `06-projects.md`) | per module |
 | Data (Data Import, Rename Tool, Bulk Transaction Log, Transaction Deletion Record) | — | **out** (PLAN §1: Data Import/Rename tools) | — |
 | Integrations (telephony, Code List, Common Code) | — | **out** | — |
@@ -437,6 +437,7 @@ Only the fields that affect our behaviour; defaults are Frappe's.
 | session defaults | — | `Company` | `install.py: add_company_to_session_defaults` → the company switcher + `hx_company` cookie |
 
 - Permissions: System Manager rw.
+- **Built (P0, `0104_setup_system_settings.sql`):** one row per org, seeded on `organizations` insert: `date_format`/`time_format` from the country, `number_format` from the currency, `time_zone` from the org (unknown zones fall back to `UTC`). Selects are text with Frappe's option lists as check constraints (`float_precision` 2–9, `currency_precision` empty or 0–9). `time_zone_unknown` rejects zones Postgres does not know. Members read the row through RLS. **Deviation:** Frappe grants System Settings and Global Defaults to System Manager only; every other standard role gets read-only access so the pages open for them. `email_footer_address` is left empty until the wizard sets it. Number and date rendering still use the current formatting; applying these settings is a follow-up.
 
 ### 2.19 Address → `address` + `dynamic_link`
 

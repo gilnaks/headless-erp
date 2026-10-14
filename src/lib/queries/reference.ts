@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import type { OptionSource } from "@/doctypes/define";
+import { timeZoneOptions } from "@/lib/intl";
 import { countryItems, currencyItems, type ReferenceOptions } from "@/lib/reference-options";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,6 +20,7 @@ export const getCountries = cache(async () => {
 const LOADERS: Record<OptionSource, () => ReturnType<typeof getCurrencies>> = {
     Currency: getCurrencies,
     Country: getCountries,
+    TimeZone: async () => timeZoneOptions(),
 };
 
 /** Loads only the reference lists a form uses (global tables, readable by any signed-in user). */

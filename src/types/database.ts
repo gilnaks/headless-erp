@@ -1176,6 +1176,71 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          app_name: string
+          created_at: string
+          created_by: string | null
+          currency_precision: string | null
+          date_format: string
+          email_footer_address: string | null
+          first_day_of_the_week: string
+          float_precision: string
+          id: string
+          language: string
+          number_format: string
+          org_id: string
+          time_format: string
+          time_zone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          app_name?: string
+          created_at?: string
+          created_by?: string | null
+          currency_precision?: string | null
+          date_format?: string
+          email_footer_address?: string | null
+          first_day_of_the_week?: string
+          float_precision?: string
+          id?: string
+          language?: string
+          number_format?: string
+          org_id: string
+          time_format?: string
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          app_name?: string
+          created_at?: string
+          created_by?: string | null
+          currency_precision?: string | null
+          date_format?: string
+          email_footer_address?: string | null
+          first_day_of_the_week?: string
+          float_precision?: string
+          id?: string
+          language?: string
+          number_format?: string
+          org_id?: string
+          time_format?: string
+          time_zone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uom_conversion_template: {
         Row: {
           category: string
