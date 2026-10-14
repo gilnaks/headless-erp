@@ -204,6 +204,13 @@ Frappe `User` is a site-wide record with roles; in our model identity is global 
 
 - Owner (`org_members.is_owner`) always holds System Manager and cannot be removed/disabled.
 - List columns: full_name, email, roles (chips), status, last_sign_in_at.
+- **Built (P1, `0106_setup_users.sql`):**
+  - `app.org_member_directory(p_org)` (security definer, called through the security-invoker `public.org_member_directory`) joins `org_members` with `auth.users` (email) and `user_profile`. It returns rows only to active members of `p_org`; `last_sign_in_at` is filled only for System Managers. Owner first, then by name.
+  - Removing a member (deleting the `org_members` row) deletes their `user_permissions` in that org (Frappe `User.on_trash`); the auth user stays.
+  - User permissions: System Manager rwcd (Frappe `user.json`), locked like the other Access doctypes (§2.7). Writes to `org_members` are authorized by RLS (System Manager) and validated by `org_members_validate` (`owner_protected`, `invalid_role`).
+  - Disabling sets `status = 'disabled'`: roles are kept, and `app.is_member` / `user_org_ids` stop counting the membership, so the org disappears for that user.
+  - Server Actions `src/lib/actions/setup/users.ts`: `updateMemberRoles` (profile or hand-picked roles), `setMemberStatus`, `removeMember`. A user's JWT catches up with role changes through `ClaimsRefresher` on their next page load.
+  - Frappe User behaviour above is ported from memory (no local Frappe clone).
 
 ### 2.7 Role → `roles`; Role Profile → `role_profile`
 
@@ -800,6 +807,9 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Company form tabs** (Tab Breaks in `company.json`): *Details* (implicit first tab: name, abbr, is_group, parent, currency, country, letter head, holiday list, logo/description, CoA selection, registration fields) · *Accounts* (default accounts, cost center, frozen entries, exchange gain/loss, assets) · *Buying and Selling* (terms, sales-return warehouse, default sales contact, credit limit, payment terms) · *Stock and Manufacturing* (perpetual inventory, inventory/adjustment/SRBNB accounts, valuation method, default warehouses, operating cost) · *Dashboard* (monthly target, total monthly sales, transaction heatmap) · *Accounts Closing* (frozen till date, role allowed). Right rail: Address & Contact cards. Actions: Create Default Tax Template, Delete Transactions (out of scope → hidden).
 - **CoA selection step** (onboarding + new company): radio *Standard* / *Standard with Numbers* / `<country template(s)>`, with a read-only `TreeView` preview from `app.coa_template_preview(key)`; bank account name input validated against the template (`validate_bank_account`: cannot reuse an existing chart account name).
 - **Users page**: list + invite drawer (email, roles multi-select or role profile) + per-user panel (roles chips, user permissions tab, disable). Role Profile picker replaces roles.
+  - Built as bespoke routes `src/app/(app)/[org]/setup/users/page.tsx` and `[userId]/page.tsx` (listed in `BUILT_PAGES` in `src/config/navigation.ts`) instead of a descriptor: a member is `org_members` + `auth.users` + `user_profile`, keyed by `user_id` rather than a doctype row id, and its email is only readable through the directory function.
+  - List (`member-list.tsx`): search over name, email, profile and roles; Owner and status badges; rows open the panel.
+  - Panel (`member-panel.tsx`): Role Profile select (choosing one shows and saves its roles; the Roles multi-select is read-only while a profile is set; clearing the profile keeps its roles as a starting point), Active toggle (disabled for the owner), Remove with a confirm dialog (hidden for the owner). Read-only with an info alert without write permission on User.
 - **Role Permissions matrix** (Frappe `permission-manager` page): filter by doctype or role; rows = doctypes (grouped by module), columns = read/write/create/submit/cancel/amend/delete/if_owner toggles; "Reset to defaults" restores the seed; "Add new rule" picks role × doctype. Edits write `role_permissions` and invalidate claims.
 - **User Permissions**: list grouped by user; "Add" dialog = user, doctype (Company/Warehouse/Cost Center…), record, applicable_for (all / one doctype), is_default, hide_descendants.
 - **Holiday List form**: header fields + actions *Add Weekly Holidays*, *Add Local Holidays*, *Clear Table*; child grid; calendar preview coloured by `color`.
@@ -868,7 +878,7 @@ Decisions (2026-10-14):
 - [ ] Country-wise tax seed (`country_wise_tax.json`) → `app.create_default_tax_templates(company_id)`
 - [ ] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings"
 - [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail
-- [ ] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke
+- [ ] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — list, member panel, disable/remove and profile assignment done (`0106_setup_users.sql`, §2.6, §8); invitations pending
 - [ ] Branch: table, descriptor, list/form
 - [ ] Department: table (tree), seed root + 13 per company, TreeView
 - [ ] Designation: table, 31-row seed, list/form

@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 const USERS = [
     { env: "E2E", local: "smoke", first_name: "Smoke", last_name: "Test" },
     { env: "E2E_ACCESS", local: "access", first_name: "Access", last_name: "Admin" },
+    { env: "E2E_USERS", local: "users", first_name: "Users", last_name: "Admin" },
     { env: "E2E_INVITEE", local: "invitee", first_name: "Invited", last_name: "Member" },
 ] as const;
 

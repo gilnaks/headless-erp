@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { DocForm } from "@/components/erp/doc/doc-form";
 import { DocList } from "@/components/erp/doc/doc-list";
-import { FormAlert } from "@/components/erp/form-alert";
+import { NotPermitted } from "@/components/erp/not-permitted";
 import { PlaceholderPage } from "@/components/erp/placeholder-page";
 import { PageSkeleton } from "@/components/erp/shell/shell-skeleton";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
@@ -33,14 +33,6 @@ function describe(link: NavLink, path: string): string {
         default:
             return "This page is not built yet.";
     }
-}
-
-function NotPermitted({ action, doctype }: { action: string; doctype: string }) {
-    return (
-        <FormAlert>
-            You do not have permission to {action} {doctype}. Ask a System Manager for access.
-        </FormAlert>
-    );
 }
 
 async function ListRoute({ d, orgSlug, searchParams }: { d: Doctype; orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
