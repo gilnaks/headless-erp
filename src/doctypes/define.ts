@@ -75,7 +75,7 @@ export type FieldDef = {
 };
 
 /** Live panels shown below a form (`src/components/erp/doc/form-preview.tsx`). */
-export type FormPreview = "LetterHead";
+export type FormPreview = "LetterHead" | "EmailTemplate";
 
 export type FormSection = { label?: string; columns: string[][] };
 export type FormTab = { label: string; sections: FormSection[] };
@@ -124,6 +124,9 @@ export type FormAction = {
  */
 export type FieldTrigger = (values: FieldValues) => FieldValues;
 
+/** Document-level check (Frappe controller `validate`) run by the form and `saveDoc`: field name -> message. */
+export type DocValidator = (values: FieldValues) => Record<string, string>;
+
 export type ChildDoctype = {
     doctype: string;
     table: TableName;
@@ -152,6 +155,7 @@ export type Doctype = {
     /** Form actions, shown in the form header menu while the document is editable. */
     actions: FormAction[];
     triggers: Record<string, FieldTrigger>;
+    validate?: DocValidator;
     /** RPC that creates new documents instead of `save_doc` (creation side effects, e.g. `create_company`). */
     create?: CreateRpc;
     preview?: FormPreview;
@@ -179,6 +183,7 @@ type DoctypeBase<T extends TableName, C extends string> = {
     tree?: { parentField: Columns<T>; groupField: Columns<T>; filters?: Columns<T>[]; disabledField?: Columns<T> };
     actions?: FormAction[];
     triggers?: Partial<Record<Columns<T> | C, FieldTrigger>>;
+    validate?: DocValidator;
     create?: CreateRpc;
     preview?: FormPreview;
     addressContact?: true;
@@ -213,6 +218,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         ...(input.tree ? { tree: input.tree } : {}),
         actions: input.actions ?? [],
         triggers: (input.triggers ?? {}) as Record<string, FieldTrigger>,
+        ...(input.validate ? { validate: input.validate } : {}),
         ...(input.create ? { create: input.create } : {}),
         ...(input.preview ? { preview: input.preview } : {}),
         ...(input.addressContact ? { addressContact: true as const } : {}),

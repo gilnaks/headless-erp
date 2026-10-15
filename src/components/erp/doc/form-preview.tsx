@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { FieldValues, FormPreview as FormPreviewKind } from "@/doctypes/define";
+import { renderTemplate, type TemplateContext } from "@/lib/email/render";
 import { cx } from "@/utils/cx";
 import { useSignedFileUrl } from "./attach-image-field";
 
@@ -12,7 +13,60 @@ export function FormPreview({ kind, ...props }: PreviewProps & { kind: FormPrevi
     switch (kind) {
         case "LetterHead":
             return <LetterHeadPreview {...props} />;
+        case "EmailTemplate":
+            return <EmailTemplatePreview {...props} />;
     }
+}
+
+const SAMPLE_CONTEXT: TemplateContext = {
+    doc: {
+        doctype: "Sales Invoice",
+        name: "ACC-SINV-2026-00001",
+        customer_name: "Sample Customer",
+        posting_date: "2026-01-15",
+        due_date: "2026-02-14",
+        grand_total: 1250,
+        currency: "USD",
+        items: [{ item_code: "SAMPLE-ITEM", item_name: "Sample Item", qty: 5, rate: 250 }],
+    },
+    company: { company_name: "Your Company", default_currency: "USD" },
+    user: { full_name: "Your Name" },
+};
+
+/** The template rendered against a sample Sales Invoice; compile errors are shown instead. */
+function EmailTemplatePreview({ values }: PreviewProps) {
+    const str = (name: string) => (typeof values[name] === "string" ? (values[name] as string) : "");
+    const html = Boolean(values.use_html);
+    const render = (source: string, asHtml: boolean) => {
+        try {
+            return { text: renderTemplate(source, SAMPLE_CONTEXT, { html: asHtml }), error: null };
+        } catch (e) {
+            return { text: "", error: e instanceof Error ? e.message : "Invalid template" };
+        }
+    };
+    const subject = render(str("subject"), false);
+    const body = render(html ? str("response_html") : str("response"), html);
+    return (
+        <section className="flex flex-col gap-3 border-t border-secondary py-5">
+            <h2 className="text-sm font-semibold text-primary">Preview</h2>
+            <p className="text-xs text-tertiary">Rendered with a sample Sales Invoice.</p>
+            <div data-testid="email-template-preview" className="flex flex-col gap-3 rounded-lg bg-secondary p-4">
+                <p className="text-sm text-primary">
+                    <span className="font-medium text-secondary">Subject: </span>
+                    {subject.error ? <span className="text-error-primary">{subject.error}</span> : subject.text}
+                </p>
+                <div className="rounded-md bg-white p-4 text-black shadow-xs">
+                    {body.error ? (
+                        <p className="text-sm text-error-primary">{body.error}</p>
+                    ) : html ? (
+                        body.text.trim() && <HtmlFrame title="Email body preview" html={body.text} />
+                    ) : (
+                        <p className="text-sm whitespace-pre-wrap">{body.text}</p>
+                    )}
+                </div>
+            </div>
+        </section>
+    );
 }
 
 const ALIGN: Record<string, string> = { Left: "text-left", Center: "text-center", Right: "text-right" };

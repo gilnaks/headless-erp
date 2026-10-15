@@ -441,6 +441,13 @@ Frappe `Email Account` plus ERPNext custom field `company` (`install.py: create_
 - Placeholders: handlebars-style subset `{{doc.<field>}}`, `{{doc.<child>[0].<field>}}`, `{{company.<field>}}`, `{{user.full_name}}` with helpers `money`, `date`, `qty` (**Deviation:** Frappe renders full Jinja with `restrict_globals`). Validation: compile the template on save, reject unknown helpers.
 - Seeded per org: none of ERPNext's (`Dispatch Notification` belongs to Delivery Trip, out of scope). App-level (non-org) templates: `Invitation`, `Send Document` (used by the form "Email" action with subject `{{doc.doctype}} {{doc.name}}`).
 - Permissions: System Manager rwcd; Sales/Purchase/Accounts Manager rw, all read.
+- **Built (P1, `0124_setup_email_template.sql`, descriptor `email-template.ts`):**
+  - Table with trims, a non-empty subject, and names unique per org (case-insensitive; the name is set once). Permissions as above: the 19 standard roles read, the three managers also write, and only System Manager creates and deletes.
+  - `src/lib/email/render.ts`: `compileTemplate` / `renderTemplate`. Placeholders are `{{doc.x}}`, `{{doc.items[0].x}}`, `{{company.x}}` and `{{user.full_name}}`, optionally with one helper (`money`, `date`, `qty`). `money` uses `doc.currency`, then the company's default currency. Missing values and objects render as empty. HTML output escapes every value. Unknown helpers or roots, `{{#blocks}}`, filters and unbalanced `{{ }}` are errors.
+  - The descriptor's `validate` hook compiles the subject and both bodies; the client resolver and `saveDoc` share it, so errors land on the field. `response_html` is sanitized on save like other HTML fields.
+  - Live preview (`preview: "EmailTemplate"`): subject and body rendered against a sample Sales Invoice; the HTML body is shown in a sandboxed frame, and compile errors are shown in place.
+  - App-level templates live in code (`src/lib/email/templates.ts`): `Invitation` and `Send Document` (subject `{{doc.doctype}} {{doc.name}}`).
+  - pgTAP `28_email_template`, Vitest `render.test.ts`, e2e `email-template.spec.ts`.
 
 ### 2.16 Email Digest → `email_digest` + child `email_digest_recipient`
 
@@ -1025,7 +1032,7 @@ Decisions (2026-10-14):
 - [x] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
 - [x] Print Settings: table + SettingsPage
 - [x] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action — `0123_setup_email_account.sql` (§2.14), descriptor `email-account.ts`, `email_log`; sending is a server-only module (`src/lib/email/transport.ts`, `sender.ts`) instead of an Edge Function; SMTP deferred
-- [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action
+- [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action — table, renderer, templates and form are built (`0124_setup_email_template.sql`, §2.15); the form "Email" action is next
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
 - [ ] Global Defaults + System Settings pages (**done in P0**, single-doctype forms); Settings pointer list in sidebar
 - [x] Address + `address_link`: tables, naming, preferred/company-address triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS — `0121_setup_address.sql` (§2.19), descriptor `address.ts`

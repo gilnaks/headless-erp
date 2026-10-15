@@ -1473,6 +1473,56 @@ export type Database = {
           },
         ]
       }
+      email_template: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          response: string | null
+          response_html: string | null
+          subject: string
+          updated_at: string
+          updated_by: string | null
+          use_html: boolean
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          response?: string | null
+          response_html?: string | null
+          subject: string
+          updated_at?: string
+          updated_by?: string | null
+          use_html?: boolean
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          response?: string | null
+          response_html?: string | null
+          subject?: string
+          updated_at?: string
+          updated_by?: string | null
+          use_html?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiscal_year: {
         Row: {
           auto_created: boolean
