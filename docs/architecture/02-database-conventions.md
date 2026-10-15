@@ -104,7 +104,7 @@ Doctype registry table `doctype_meta(doctype, table_name, module, is_submittable
 ## Files (Storage)
 
 - One **private** bucket, `org-files` (0118), created by migration (`insert into storage.buckets … on conflict do update`): 2 MB limit, PNG/JPEG/GIF/WebP only (SVG excluded: it can carry scripts).
-- Object names: `<org_id>/<folder>/<uuid>.<ext>`, where `<folder>` is the owning doctype's slug (`letter-head`). Rows store the object path, never a URL; tables add a `check (starts_with(<col>, org_id::text || '/<folder>/'))` so a row cannot point at another org's file.
+- Object names: `<org_id>/<folder>/<uuid>.<ext>`, where `<folder>` is the owning doctype's slug (`letter-head`, `contact`). Rows store the object path, never a URL; tables add a `check (starts_with(<col>, org_id::text || '/<folder>/'))` so a row cannot point at another org's file.
 - Policies on `storage.objects`, all `bucket_id = 'org-files'`: **select** for members of the first path segment's org (`app.is_member(app.file_org(name))`); **insert / update / delete** when `app.can_write_file(name)` = write or create permission on the doctype mapped from the folder by `app.file_doctype` (unknown folders accept nothing). Add a folder by extending `app.file_doctype` and the `FOLDERS` set in `src/lib/actions/files.ts`.
 - Uploads: a Server Action creates a signed upload URL with the user's client (Storage RLS decides), the browser uploads with the token. Reads: short-lived signed URLs (`signedFileUrls`, 1 h). Direct `delete from storage.objects` is blocked by Supabase (`protect_objects_delete`); removing a file reference leaves the object (cleanup job: future work).
 

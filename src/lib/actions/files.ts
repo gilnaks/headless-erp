@@ -11,7 +11,7 @@ const MAX_BYTES = 2 * 1024 * 1024;
 /** Mirrors `storage.buckets.allowed_mime_types` for `org-files` (0118). */
 const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/webp": "webp" };
 /** Folders with storage policies (`app.file_doctype`). */
-const FOLDERS = new Set(["letter-head"]);
+const FOLDERS = new Set(["letter-head", "contact"]);
 const SIGNED_URL_SECONDS = 60 * 60;
 
 /**
