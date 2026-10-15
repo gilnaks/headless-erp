@@ -1,7 +1,13 @@
 import type { ChildDoctype, Doctype, FieldDef, FieldValues } from "@/doctypes/define";
 import { type LinkTitles, linkTitle } from "@/lib/link-titles";
 
-export type PrintTemplateProps = { doctype: Doctype; doc: FieldValues; titles: LinkTitles };
+export type PrintTemplateProps = {
+    doctype: Doctype;
+    doc: FieldValues;
+    titles: LinkTitles;
+    /** The company's preferred billing address lines (`app.company_address`), printed under the header. */
+    companyAddress?: string[] | null;
+};
 
 const DECIMAL = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 });
 const INTEGER = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -72,7 +78,7 @@ function ChildRows({ child, rows, titles }: { child: ChildDoctype; rows: FieldVa
  * Generic "<Doctype> Standard" template: the descriptor's tabs → sections → columns, printing only fields with a
  * value; child tables print as tables.
  */
-export function RecordTemplate({ doctype: d, doc, titles }: PrintTemplateProps) {
+export function RecordTemplate({ doctype: d, doc, titles, companyAddress }: PrintTemplateProps) {
     const tabs = d.tabs
         .map((tab) => ({
             label: tab.label,
@@ -87,6 +93,16 @@ export function RecordTemplate({ doctype: d, doc, titles }: PrintTemplateProps) 
 
     return (
         <div className="flex flex-col gap-5">
+            {companyAddress && companyAddress.length > 0 && (
+                <address data-testid="company-address" className="text-tertiary not-italic">
+                    {companyAddress.map((line, i) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: address lines can repeat and never reorder
+                        <span key={i} className="block">
+                            {line}
+                        </span>
+                    ))}
+                </address>
+            )}
             {tabs.map((tab, ti) => (
                 <section key={tab.label} className="flex flex-col gap-4">
                     {tabs.length > 1 && ti > 0 && (

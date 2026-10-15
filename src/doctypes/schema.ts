@@ -115,17 +115,33 @@ export function formValuesFor(d: Doctype, row?: FieldValues): FieldValues {
     return values;
 }
 
+function queryValue(field: FieldDef, raw: string | string[] | undefined): unknown {
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    if (value === undefined || field.readOnly || ARRAY_TYPES.has(field.type)) return undefined;
+    return field.type === "Check" ? value === "1" || value === "true" : value;
+}
+
 /**
  * Values for a new document from the URL query (Frappe `frappe.route_options`, e.g. `?user_id=<id>`): editable,
- * non-table fields only; null when nothing applies.
+ * non-table fields, plus one row per Table from `<table>.<field>` keys (`?links.link_doctype=Company&links.link_id=<id>`);
+ * null when nothing applies.
  */
-export function prefillValues(d: Pick<Doctype, "fields">, query: Record<string, string | string[] | undefined>): FieldValues | null {
+export function prefillValues(
+    d: Pick<Doctype, "fields"> & Partial<Pick<Doctype, "children">>,
+    query: Record<string, string | string[] | undefined>,
+): FieldValues | null {
     const row: FieldValues = {};
     for (const [name, field] of Object.entries(d.fields)) {
-        const raw = query[name];
-        const value = Array.isArray(raw) ? raw[0] : raw;
-        if (value === undefined || field.readOnly || ARRAY_TYPES.has(field.type)) continue;
-        row[name] = field.type === "Check" ? value === "1" || value === "true" : value;
+        const value = queryValue(field, query[name]);
+        if (value !== undefined) row[name] = value;
+    }
+    for (const [name, child] of Object.entries(d.children ?? {})) {
+        const seeded: FieldValues = {};
+        for (const [column, field] of Object.entries(child.fields)) {
+            const value = queryValue(field, query[`${name}.${column}`]);
+            if (value !== undefined) seeded[column] = value;
+        }
+        if (Object.keys(seeded).length) row[name] = [{ ...newChildRow(child), ...seeded }];
     }
     return Object.keys(row).length ? row : null;
 }

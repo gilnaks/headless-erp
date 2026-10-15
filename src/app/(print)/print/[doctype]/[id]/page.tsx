@@ -84,7 +84,7 @@ async function PrintView({ params, searchParams }: PrintPageProps) {
                         </div>
                         {ctx.draftHeading && <p className="text-[1.6em] font-semibold text-error-primary uppercase">Draft</p>}
                     </header>
-                    <Template doctype={d} doc={doc} titles={ctx.titles} />
+                    <Template doctype={d} doc={doc} titles={ctx.titles} companyAddress={ctx.companyAddress} />
                     {letterHead && <LetterHead block={letterHead.footer} label="footer" />}
                 </article>
             )}

@@ -19,6 +19,7 @@ import { formValuesFor, schemaFor } from "@/doctypes/schema";
 import { deleteDoc, saveDoc } from "@/lib/actions/doc";
 import { applyFieldErrors } from "@/lib/forms";
 import type { ReferenceOptions } from "@/lib/reference-options";
+import { AddressContactRail } from "./address-contact-rail";
 import { ChildTable } from "./child-table";
 import { FieldRenderer, ReferenceOptionsContext } from "./field-renderer";
 import { FormPreview } from "./form-preview";
@@ -137,6 +138,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     const title = isNew ? `New ${d.doctype}` : d.single ? d.doctype : String(row?.[d.titleField] || d.doctype);
     const listHref = d.single ? `/${orgSlug}/${d.module}` : `/${orgSlug}/${docPath(d)}`;
     const backLabel = d.single ? (getModule(d.module)?.label ?? d.module) : d.doctype;
+    const rail = d.addressContact && id ? <AddressContactRail orgSlug={orgSlug} doctype={d.doctype} id={id} /> : null;
 
     const renderTab = (t: FormTab) =>
         t.sections.map((section, si) => {
@@ -241,25 +243,30 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                     {!editable && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
                 </div>
 
-                {tabs.length > 1 ? (
-                    <Tabs selectedKey={tab} onSelectionChange={setTab} className="pt-2">
-                        <Tabs.List type="underline" size="sm" aria-label={`${d.doctype} sections`}>
-                            {tabs.map((t) => (
-                                <Tabs.Item key={t.label} id={t.label} badge={tabErrors(t) || undefined}>
-                                    {t.label}
-                                </Tabs.Item>
-                            ))}
-                        </Tabs.List>
-                        {tabs.map((t) => (
-                            <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="[&[inert]]:hidden">
-                                {renderTab(t)}
-                            </Tabs.Panel>
-                        ))}
-                    </Tabs>
-                ) : (
-                    tabs.map((t) => <div key={t.label}>{renderTab(t)}</div>)
-                )}
-                {d.preview && <FormPreview kind={d.preview} values={values} orgSlug={orgSlug} />}
+                <div className={rail ? "grid gap-x-8 xl:grid-cols-[minmax(0,1fr)_20rem]" : undefined}>
+                    <div className="min-w-0">
+                        {tabs.length > 1 ? (
+                            <Tabs selectedKey={tab} onSelectionChange={setTab} className="pt-2">
+                                <Tabs.List type="underline" size="sm" aria-label={`${d.doctype} sections`}>
+                                    {tabs.map((t) => (
+                                        <Tabs.Item key={t.label} id={t.label} badge={tabErrors(t) || undefined}>
+                                            {t.label}
+                                        </Tabs.Item>
+                                    ))}
+                                </Tabs.List>
+                                {tabs.map((t) => (
+                                    <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="[&[inert]]:hidden">
+                                        {renderTab(t)}
+                                    </Tabs.Panel>
+                                ))}
+                            </Tabs>
+                        ) : (
+                            tabs.map((t) => <div key={t.label}>{renderTab(t)}</div>)
+                        )}
+                        {d.preview && <FormPreview kind={d.preview} values={values} orgSlug={orgSlug} />}
+                    </div>
+                    {rail && <div className="border-t border-secondary py-5 xl:border-t-0 xl:pt-4">{rail}</div>}
+                </div>
             </form>
         </ReferenceOptionsContext>
     );

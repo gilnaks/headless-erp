@@ -838,6 +838,7 @@ Owner/System Manager → `invitations(org_id, email, roles[], role_profile?, tok
 ### 3.5 Address / Contact quick-create from party forms
 
 Customer/Supplier/Company forms show Address & Contact cards (ERPNext `load_address_and_contact`) with "+ New" opening a drawer pre-filled with `dynamic_link = (party doctype, id)`; `is_primary_address`/`is_shipping_address`/`is_primary_contact` toggles apply the "unset previous" rule. Mapper `app.party_addresses(doctype, id)` returns rows ordered primary-first.
+- **Built** (P1, Company): `addressContact: true` on the Company descriptor shows the Address & Contact rail on saved companies (`AddressContactRail`, `getAddressesAndContacts` → `app.party_addresses` / `app.party_contacts`). "+ New" opens `/[org]/setup/address/new?links.link_doctype=Company&links.link_id=<id>` (same for Contact): the full form with the link row seeded, not a drawer (`05-ui-ux.md`). The unset-previous rules run in the database (0121/0122). Company prints show the preferred billing address (`app.company_address`). e2e `party-rail.spec.ts`.
 
 ---
 
@@ -937,7 +938,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
   - Built on the generic `DocList` / `DocForm`: Default is a checkbox on the form (setting it clears the previous default) instead of a list action; previews come from a record's "More actions" → Print.
 - **Email Account**: provider toggle (Resend / SMTP), "Send test email" action (Edge Function), default-outgoing switch.
 - **Email Digest**: checkbox groups mirroring ERPNext sections (Accounts → Sales/Purchase → Projects/Overdue POs), recipients multi-select of members, "Send now" preview (`get_digest_msg`).
-- **Address / Contact** drawers reused from party forms; `dynamic_link` grid shown as chips.
+- **Address / Contact**: full forms opened from the party rail with the link row pre-filled (no drawer); the Links grid is a normal child table with Dynamic Link cells.
 
 ---
 
@@ -1001,7 +1002,7 @@ Decisions (2026-10-14):
 - [x] CoA template loader: global `coa_template` table (generated migration like `0009`), `supabase/seed/coa/verified/*.json` (73 files) + the two standard Python charts; `app.coa_template_preview(key)`, `app.coa_templates_for_country(country)` — `0115_setup_coa_templates.sql` (§3.2, 1.5 MB: 41 templates), `scripts/gen-coa-templates.mjs`, Company `ChartOfAccounts` select
 - [ ] Country-wise tax seed (`country_wise_tax.json`) → `app.create_default_tax_templates(company_id)`
 - [x] Onboarding wizard UI (Account → Organization → Company → Modules → Invite) with progress states "Setting up the basics / Creating your company / Applying recommended settings" — `/setup` stepper Organization → Company → Invite (05-ui-ux; Modules dropped, §9), `provisionOrganization` Server Action, country fiscal-year defaults (`src/lib/fiscal-year.ts`), chart preview, `0117` drops the P0 RPC; e2e `onboarding.spec.ts`, and `createOrganization` in `e2e/helpers.ts` now drives the wizard (every spec's organization has a first company)
-- [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail
+- [ ] Company: descriptor, Zod, form with 6 tabs, list, Address & Contact rail — the rail is built (§3.5) and the Buying and Selling tab holds Default Sales Contact; the remaining default-account and warehouse fields wait for their P2/P3 tables
 - [x] Users: list, invite drawer, member panel, disable/remove, role profile assignment; `invitations` resend/revoke — `0106_setup_users.sql` (§2.6, §8), `0107_setup_invitations.sql` (§3.4, link-only delivery)
 - [x] Branch: table, descriptor, list/form — `0110_setup_branch.sql` (§2.2), descriptor `branch.ts`
 - [x] Department: table (tree), seed root + 13 per company, TreeView — `0112_setup_department.sql` (§2.3), descriptor `department.ts`, generic `tree-view.tsx`

@@ -138,6 +138,8 @@ export type Doctype = {
     /** RPC that creates new documents instead of `save_doc` (creation side effects, e.g. `create_company`). */
     create?: CreateRpc;
     preview?: FormPreview;
+    /** Party doctype (ERPNext `load_address_and_contact`): saved forms show the Address & Contact rail. */
+    addressContact?: true;
 };
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
@@ -162,6 +164,7 @@ type DoctypeBase<T extends TableName, C extends string> = {
     triggers?: Partial<Record<Columns<T> | C, FieldTrigger>>;
     create?: CreateRpc;
     preview?: FormPreview;
+    addressContact?: true;
 };
 
 /** `C` = Table field names (child row arrays), which are not columns of the parent table. */
@@ -195,6 +198,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         triggers: (input.triggers ?? {}) as Record<string, FieldTrigger>,
         ...(input.create ? { create: input.create } : {}),
         ...(input.preview ? { preview: input.preview } : {}),
+        ...(input.addressContact ? { addressContact: true as const } : {}),
     };
 }
 
