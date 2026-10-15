@@ -374,6 +374,14 @@ Frappe single + ERPNext custom fields from `erpnext/setup/install.py: create_pri
 | **print_taxes_with_zero_amount** (ERPNext) | boolean | **false** | |
 
 - Permissions: System Manager rw. Rendered with `SettingsPage`.
+- **Built (0119):** `public.print_settings`, one row per org seeded by `app.organizations_seed_print_settings` (after insert on `organizations`, Stage A4 of provisioning) plus a backfill; `doctype_meta.is_single`.
+  - Checks: `print_style = 'Modern'`; `pdf_page_size` in `A4|Letter|Legal|Custom`, with `pdf_page_height` / `pdf_page_width` (mm) required for Custom (`print_settings_custom_size`); `font_size` 6–24.
+  - `letter_head_id` → `letter_head` of the same org (`on delete set null (letter_head_id)`).
+  - RLS: every member reads (the print route applies the settings), System Manager writes; no insert/delete.
+  - Descriptor `print-settings.ts` (`single: true`) on the generic single route, sections PDF Settings / Page Settings / Print Style as in Frappe; `font` offers Frappe's font list.
+  - **Deviation:** print server / raw printing fields (`enable_print_server`, `enable_raw_printing`, …) are not ported; Frappe's global default letter head is `letter_head_id` here.
+  - **Deviation:** Frappe Print Settings ported from memory (the frappe repo is not cloned locally); ERPNext custom fields from `erpnext/setup/install.py` `create_print_setting_custom_fields`.
+  - pgTAP `23_print_settings.test.sql`, `21_provision_organization` asserts the seeded row; e2e `print-settings.spec.ts`.
 
 ### 2.14 Email Account → `email_account` (outbound only)
 
@@ -625,7 +633,7 @@ Mirrors `setup_wizard.get_setup_stages()`: **Setting up the basics** (`install_f
 Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language}, company: {company_name, abbr, fy_start_date, fy_end_date, chart_of_accounts, domain}, invites: [{email, roles[], role_profile}] }`. The owner is the caller (`auth.uid()`); there is no `modules` key (the wizard's Modules step is dropped) and `bank_account` arrives with B13.
 
 **Built (0116, staged):** `app.provision_organization(p)` (`security definer`, one transaction; public RPC `provision_organization`) runs:
-- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, the 31 designations and the `All Departments` root. A1-A4 and A18 are done; A5-A17 and A19-A22 wait for their tables.
+- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, Print Settings (0119), the 31 designations and the `All Departments` root. A1-A4 and A18 are done; A5-A17 and A19-A22 wait for their tables.
 - **Stage B:**
   - B1: a Fiscal Year from `fy_start_date` / `fy_end_date` (the end defaults to one year later; skipped without a start date, as in `install_company`).
   - B2: the company through `app.create_company`. The abbreviation defaults to the word initials (`app.company_abbr`), currency and country default to the organization's, `chart_of_accounts` defaults to `Standard`, `enable_perpetual_inventory = true` and `create_chart_of_accounts_based_on = 'Standard Template'`.
@@ -990,7 +998,7 @@ Decisions (2026-10-14):
 - [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
 - [x] Letter Head: table, storage upload, preview, default trigger
 - [ ] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
-- [ ] Print Settings: table + SettingsPage
+- [x] Print Settings: table + SettingsPage
 - [ ] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action
 - [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
