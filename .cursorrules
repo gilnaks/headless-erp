@@ -43,4 +43,25 @@ Biome, Vitest, pgTAP, Playwright, GitHub Actions → Netlify.
   over one-off pages. Add a descriptor, not a bespoke screen.
 - Use the Supabase MCP for `apply_migration` (local/dev only), `execute_sql` (reads), `get_advisors`
   (must be clean), `generate_typescript_types`. Production changes go through CI only.
-- Verify with `supabase db reset` + pgTAP + `vitest` + `next build` before declaring done.
+- Hosted Supabase is the dev project only. Load `.env.local` without echoing it and clear the variables afterwards.
+  `db reset --linked` only when the project should be wiped; the local `supabase db reset` job runs in GitHub Actions.
+
+## Workflow (every PR)
+Never commit to `main`. One doctype or one engine function per PR, in this order:
+1. Branch from `origin/main`.
+2. Read the ERPNext `.json`/`.py`/`test_*.py`; note ported fields and deviations in the module doc.
+3. Migration (RLS + `doctype_meta` + `role_permissions`), then `npx supabase db push --linked --include-all --yes`.
+4. pgTAP file for the change, then `npm run db:test:linked` for the whole `supabase/tests` suite.
+5. `npm run db:types:linked`, then `node scripts/check-types.mjs --linked`.
+6. Descriptor, registry, queries/mutations, UI.
+7. `npx biome check --write .`, then `npx biome ci .`, `npm run typecheck`, `npm test`, `npm run test:db`, `npm run build`.
+8. The PR's own Playwright spec plus related specs via `npm run e2e`.
+9. `get_advisors` clean (accepted: `rls_auto_enable`, `auth_leaked_password_protection`).
+10. Docs in the same PR: module doc Built note and deviations, §10 checklist tick, `docs/PLAN.md` if scope moved.
+11. Commit with a message file (cite ERPNext files), `gh pr create --body-file`, `gh pr checks <n> --watch`,
+    `gh pr merge <n> --squash`, delete the branch, `git branch -f main origin/main`.
+
+## Phase gate
+A phase is finished only when: every item in the module doc §10 checklist is ticked or re-homed to a named phase;
+its critical flows have Playwright specs; the full `npm run e2e` and `npm run db:test:linked` pass; and its
+`docs/PLAN.md` §7 row is marked Complete with the date.
