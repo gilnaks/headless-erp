@@ -942,7 +942,7 @@ The Company-level accounting fields that v16 moved off Accounts Settings (`accou
 |---|---|---|
 | `companies` (00-setup §2.1) | `default_receivable_account_id`, `default_payable_account_id` | party account fallback (§3.5) |
 | | `default_income_account_id`, `default_expense_account_id`, `cost_center_id` | item rows (§3.1/§3.2), round-off fallback |
-| | `round_off_account_id`, `round_off_cost_center_id`, *`round_off_for_opening_id`* | §4.0 (`round_off_for_opening_id` exists in `0100_setup_company.sql`; not listed in 00-setup's field table) |
+| | `round_off_account_id`, `round_off_cost_center_id`, *`round_off_for_opening_id`* | §4.0 (00-setup §companies) |
 | | `write_off_account_id`, `exchange_gain_loss_account_id`, `bank_charges_account_id`, `default_discount_account_id` | PE deductions / PI write-off / PE difference (§3.7) |
 | | `default_bank_account_id`, `default_cash_account_id` | JE Bank/Cash Entry, PE `paid_from/paid_to` default (`get_default_bank_cash_account`) |
 | | `stock_received_but_not_billed_id`, `default_inventory_account_id`, `stock_adjustment_account_id`, `enable_perpetual_inventory` | §4.4 |
