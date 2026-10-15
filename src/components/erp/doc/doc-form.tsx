@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, ChevronLeft, DotsVertical, Printer, Trash01 } from "@untitledui/icons";
+import { ChevronDown, ChevronLeft, DotsVertical, Mail01, Printer, Trash01 } from "@untitledui/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Heading as AriaHeading, type Key } from "react-aria-components";
@@ -21,6 +21,7 @@ import { applyFieldErrors } from "@/lib/forms";
 import type { ReferenceOptions } from "@/lib/reference-options";
 import { AddressContactRail } from "./address-contact-rail";
 import { ChildTable } from "./child-table";
+import { EmailDialog } from "./email-dialog";
 import { FieldRenderer, ReferenceOptionsContext } from "./field-renderer";
 import { FormPreview } from "./form-preview";
 
@@ -54,6 +55,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
+    const [emailOpen, setEmailOpen] = useState(false);
     const [tab, setTab] = useState<Key>(d.tabs[0]?.label ?? "");
 
     // A server refresh after saving brings normalised values (e.g. upper-cased abbr); never clobber unsaved edits.
@@ -228,7 +230,22 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                                 orgSlug={orgSlug}
                                 id={id}
                                 printHref={d.single ? null : `/print/${d.slug}/${id}`}
+                                onEmail={d.single ? null : () => setEmailOpen(true)}
                                 canDelete={canDelete}
+                            />
+                        )}
+                        {id && !d.single && (
+                            <EmailDialog
+                                isOpen={emailOpen}
+                                onOpenChange={setEmailOpen}
+                                orgSlug={orgSlug}
+                                doctype={d.doctype}
+                                id={id}
+                                title={title}
+                                onSent={(message) => {
+                                    setError(null);
+                                    setNotice(message);
+                                }}
                             />
                         )}
                         {editable && (
@@ -276,10 +293,18 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     );
 }
 
-type MoreMenuProps = { doctype: string; title: string; orgSlug: string; id: string; printHref: string | null; canDelete: boolean };
+type MoreMenuProps = {
+    doctype: string;
+    title: string;
+    orgSlug: string;
+    id: string;
+    printHref: string | null;
+    onEmail: (() => void) | null;
+    canDelete: boolean;
+};
 
-/** Overflow menu: Print (new tab, `/print/<slug>/<id>`) and Delete with a confirm dialog. */
-function MoreMenu({ doctype, title, orgSlug, id, printHref, canDelete }: MoreMenuProps) {
+/** Overflow menu: Print (new tab, `/print/<slug>/<id>`), Email (compose dialog) and Delete with a confirm dialog. */
+function MoreMenu({ doctype, title, orgSlug, id, printHref, onEmail, canDelete }: MoreMenuProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
@@ -300,10 +325,12 @@ function MoreMenu({ doctype, title, orgSlug, id, printHref, canDelete }: MoreMen
                         aria-label="More actions"
                         onAction={(key) => {
                             if (key === "print" && printHref) window.open(printHref, "_blank", "noopener");
+                            if (key === "email") onEmail?.();
                             if (key === "delete") setOpen(true);
                         }}
                     >
                         {printHref ? <Dropdown.Item id="print" icon={Printer} label="Print" /> : null}
+                        {onEmail ? <Dropdown.Item id="email" icon={Mail01} label="Email" /> : null}
                         {canDelete ? <Dropdown.Item id="delete" icon={Trash01} label="Delete" /> : null}
                     </Dropdown.Menu>
                 </Dropdown.Popover>

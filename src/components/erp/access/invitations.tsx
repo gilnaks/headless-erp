@@ -42,7 +42,7 @@ function useCopy(): [string | null, (key: string, text: string) => void] {
 
 type InviteProps = { orgSlug: string; roleOptions: RoleOption[]; profiles: RoleProfileOption[] };
 
-/** "Invite user" slideout: email + roles or profile → a link to copy (no email is sent yet, 00-setup §3.4). */
+/** "Invite user" slideout: email + roles or profile → the invitation is emailed; the link stays copyable (00-setup §3.4). */
 export function InviteUser({ orgSlug, roleOptions, profiles }: InviteProps) {
     const [open, setOpen] = useState(false);
     const [formKey, setFormKey] = useState(0);
@@ -77,6 +77,7 @@ function InviteForm({ orgSlug, roleOptions, profiles, onClose, onReset }: Invite
     const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [link, setLink] = useState<string | null>(null);
+    const [delivery, setDelivery] = useState<{ email: string; emailed: boolean; emailError?: string } | null>(null);
     const [pending, startTransition] = useTransition();
     const [copied, copy] = useCopy();
     const origin = useOrigin();
@@ -91,7 +92,10 @@ function InviteForm({ orgSlug, roleOptions, profiles, onClose, onReset }: Invite
                 setFieldErrors(result.fieldErrors ?? {});
                 return;
             }
-            if (result.data) setLink(inviteLink(origin, result.data.token));
+            if (result.data) {
+                setLink(inviteLink(origin, result.data.token));
+                setDelivery(result.data);
+            }
         });
 
     return (
@@ -100,15 +104,23 @@ function InviteForm({ orgSlug, roleOptions, profiles, onClose, onReset }: Invite
                 <AriaHeading slot="title" className="text-lg font-semibold text-primary">
                     Invite user
                 </AriaHeading>
-                <p className="text-sm text-tertiary">Share the link with the person you invite. It works for 7 days.</p>
+                <p className="text-sm text-tertiary">We email them a link to join. It works for 7 days.</p>
             </SlideoutMenu.Header>
             <SlideoutMenu.Content>
                 {link ? (
                     <div className="flex flex-col gap-4">
-                        <FormAlert tone="success">
-                            Invitation created for <span className="font-semibold">{email.trim().toLowerCase()}</span>. Copy the link and
-                            send it to them; no email is sent.
-                        </FormAlert>
+                        {delivery?.emailed ? (
+                            <FormAlert tone="success">
+                                Invitation emailed to <span className="font-semibold">{delivery.email}</span>. You can also copy the link
+                                below.
+                            </FormAlert>
+                        ) : (
+                            <FormAlert tone="info">
+                                Invitation created for{" "}
+                                <span className="font-semibold">{delivery?.email || email.trim().toLowerCase()}</span>, but no email was
+                                sent{delivery?.emailError ? ` (${delivery.emailError})` : ""}. Copy the link and send it to them.
+                            </FormAlert>
+                        )}
                         <Input label="Invitation link" size="sm" value={link} isReadOnly />
                         <Button size="sm" color="secondary" iconLeading={Copy01} onPress={() => copy("new", link)}>
                             {copied === "new" ? "Copied" : "Copy link"}
@@ -170,20 +182,35 @@ export function InvitationList({ orgSlug, invitations }: { orgSlug: string; invi
     const origin = useOrigin();
     const [copied, copy] = useCopy();
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
-    const run = (action: () => Promise<{ ok: boolean; error?: string; data?: { token: string } }>, copyKey?: string) =>
+    const run = (action: () => Promise<{ ok: boolean; error?: string }>) =>
         startTransition(async () => {
             setError(null);
+            setNotice(null);
             const result = await action();
             if (!result.ok) setError(result.error ?? "Something went wrong. Try again.");
-            else if (copyKey && result.data) copy(copyKey, inviteLink(origin, result.data.token));
+        });
+
+    const resend = (id: string) =>
+        startTransition(async () => {
+            setError(null);
+            setNotice(null);
+            const result = await resendInvitation({ orgSlug, id });
+            if (!result.ok || !result.data) return setError(result.ok ? "Something went wrong. Try again." : result.error);
+            if (result.data.emailed) return setNotice(`Invitation emailed to ${result.data.email}.`);
+            copy(id, inviteLink(origin, result.data.token));
+            setNotice(
+                `New link copied for ${result.data.email}; no email was sent${result.data.emailError ? ` (${result.data.emailError})` : ""}.`,
+            );
         });
 
     return (
         <section className="flex flex-col gap-3">
             <h2 className="text-md font-semibold text-primary">Invitations</h2>
             {error && <FormAlert>{error}</FormAlert>}
+            {notice && <FormAlert tone="success">{notice}</FormAlert>}
             <div className="overflow-hidden rounded-xl ring-1 ring-secondary">
                 <Table aria-label="Invitations" size="sm">
                     <Table.Header>
@@ -236,9 +263,9 @@ export function InvitationList({ orgSlug, invitations }: { orgSlug: string; invi
                                                     size="xs"
                                                     color="tertiary"
                                                     icon={RefreshCw01}
-                                                    tooltip="Resend (new link, copied)"
+                                                    tooltip="Resend (new link)"
                                                     isDisabled={pending}
-                                                    onPress={() => run(() => resendInvitation({ orgSlug, id: inv.id }), inv.id)}
+                                                    onPress={() => resend(inv.id)}
                                                 />
                                                 {status === "pending" && (
                                                     <ButtonUtility
