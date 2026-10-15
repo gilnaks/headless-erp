@@ -28,6 +28,8 @@ const USERS = [
     { env: "E2E_EMAIL_TEMPLATE", local: "email-template", first_name: "Template", last_name: "Admin" },
     { env: "E2E_EMAIL_SEND", local: "email-send", first_name: "Sending", last_name: "Owner" },
     { env: "E2E_AUTH_RULE", local: "auth-rule", first_name: "Rule", last_name: "Admin" },
+    { env: "E2E_HOME", local: "home", first_name: "Home", last_name: "Owner" },
+    { env: "E2E_HOME_MEMBER", local: "home-member", first_name: "Home", last_name: "Member" },
 ] as const;
 
 /**
