@@ -69,6 +69,7 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
   publish = "dist"
 [build.environment]
   NODE_VERSION = "22"
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -83,7 +84,7 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
     Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 http://localhost:54321; font-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'"
 ```
 
-- The SPA fallback (`/*` → `/index.html`) is what makes client routes work on refresh. `/health` is a static `dist/health` file (or a rewrite to a tiny JSON file) so uptime checks do not depend on the router.
+- `NETLIFY_NEXT_PLUGIN_SKIP` stops the Next.js adapter Netlify attached when the site was first created. The SPA fallback (`/*` → `/index.html`) is what makes client routes work on refresh. `/health` is a static `dist/health` file (or a rewrite to a tiny JSON file) so uptime checks do not depend on the router.
 - Env vars set per context (production / deploy-preview / branch-deploy) in the Netlify UI, never in `netlify.toml`. Deploy previews point to the Supabase dev project. Only `VITE_*` values are visible to the bundle.
 - Content-Security-Policy ships with the SPA (session lives in `localStorage`). Widen `connect-src` only for the real Supabase project origin. Access tokens stay short-lived.
 - Scheduled work does **not** use Netlify functions; it uses `pg_cron` in Supabase (and Supabase Edge Functions for email) so the schedule survives independent of the web host. Migrations enable the extension themselves (`create extension if not exists pg_cron`, `0114`) and register jobs with `cron.schedule`, so a new project needs no dashboard step; check jobs with `select * from cron.job` and runs with `cron.job_run_details`.
