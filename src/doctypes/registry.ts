@@ -7,6 +7,7 @@ import { contact } from "./setup/contact";
 import { department } from "./setup/department";
 import { designation } from "./setup/designation";
 import { emailAccount } from "./setup/email-account";
+import { emailTemplate } from "./setup/email-template";
 import { globalDefaults } from "./setup/global-defaults";
 import { holidayList } from "./setup/holiday-list";
 import { letterHead } from "./setup/letter-head";
@@ -36,6 +37,7 @@ export const DOCTYPES: readonly Doctype[] = [
     address,
     contact,
     emailAccount,
+    emailTemplate,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {

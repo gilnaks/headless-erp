@@ -25,6 +25,7 @@ const USERS = [
     { env: "E2E_CONTACT", local: "contact", first_name: "Contact", last_name: "Admin" },
     { env: "E2E_RAIL", local: "rail", first_name: "Party", last_name: "Rail" },
     { env: "E2E_EMAIL_ACCOUNT", local: "email-account", first_name: "Email", last_name: "Admin" },
+    { env: "E2E_EMAIL_TEMPLATE", local: "email-template", first_name: "Template", last_name: "Admin" },
 ] as const;
 
 /**

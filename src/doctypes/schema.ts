@@ -88,7 +88,13 @@ export function childSchemaFor(child: ChildDoctype) {
 export function schemaFor(d: Doctype) {
     const childSchemas = Object.fromEntries(Object.entries(d.children).map(([name, child]) => [name, z.array(childSchemaFor(child))]));
     const base = objectSchema(d.fields);
-    return Object.keys(childSchemas).length ? base.and(z.object(childSchemas)) : base;
+    const schema = Object.keys(childSchemas).length ? base.and(z.object(childSchemas)) : base;
+    const { validate } = d;
+    if (!validate) return schema;
+    return schema.superRefine((values, ctx) => {
+        for (const [path, message] of Object.entries(validate(values as FieldValues)))
+            ctx.addIssue({ code: "custom", path: [path], message });
+    });
 }
 
 function toInput(field: FieldDef, value: unknown): unknown {
