@@ -558,7 +558,7 @@ Frappe `Address` (extended by `erpnext/accounts/custom/address.py: ERPNextAddres
 - List: name, address_type, city, country.
 - **Built** (0121, descriptor `address.ts`): `app.address_validate` (trims; `name` is write-once; `country` falls back to the organization's), `app.address_link_validate` (same-org target, `link_title`), deferred `app.address_refresh` (naming, `update_company_address` + `validate_reference`, `validate_preferred_address` per linked party), `app.dynamic_link_sync('Company')` on `companies` (renames refresh titles; deletes drop the links and clear `is_your_company_address` when no Company link is left), `app.company_address(company, 'primary'|'shipping')` and `app.party_addresses(doctype, id)` (+ `public.*` RPC wrappers, RLS applies), `src/lib/format/address.ts` `formatAddress()`. The form's Links grid uses `DynamicLink` cells that read `link_doctype` from the same row. `tax_category_id` waits for Tax Category (P2); the `customer.primary_address` refresh waits for Customer (P2). pgTAP `25_address`, e2e `address.spec.ts`.
 
-### 2.20 Contact → `contact` + `contact_email` + `contact_phone` + `dynamic_link`
+### 2.20 Contact → `contact` + `contact_email` + `contact_phone` + `contact_link`
 
 - **Kind:** master. **Naming:** full name, plus `"-<first link title>"` when links exist; `-1` on duplicates.
 
@@ -585,7 +585,8 @@ Frappe `Address` (extended by `erpnext/accounts/custom/address.py: ERPNextAddres
 `contact_email(parent_id, email_id reqd, is_primary)`, `contact_phone(parent_id, phone reqd, is_primary_phone, is_primary_mobile_no)`. Validations: at most one primary email / primary phone / primary mobile; email format; `full_name` set; parent `email_id/mobile_no/phone` refreshed from primary rows.
 - `on_update` refreshes `customer.mobile_no/email_id` for customers whose `customer_primary_contact` is this row (ERPNext `Customer` fetches them).
 - Permissions (Frappe JSON): Sales User, Purchase User, Maintenance User, Accounts User, Stock User rwcd; Sales/Purchase Manager rwcd.
-- List: full_name, email_id, mobile_no, linked party, is_primary_contact.
+- List: name, email_id, mobile_no, is_primary_contact.
+- **Built** (0122, descriptor `contact.ts`): child tables `contact_email` (`email_ids`), `contact_phone` (`phone_nos`) and `contact_link` (`links`, same rules as `address_link`); `app.contact_validate` (trims, `full_name`, write-once `name`), `app.contact_email_validate` (email format), deferred `app.contact_refresh` (one primary email / phone / mobile, denormalised `email_id` / `phone` / `mobile_no` follow the primary rows and are cleared when there is none, `set_user` against the org's members, naming, one primary contact per linked party), `app.contact_match_member` on `org_members` insert, `app.party_contacts(doctype, id)` (+ `public` RPC), `app.file_doctype` maps the `contact` folder to Contact (image upload), `companies.default_sales_contact_id` FK `on delete set null` and a *Buying and Selling* tab on the Company form. `gender` is a check over Frappe's Gender fixtures; `designation_id` / `address_id` are FKs that clear on delete. The `customer.mobile_no/email_id` refresh waits for Customer (P2). pgTAP `26_contact`, e2e `contact.spec.ts`.
 
 ### 2.21 Currency → `currency` (global, `is_global`)
 
@@ -1018,7 +1019,7 @@ Decisions (2026-10-14):
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
 - [ ] Global Defaults + System Settings pages (**done in P0**, single-doctype forms); Settings pointer list in sidebar
 - [x] Address + `address_link`: tables, naming, preferred/company-address triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS — `0121_setup_address.sql` (§2.19), descriptor `address.ts`
-- [ ] Contact + `contact_email` + `contact_phone` + `contact_link`: tables, naming, primary triggers, user match, `app.party_contacts()`
+- [x] Contact + `contact_email` + `contact_phone` + `contact_link`: tables, naming, primary triggers, user match, `app.party_contacts()` — `0122_setup_contact.sql` (§2.20), descriptor `contact.ts`, Company `default_sales_contact_id` FK
 - [x] Fiscal Year + Fiscal Year Company: tables, validations, `app.auto_create_fiscal_year()` pg_cron daily — `0114_accounts_fiscal_year.sql` (§2.23), descriptor `fiscal-year.ts`, field triggers
 - [ ] Terms and Conditions: table, validation, renderer
 - [ ] Home page: onboarding checklist (`onboarding_progress`), number-card + P&L chart placeholders wired to `app.home_number_cards()` / `app.report_profit_and_loss()` as modules land

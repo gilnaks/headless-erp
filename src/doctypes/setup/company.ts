@@ -62,6 +62,7 @@ export const company = defineDoctype({
         fax: { type: "Data", label: "Fax" },
         email: { type: "Data", label: "Email" },
         website: { type: "Data", label: "Website" },
+        default_sales_contact_id: { type: "Link", label: "Default Sales Contact", target: "Contact" },
         credit_limit: { type: "Currency", label: "Credit Limit", default: 0 },
         reconciliation_takes_effect_on: {
             type: "Select",
@@ -135,6 +136,10 @@ export const company = defineDoctype({
                     columns: [["auto_exchange_rate_revaluation", "auto_err_frequency", "submit_err_jv"]],
                 },
             ],
+        },
+        {
+            label: "Buying and Selling",
+            sections: [{ columns: [["default_sales_contact_id"]] }],
         },
         {
             label: "Stock",

@@ -63,6 +63,7 @@ export type Database = {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
       }
+      contact_refresh: { Args: { p_contact: string }; Returns: undefined }
       create_company: { Args: { p: Json }; Returns: Json }
       create_invitation: {
         Args: {
@@ -149,6 +150,16 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "address"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      party_contacts: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: Database["public"]["Tables"]["contact"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "contact"
           isOneToOne: false
           isSetofReturn: true
         }
@@ -797,6 +808,13 @@ export type Database = {
             referencedColumns: ["org_id", "id"]
           },
           {
+            foreignKeyName: "companies_default_sales_contact_fkey"
+            columns: ["org_id", "default_sales_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_org_id_exception_budget_approver_role_fkey"
             columns: ["org_id", "exception_budget_approver_role"]
             isOneToOne: false
@@ -837,6 +855,226 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currency"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      contact: {
+        Row: {
+          address_id: string | null
+          company_name: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          designation_id: string | null
+          email_id: string | null
+          first_name: string
+          full_name: string | null
+          gender: string | null
+          id: string
+          image: string | null
+          is_billing_contact: boolean
+          is_primary_contact: boolean
+          last_name: string | null
+          middle_name: string | null
+          mobile_no: string | null
+          name: string | null
+          org_id: string
+          phone: string | null
+          salutation: string | null
+          status: string
+          unsubscribed: boolean
+          updated_at: string
+          updated_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address_id?: string | null
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          designation_id?: string | null
+          email_id?: string | null
+          first_name: string
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          image?: string | null
+          is_billing_contact?: boolean
+          is_primary_contact?: boolean
+          last_name?: string | null
+          middle_name?: string | null
+          mobile_no?: string | null
+          name?: string | null
+          org_id: string
+          phone?: string | null
+          salutation?: string | null
+          status?: string
+          unsubscribed?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address_id?: string | null
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          designation_id?: string | null
+          email_id?: string | null
+          first_name?: string
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          image?: string | null
+          is_billing_contact?: boolean
+          is_primary_contact?: boolean
+          last_name?: string | null
+          middle_name?: string | null
+          mobile_no?: string | null
+          name?: string | null
+          org_id?: string
+          phone?: string | null
+          salutation?: string | null
+          status?: string
+          unsubscribed?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_org_id_address_id_fkey"
+            columns: ["org_id", "address_id"]
+            isOneToOne: false
+            referencedRelation: "address"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "contact_org_id_designation_id_fkey"
+            columns: ["org_id", "designation_id"]
+            isOneToOne: false
+            referencedRelation: "designation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "contact_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_email: {
+        Row: {
+          email_id: string
+          id: string
+          idx: number
+          is_primary: boolean
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          email_id: string
+          id?: string
+          idx: number
+          is_primary?: boolean
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          email_id?: string
+          id?: string
+          idx?: number
+          is_primary?: boolean
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_email_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      contact_link: {
+        Row: {
+          id: string
+          idx: number
+          link_doctype: string
+          link_id: string
+          link_title: string | null
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          id?: string
+          idx: number
+          link_doctype: string
+          link_id: string
+          link_title?: string | null
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          id?: string
+          idx?: number
+          link_doctype?: string
+          link_id?: string
+          link_title?: string | null
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_link_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      contact_phone: {
+        Row: {
+          id: string
+          idx: number
+          is_primary_mobile_no: boolean
+          is_primary_phone: boolean
+          org_id: string
+          parent_id: string
+          phone: string
+        }
+        Insert: {
+          id?: string
+          idx: number
+          is_primary_mobile_no?: boolean
+          is_primary_phone?: boolean
+          org_id: string
+          parent_id: string
+          phone: string
+        }
+        Update: {
+          id?: string
+          idx?: number
+          is_primary_mobile_no?: boolean
+          is_primary_phone?: boolean
+          org_id?: string
+          parent_id?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_phone_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -2448,6 +2686,43 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "address"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      party_contacts: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: {
+          address_id: string | null
+          company_name: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          designation_id: string | null
+          email_id: string | null
+          first_name: string
+          full_name: string | null
+          gender: string | null
+          id: string
+          image: string | null
+          is_billing_contact: boolean
+          is_primary_contact: boolean
+          last_name: string | null
+          middle_name: string | null
+          mobile_no: string | null
+          name: string | null
+          org_id: string
+          phone: string | null
+          salutation: string | null
+          status: string
+          unsubscribed: boolean
+          updated_at: string
+          updated_by: string | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "contact"
           isOneToOne: false
           isSetofReturn: true
         }

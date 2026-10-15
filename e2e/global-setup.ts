@@ -22,6 +22,7 @@ const USERS = [
     { env: "E2E_PRINT_A", local: "print-a", first_name: "Printing", last_name: "Owner" },
     { env: "E2E_PRINT_B", local: "print-b", first_name: "Other", last_name: "Owner" },
     { env: "E2E_ADDRESS", local: "address", first_name: "Address", last_name: "Admin" },
+    { env: "E2E_CONTACT", local: "contact", first_name: "Contact", last_name: "Admin" },
 ] as const;
 
 /**

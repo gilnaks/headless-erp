@@ -3,6 +3,7 @@ import type { Doctype } from "./define";
 import { address } from "./setup/address";
 import { branch } from "./setup/branch";
 import { company } from "./setup/company";
+import { contact } from "./setup/contact";
 import { department } from "./setup/department";
 import { designation } from "./setup/designation";
 import { globalDefaults } from "./setup/global-defaults";
@@ -32,6 +33,7 @@ export const DOCTYPES: readonly Doctype[] = [
     printSettings,
     printFormat,
     address,
+    contact,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {
