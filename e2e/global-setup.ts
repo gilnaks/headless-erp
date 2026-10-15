@@ -19,6 +19,8 @@ const USERS = [
     { env: "E2E_ONBOARDING", local: "onboarding", first_name: "Onboarding", last_name: "Owner" },
     { env: "E2E_LETTERHEAD", local: "letterhead", first_name: "Letter", last_name: "Head" },
     { env: "E2E_PRINTSETTINGS", local: "printsettings", first_name: "Print", last_name: "Settings" },
+    { env: "E2E_PRINT_A", local: "print-a", first_name: "Printing", last_name: "Owner" },
+    { env: "E2E_PRINT_B", local: "print-b", first_name: "Other", last_name: "Owner" },
 ] as const;
 
 /**

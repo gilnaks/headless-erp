@@ -349,6 +349,18 @@ ERPNext ships Jinja/JS print formats and `install.py: set_default_print_formats(
 - **Deviation:** no Print Format Builder / HTML editing / raw printing in P1 (Frappe `html`, `css`, `format_data`, `print_format_type`, `raw_printing` dropped). Custom formats = future work.
 - Doctypes that need a standard format (seeded as modules land): Quotation, Sales Order, Delivery Note, Sales Invoice (P5); Material Request, Request for Quotation, Supplier Quotation, Purchase Order, Purchase Receipt, Purchase Invoice (P4/P6); Payment Entry, Journal Entry (P3); Stock Entry, Stock Reconciliation (P4); BOM, Work Order, Job Card, Subcontracting Order, Subcontracting Receipt (P8); Timesheet (P9); Asset (P10). Masters print via a generic "record" template.
 - Permissions: System Manager rwcd, all read.
+- **Built (0120):** `public.print_format` (name unique per org, case-insensitive; `doc_type` → `doctype_meta`; `template_key` default `record`; `options` jsonb object; partial unique index = one default per `(org_id, doc_type)`).
+  - `app.print_format_validate` (before trigger, security invoker so `current_user` tells API callers from the system): API roles cannot create standard rows; standard rows keep their name, doctype, template and options (only Default and Disabled change; `print_format_standard`); `doc_type` must be printable (`print_format_doc_type`); a disabled format cannot be the default (`print_format_disabled_default`); a new default clears the previous one (`app.print_format_clear_default`). Standard rows cannot be deleted.
+  - `app.is_printable(doctype)`: organization doctypes (table with `org_id`) that are neither child tables nor singles, except User (members) and Print Format.
+  - `app.seed_print_formats(org, doctype?)` creates `"<Doctype> Standard"` (`template_key = 'record'`, standard, default when the doctype has none). Run by an `organizations` insert trigger (Stage A4), by an `after insert on doctype_meta` trigger (doctypes registered by later migrations get their format in every org, so module migrations need no extra step) and by the backfill.
+  - Descriptor `print-format.ts`: list (name, doctype, template, default, disabled) and form; Template options come from `src/print/template-keys.ts`.
+  - **Print route** `src/app/(print)/print/[doctype]/[id]/page.tsx` (outside the app shell, `[doctype]` = descriptor slug): the record is read with the user's client, so missing and other organizations' records render the 404 page. Format = `?format=<id>` when enabled, else the doctype's default (`pickPrintFormat`); the template comes from `src/print/registry.tsx`. Letter head (`resolveLetterHeadId` in `src/lib/print/resolve.ts`): document `letter_head_id` → company `default_letter_head_id` (the company itself when printing a Company) → Print Settings `letter_head_id` → org default; none when `with_letterhead` is off; disabled letter heads are skipped. Header/footer HTML is sanitized again at render; images use signed URLs.
+  - Print Settings applied: `font_size` (pt) and `font`, `@page { size }` from `pdf_page_size` (Custom = width × height mm), "Draft" heading on submittable drafts (`add_draft_heading`), `allow_print_for_draft` / `allow_print_for_cancelled` ("Not allowed to print draft/cancelled documents" instead of the page).
+  - Toolbar (screen only): back to the form, Print Format picker, Print (`window.print()`). `DocForm`'s "More actions" menu has **Print**, which opens the route in a new tab.
+  - Generic template `src/print/templates/record.tsx`: the descriptor's tabs → sections → columns, fields with a value only (Check prints Yes/No, Links print the target's title, numbers grouped), child tables as tables.
+  - **Deviation:** `repeat_header_footer`, `allow_page_break_inside_tables`, `compact_item_print` and PDF generation (`send_print_as_pdf`) wait for the transaction templates and the Email track; the browser's print dialog produces the PDF.
+  - **Deviation:** Frappe Print Format ported from memory (the frappe repo is not cloned locally); ERPNext `set_default_print_formats` ("<Doctype> Classic" for 8 transactions) becomes a "<Doctype> Standard" default for every printable doctype.
+  - pgTAP `24_print_format.test.sql`, `21_provision_organization` asserts the seeded formats; Vitest `resolve.test.ts`; e2e `print.spec.ts`.
 
 ### 2.13 Print Settings → `print_settings` (single, per org)
 
@@ -633,7 +645,7 @@ Mirrors `setup_wizard.get_setup_stages()`: **Setting up the basics** (`install_f
 Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language}, company: {company_name, abbr, fy_start_date, fy_end_date, chart_of_accounts, domain}, invites: [{email, roles[], role_profile}] }`. The owner is the caller (`auth.uid()`); there is no `modules` key (the wizard's Modules step is dropped) and `bank_account` arrives with B13.
 
 **Built (0116, staged):** `app.provision_organization(p)` (`security definer`, one transaction; public RPC `provision_organization`) runs:
-- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, Print Settings (0119), the 31 designations and the `All Departments` root. A1-A4 and A18 are done; A5-A17 and A19-A22 wait for their tables.
+- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, Print Settings (0119), the standard Print Formats (0120), the 31 designations and the `All Departments` root. A1-A4 and A18 are done; A5-A17 and A19-A22 wait for their tables.
 - **Stage B:**
   - B1: a Fiscal Year from `fy_start_date` / `fy_end_date` (the end defaults to one year later; skipped without a start date, as in `install_company`).
   - B2: the company through `app.create_company`. The abbreviation defaults to the word initials (`app.company_abbr`), currency and country default to the organization's, `chart_of_accounts` defaults to `Standard`, `enable_perpetual_inventory = true` and `create_chart_of_accounts_based_on = 'Standard Template'`.
@@ -920,6 +932,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Letter Head**: live preview of header/footer over an A4 frame; Image vs HTML toggle.
   - Built on the generic `DocForm`: "Letter Head Based On" / "Footer Based On" switch the HTML and image fields (`dependsOn`); the descriptor's `preview: "LetterHead"` adds the A4-width Preview panel below the form (`form-preview.tsx`), updated as you type.
 - **Print Format**: read-only registry list with "Set as default" per doctype and a preview link to `/print/<doctype>/<sample>`.
+  - Built on the generic `DocList` / `DocForm`: Default is a checkbox on the form (setting it clears the previous default) instead of a list action; previews come from a record's "More actions" → Print.
 - **Email Account**: provider toggle (Resend / SMTP), "Send test email" action (Edge Function), default-outgoing switch.
 - **Email Digest**: checkbox groups mirroring ERPNext sections (Accounts → Sales/Purchase → Projects/Overdue POs), recipients multi-select of members, "Send now" preview (`get_digest_msg`).
 - **Address / Contact** drawers reused from party forms; `dynamic_link` grid shown as chips.
@@ -997,7 +1010,7 @@ Decisions (2026-10-14):
 - [x] User Permissions: list/form, picker for Company/Warehouse/Cost Center — `0109_setup_user_permissions.sql` (§2.9), descriptor `user-permission.ts`, `DynamicLink` field type; Warehouse/Cost Center join the picker with their P2 tables
 - [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
 - [x] Letter Head: table, storage upload, preview, default trigger
-- [ ] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
+- [x] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
 - [x] Print Settings: table + SettingsPage
 - [ ] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action
 - [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action
