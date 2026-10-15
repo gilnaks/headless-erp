@@ -2,7 +2,7 @@ import { defineDoctype } from "../define";
 
 /**
  * Company (erpnext/setup/doctype/company/company.json). Tabs follow ERPNext's Tab Breaks; Link fields to Account,
- * Cost Center, Warehouse, Letter Head, Terms and Payment Terms join the form when those tables exist
+ * Cost Center, Warehouse, Terms and Payment Terms join the form when those tables exist
  * (P1-P4). Validations live in `app.companies_validate` (supabase/migrations/0100_setup_company.sql); new companies go
  * through `app.create_company` (0116), which grows the Company.on_update side effects.
  */
@@ -21,6 +21,7 @@ export const company = defineDoctype({
         is_group: { type: "Check", label: "Is Group" },
         parent_id: { type: "Link", label: "Parent Company", target: "Company" },
         default_holiday_list_id: { type: "Link", label: "Default Holiday List", target: "Holiday List" },
+        default_letter_head_id: { type: "Link", label: "Default Letter Head", target: "Letter Head" },
         tax_id: { type: "Data", label: "Tax ID" },
         domain: { type: "Data", label: "Domain" },
         date_of_establishment: { type: "Date", label: "Date of Establishment" },
@@ -95,7 +96,15 @@ export const company = defineDoctype({
                 {
                     columns: [
                         ["company_name", "abbr", "default_currency", "country", "is_group"],
-                        ["tax_id", "domain", "date_of_establishment", "parent_id", "reporting_currency", "default_holiday_list_id"],
+                        [
+                            "tax_id",
+                            "domain",
+                            "date_of_establishment",
+                            "parent_id",
+                            "reporting_currency",
+                            "default_holiday_list_id",
+                            "default_letter_head_id",
+                        ],
                     ],
                 },
                 {

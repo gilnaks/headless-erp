@@ -21,6 +21,7 @@ import { applyFieldErrors } from "@/lib/forms";
 import type { ReferenceOptions } from "@/lib/reference-options";
 import { ChildTable } from "./child-table";
 import { FieldRenderer, ReferenceOptionsContext } from "./field-renderer";
+import { FormPreview } from "./form-preview";
 
 export type DocFormProps = {
     /** Doctype name; the descriptor is resolved client-side because it holds functions (`dependsOn`). */
@@ -249,6 +250,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                 ) : (
                     tabs.map((t) => <div key={t.label}>{renderTab(t)}</div>)
                 )}
+                {d.preview && <FormPreview kind={d.preview} values={values} orgSlug={orgSlug} />}
             </form>
         </ReferenceOptionsContext>
     );

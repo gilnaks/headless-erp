@@ -25,6 +25,7 @@ export type FieldType =
     | "Currency"
     | "Percent"
     | "Color"
+    | "AttachImage"
     | "Table";
 
 /**
@@ -56,7 +57,14 @@ export type FieldDef = {
     dependsOn?: (values: FieldValues) => boolean;
     description?: string;
     placeholder?: string;
+    /** Text: the value is HTML; `saveDoc` sanitizes it with the server-side allow-list (`src/lib/html/sanitize.ts`). */
+    html?: boolean;
+    /** AttachImage: folder below `<org_id>/` in the private `org-files` bucket (see `app.file_doctype`). */
+    folder?: string;
 };
+
+/** Live panels shown below a form (`src/components/erp/doc/form-preview.tsx`). */
+export type FormPreview = "LetterHead";
 
 export type FormSection = { label?: string; columns: string[][] };
 export type FormTab = { label: string; sections: FormSection[] };
@@ -129,6 +137,7 @@ export type Doctype = {
     triggers: Record<string, FieldTrigger>;
     /** RPC that creates new documents instead of `save_doc` (creation side effects, e.g. `create_company`). */
     create?: CreateRpc;
+    preview?: FormPreview;
 };
 
 type LayoutOf<K extends string> = { label: string; sections: { label?: string; columns: K[][] }[] }[];
@@ -152,6 +161,7 @@ type DoctypeBase<T extends TableName, C extends string> = {
     actions?: FormAction[];
     triggers?: Partial<Record<Columns<T> | C, FieldTrigger>>;
     create?: CreateRpc;
+    preview?: FormPreview;
 };
 
 /** `C` = Table field names (child row arrays), which are not columns of the parent table. */
@@ -184,6 +194,7 @@ export function defineDoctype<T extends TableName, C extends string = never>(inp
         actions: input.actions ?? [],
         triggers: (input.triggers ?? {}) as Record<string, FieldTrigger>,
         ...(input.create ? { create: input.create } : {}),
+        ...(input.preview ? { preview: input.preview } : {}),
     };
 }
 

@@ -12,6 +12,7 @@ import { TextArea } from "@/components/base/textarea/textarea";
 import type { FieldDef, OptionSource } from "@/doctypes/define";
 import type { ReferenceOptions } from "@/lib/reference-options";
 import { cx } from "@/utils/cx";
+import { AttachImageField } from "./attach-image-field";
 import { LinkField } from "./link-field";
 
 /** Reference-table options (Currency, Country) loaded by the route and shared by every field in the form. */
@@ -56,6 +57,8 @@ export function FieldRenderer(props: FieldRendererProps) {
             return <MultiSelectField {...props} />;
         case "Color":
             return <ColorField {...props} />;
+        case "AttachImage":
+            return <AttachImageField {...props} />;
         default:
             return <InputField {...props} />;
     }
@@ -141,7 +144,8 @@ function TextField({ control, name, field, isDisabled, compact }: FieldRendererP
             textAreaRef={f.ref}
             name={f.name}
             size="sm"
-            rows={compact ? 1 : 3}
+            rows={compact ? 1 : field.html ? 8 : 3}
+            textAreaClassName={field.html ? "font-mono text-xs" : undefined}
             value={typeof f.value === "string" ? f.value : ""}
             onChange={f.onChange}
             onBlur={f.onBlur}

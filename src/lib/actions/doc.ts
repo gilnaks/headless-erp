@@ -7,6 +7,7 @@ import { getDoctypeByName } from "@/doctypes/registry";
 import { formToPayload, schemaFor } from "@/doctypes/schema";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
+import { sanitizeHtml } from "@/lib/html/sanitize";
 import type { LinkOption } from "@/lib/link-titles";
 import { getOrgBySlug } from "@/lib/queries/doc";
 import { getLinkTitles, searchLinkTitles } from "@/lib/queries/links";
@@ -21,7 +22,7 @@ function docTag(orgId: string, doctype: string): string {
 }
 
 /**
- * Generic save (frappe `Document.save`): Zod parse with the doctype's schema, then `app.save_doc` (RLS authorizes), or
+ * Generic save (frappe `Document.save`): Zod parse with the doctype's schema, HTML fields sanitized, then `app.save_doc` (RLS authorizes), or
  * the descriptor's `create` RPC for new documents. New documents redirect to their form; edits refresh the route.
  */
 export async function saveDoc(input: {
@@ -41,8 +42,13 @@ export async function saveDoc(input: {
     const parsed = schemaFor(d).safeParse(input.values);
     if (!parsed.success) return fail("Check the highlighted fields.", zodFieldErrors(parsed.error));
 
+    const values = { ...(parsed.data as FieldValues) };
+    for (const [name, field] of Object.entries(d.fields)) {
+        if (field.html && typeof values[name] === "string") values[name] = sanitizeHtml(values[name]);
+    }
+
     const isNew = input.id === null;
-    const payload = { ...formToPayload(d, parsed.data as FieldValues, { isNew }), ...(isNew ? { org_id: org.id } : { id: input.id }) };
+    const payload = { ...formToPayload(d, values, { isNew }), ...(isNew ? { org_id: org.id } : { id: input.id }) };
 
     const supabase = await createClient();
     const { data, error } =
