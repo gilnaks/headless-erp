@@ -6,8 +6,8 @@ alwaysApply: false
 
 # Supabase SQL conventions
 
-- File name `NNNN_<module>_<doctype>.sql`; ranges: 0000-0099 framework, 0100 setup, 0200 stock masters, 0300 accounts,
-  0400 selling, 0500 buying, 0600 stock txns, 0700 manufacturing, 0800 projects, 0900 assets, 1000+ reports/perf.
+- File name `NNNN_<module>_<doctype>.sql`; one 100-number block per PLAN phase (0000-0099 P0, 0100 P1, 0200 P2, 0300 P3 …),
+  numbered sequentially in build order within the block; `<module>` names the owning module.
 - Table = ERPNext doctype in snake_case (`sales_invoice`, child `sales_invoice_item`). Keep ERPNext fieldnames.
 - Base columns on every tenant table: `id uuid pk default gen_random_uuid()`, `org_id uuid not null references organizations(id) on delete cascade`,
   `created_at/created_by/updated_at/updated_by`. Transactional docs add `company_id`, `name` (null until submit),

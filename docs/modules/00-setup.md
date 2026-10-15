@@ -86,6 +86,7 @@ Additionally owned by this doc (not sidebar items):
 | default_income_account_id | uuid → account | | `Sales - ABBR` | |
 | round_off_account_id | uuid → account | | `Round Off - ABBR` | |
 | round_off_cost_center_id | uuid → cost_center | | `Main - ABBR` | |
+| round_off_for_opening_id | uuid → account | | — (not set by provisioning) | filter `root_type = Liability`, `account_type = Round Off for Opening`; used instead of `round_off_account` for opening entries, which throw "Please set 'Round Off for Opening' in Company: {0}" when blank (`general_ledger.py`) |
 | write_off_account_id | uuid → account | | `Write Off - ABBR` | |
 | bank_charges_account_id | uuid → account | | `Bank Charges - ABBR` | |
 | exchange_gain_loss_account_id | uuid → account | | `Exchange Gain/Loss - ABBR` | fixed-rate multi-currency only |

@@ -127,7 +127,7 @@ bin: unique (org_id, item_id, warehouse_id)
 
 ## Migrations workflow
 
-1. `supabase migration new <nnnn>_<module>_<doctype>` (numbering ranges: 0000-0099 framework, 0100 setup, 0200 stock masters, 0300 accounts, 0400 selling, 0500 buying, 0600 stock txns, 0700 manufacturing, 0800 projects, 0900 assets, 1000+ reports/perf).
+1. `supabase migration new <nnnn>_<module>_<doctype>` (one 100-number block per PLAN phase, numbered sequentially in build order so dependencies always run first: 0000-0099 P0 framework, 0100 P1, 0200 P2, 0300 P3, … 1100 P11; the `<module>` part names the owning module, e.g. `0114_accounts_fiscal_year.sql` was built in P1).
 2. Each migration is idempotent-safe (`create table if not exists`, `drop policy if exists`), ends with RLS enablement and policies, and includes the `doctype_meta` + default `role_permissions` upserts for that doctype.
 3. Run locally (`supabase db reset`), run pgTAP, regenerate `src/types/database.ts`, commit both.
 4. Applied to the hosted project only by CI (`deploy-db.yml`) or, when working interactively against the **dev** project, by `supabase db push --linked` (keeps the `NNNN` versions in sync with git; preferred over the MCP `apply_migration`, which records timestamp versions) — never DDL against prod. A new framework migration numbered below an already-applied module migration (e.g. `0005` after `0100`) needs `--include-all`.
