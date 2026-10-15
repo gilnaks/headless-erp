@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { Key } from "react-aria-components";
 import { type Control, type FieldValues, useController } from "react-hook-form";
@@ -21,15 +22,23 @@ type LinkFieldProps = {
 
 const DEBOUNCE_MS = 250;
 
+function useDebounced(value: string, ms: number): string {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+        const timer = setTimeout(() => setDebounced(value), ms);
+        return () => clearTimeout(timer);
+    }, [value, ms]);
+    return debounced;
+}
+
 /** ERPNext Link: an async combobox over the target doctype's title field; the stored value is the record id. */
 export function LinkField({ control, name, field, orgSlug, isDisabled, compact, target: dynamicTarget }: LinkFieldProps) {
     const { field: f, fieldState } = useController({ control, name });
     const value = typeof f.value === "string" ? f.value : "";
     const target = dynamicTarget ?? field.target ?? "";
-    const [items, setItems] = useState<LinkOption[]>([]);
-    const [loaded, setLoaded] = useState(false);
-    const request = useRef(0);
-    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [query, setQuery] = useState("");
+    const [opened, setOpened] = useState(!compact);
+    const debounced = useDebounced(query, DEBOUNCE_MS);
     const shownTarget = useRef(target);
 
     // A record id of the previous doctype means nothing for the new one.
@@ -37,41 +46,19 @@ export function LinkField({ control, name, field, orgSlug, isDisabled, compact, 
     useEffect(() => {
         if (target === shownTarget.current) return;
         shownTarget.current = target;
-        request.current++;
-        setItems([]);
-        setLoaded(false);
+        setQuery("");
+        setOpened(!compact);
         f.onChange("");
-        if (!compact) load("");
     }, [target]);
 
-    const load = (q: string) => {
-        if (!target) return;
-        const seq = ++request.current;
-        void searchLink({ orgSlug, doctype: target, q, ids: value ? [value] : [] }).then((options) => {
-            if (seq !== request.current) return;
-            setItems(options);
-            setLoaded(true);
-        });
-    };
-
-    // React Aria opens the menu on focus/typing only if options already exist, so form fields preload; grid cells
-    // load on focus to avoid one request per row. A stored id always needs its label.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: only when the stored value changes
-    useEffect(() => {
-        if (!compact || (value && !items.some((i) => i.id === value))) load("");
-    }, [value]);
-
-    useEffect(
-        () => () => {
-            if (timer.current) clearTimeout(timer.current);
-        },
-        [],
-    );
-
-    const onInputChange = (q: string) => {
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => load(q), DEBOUNCE_MS);
-    };
+    const result = useQuery({
+        queryKey: ["link", orgSlug, target, debounced, value],
+        queryFn: ({ signal }) => searchLink({ orgSlug, doctype: target, q: debounced, ids: value ? [value] : [], signal }),
+        enabled: Boolean(target) && (opened || Boolean(value)),
+        staleTime: 30_000,
+        placeholderData: (previous, previousQuery) => (previousQuery?.queryKey[2] === target ? previous : undefined),
+    });
+    const items: LinkOption[] = result.data ?? [];
 
     return (
         <Select.ComboBox
@@ -89,10 +76,8 @@ export function LinkField({ control, name, field, orgSlug, isDisabled, compact, 
             hint={compact ? undefined : (fieldState.error?.message ?? field.description)}
             selectedKey={value || null}
             onSelectionChange={(key: Key | null) => f.onChange(key == null ? "" : String(key))}
-            onInputChange={onInputChange}
-            onFocus={() => {
-                if (!loaded) load("");
-            }}
+            onInputChange={setQuery}
+            onFocus={() => setOpened(true)}
             onBlur={f.onBlur}
             name={f.name}
         >

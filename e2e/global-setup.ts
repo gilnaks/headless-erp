@@ -30,6 +30,9 @@ const USERS = [
     { env: "E2E_AUTH_RULE", local: "auth-rule", first_name: "Rule", last_name: "Admin" },
     { env: "E2E_HOME", local: "home", first_name: "Home", last_name: "Owner" },
     { env: "E2E_HOME_MEMBER", local: "home-member", first_name: "Home", last_name: "Member" },
+    { env: "E2E_P2", local: "p2", first_name: "Masters", last_name: "Admin" },
+    { env: "E2E_JE", local: "journal", first_name: "Journal", last_name: "Admin" },
+    { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },
 ] as const;
 
 /**
@@ -37,9 +40,9 @@ const USERS = [
  * Credentials reach the tests through env vars (`<env>_EMAIL`, `<env>_PASSWORD`), which Playwright passes on to workers.
  */
 export default async function globalSetup() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const url = process.env.VITE_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) throw new Error("e2e needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (local Supabase)");
+    if (!url || !key) throw new Error("e2e needs VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (.env.local or CI)");
 
     const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
     const stamp = Date.now();

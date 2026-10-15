@@ -1,11 +1,9 @@
-"use server";
-
-import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/claims";
 import { emailInvitation } from "@/lib/email/invitation";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
+import { redirect } from "@/lib/navigate";
 import { type ProvisionOrganizationInput, provisionOrganizationSchema } from "@/lib/schemas/organization";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 /** Database error code → wizard field (`app.provision_organization` and the triggers it runs). */
 const FIELD_FOR: Record<string, string> = {

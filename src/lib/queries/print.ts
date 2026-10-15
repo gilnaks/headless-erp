@@ -1,8 +1,6 @@
-import "server-only";
 import { type Doctype, type FieldValues, layoutFields } from "@/doctypes/define";
 import { DOCTYPES } from "@/doctypes/registry";
 import { formatAddress } from "@/lib/format/address";
-import { sanitizeHtml } from "@/lib/html/sanitize";
 import { type LinkTitles, linkRequests, titleKey } from "@/lib/link-titles";
 import {
     DEFAULT_PRINT_SETTINGS,
@@ -15,7 +13,7 @@ import {
 } from "@/lib/print/resolve";
 import { docTable, getDoc } from "@/lib/queries/doc";
 import { getLinkTitles } from "@/lib/queries/links";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SIGNED_URL_SECONDS = 60 * 60;
@@ -93,8 +91,8 @@ async function letterHeadBlocks(supabase: Awaited<ReturnType<typeof createClient
         align: string,
     ) => {
         if (source === "Image") return image && urls[image] ? { kind: "image" as const, url: urls[image], height, width, align } : null;
-        // Saved HTML is sanitized by saveDoc; sanitize again because rows can also be written through the API.
-        return html?.trim() ? { kind: "html" as const, html: sanitizeHtml(html) } : null;
+        // Stored HTML is sanitized by app.sanitize_html on every write.
+        return html?.trim() ? { kind: "html" as const, html } : null;
     };
     return {
         header: block(row.source, row.content, row.image, row.image_height, row.image_width, row.align),

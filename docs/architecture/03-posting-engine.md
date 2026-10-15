@@ -2,7 +2,7 @@
 
 This is the heart of the port. ERPNext's behaviour lives in `erpnext/accounts/general_ledger.py`, `erpnext/stock/stock_ledger.py`, `erpnext/controllers/{accounts_controller,stock_controller,selling_controller,buying_controller,status_updater,taxes_and_totals}.py` and each doctype's `get_gl_entries()` / `update_stock_ledger()`. We port the *default* paths only.
 
-Everything in this document runs in Postgres (`schema app`), inside the transaction opened by `app.submit_doc()` / `app.cancel_doc()`. Server Actions never write to ledger tables directly.
+Everything in this document runs in Postgres (`schema app`), inside the transaction opened by `app.submit_doc()` / `app.cancel_doc()`. Client mutations never write to ledger tables directly.
 
 ## Ledger tables
 

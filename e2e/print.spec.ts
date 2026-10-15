@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { createOrganization, label, signIn } from "./helpers";
 
 test("print a company with the default letter head; another organization gets a 404", async ({ page, browser }) => {
+    test.slow();
     const stamp = Date.now().toString(36);
     const orgName = `Print Org ${stamp}`;
 

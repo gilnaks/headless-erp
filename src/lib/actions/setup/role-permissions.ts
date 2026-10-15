@@ -1,9 +1,7 @@
-"use server";
-
-import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
 import { getOrgBySlug } from "@/lib/queries/doc";
+import { refresh } from "@/lib/query-client";
 import {
     type ResetDoctypeInput,
     type RuleInput,
@@ -12,7 +10,7 @@ import {
     type SetPermissionInput,
     setPermissionSchema,
 } from "@/lib/schemas/role-permissions";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const PATH = "setup/role-permissions";
 const NOT_ALLOWED = "You do not have permission to change role permissions. Ask a System Manager.";

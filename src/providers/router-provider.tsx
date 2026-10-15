@@ -1,12 +1,12 @@
 "use client";
 
 import type { PropsWithChildren } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/lib/next-nav";
 import { RouterProvider } from "react-aria-components";
 
 declare module "react-aria-components" {
     interface RouterConfig {
-        routerOptions: NonNullable<Parameters<ReturnType<typeof useRouter>["push"]>[1]>;
+        routerOptions: undefined;
     }
 }
 

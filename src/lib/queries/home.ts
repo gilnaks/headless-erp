@@ -1,6 +1,5 @@
-import "server-only";
 import { ONBOARDING_STEP_KEYS, type OnboardingState, type OnboardingStepKey } from "@/lib/onboarding";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 /** The org's onboarding checklist (RLS: members read). */
 export async function getOnboarding(orgId: string): Promise<OnboardingState> {

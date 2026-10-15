@@ -1,6 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("server-only", () => ({}));
+import { describe, expect, it } from "vitest";
 
 const { accountSender, formatAddress, platformSender, withSignature } = await import("./sender");
 

@@ -1,5 +1,3 @@
-import "server-only";
-
 import sanitize from "sanitize-html";
 
 const SAFE_VALUE = /^(?!.*(?:url|expression|javascript)\s*[(:]).*$/i;

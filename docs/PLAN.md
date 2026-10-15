@@ -25,41 +25,44 @@ Source of truth for behaviour: the ERPNext clone at `C:\Users\John\Desktop\erpne
 
 | Concern | Choice | Notes |
 |---|---|---|
-| Framework | **Next.js 16.4+** (App Router, React 19, TypeScript strict, Turbopack) | `cacheComponents: true`, `partialPrefetching: true`. `proxy.ts` (not `middleware.ts`). `params`/`searchParams`/`cookies()`/`headers()` are async. |
-| Database / Auth / Storage | **Supabase** (Postgres 15+, Supabase Auth, Storage, Edge Functions only when a Server Action cannot do the job) | Schema lives in `supabase/migrations/*.sql`, versioned in git. Types generated with `supabase gen types`. The Supabase MCP server is used from Cursor for migrations, SQL, advisors and type generation. |
-| Auth in Next.js | `@supabase/ssr` | Browser client + server client. Token refresh in `proxy.ts` with `supabase.auth.getClaims()`. Never `getSession()` for authorization on the server. Never `@supabase/auth-helpers-nextjs`. |
-| Client state | **Zustand** | UI/session state only (active company, sidebar, list filters, unsaved form drafts, toasts). Server data is fetched in Server Components / Server Actions; never duplicate it into a global store. |
+| Framework | **Vite SPA** (React 19, TypeScript strict) | Client-rendered. TanStack Router for routes, TanStack Query for server data. No Server Components, Server Actions, or `proxy.ts`. |
+| Database / Auth / Storage | **Supabase** (Postgres 15+, Supabase Auth, Storage, Edge Functions for secrets) | Schema lives in `supabase/migrations/*.sql`, versioned in git. Types generated with `supabase gen types`. The browser calls `rpc` with the user JWT. Edge Functions hold the service role and provider keys (email). |
+| Auth in the browser | `@supabase/supabase-js` | Session in local storage. The client refreshes tokens. Route guards send signed-out users to `/login`. Never `getSession()` for authorization decisions; RLS is the check. Short-lived access tokens. Never put the service-role key in the client bundle. |
+| Routing | **TanStack Router** | File routes under `src/routes`, mirroring `/[org]/…`, auth, print, onboarding, and invites. |
+| Server data | **TanStack Query** | Lists, forms, and link search. Invalidate `['org', orgId, doctype]` after a mutation. `nuqs` keeps list filters in the URL (TanStack Router adapter). |
+| Client state | **Zustand** | UI/session state only (active company, sidebar, list filters, unsaved form drafts, toasts). Query results stay in TanStack Query, not in a store. |
 | UI kit | **Untitled UI React** (Tailwind CSS v4, React Aria Components, `@untitledui/icons`) | Components are copied into `src/components/base/**` and `src/components/application/**` via `npx untitledui@latest add <component>`. We own the code. |
-| Charts | **Recharts 3** | `responsive` prop on chart roots; wrap in a client component. |
-| Validation | **Zod** | One schema per doctype, shared by client forms and Server Actions. |
+| Font | **`@fontsource/inter`** | Self-hosted Inter. No Google Fonts runtime. |
+| Charts | **Recharts 3** | `responsive` prop on chart roots. |
+| Validation | **Zod** | One schema per doctype, shared by forms (field errors). Postgres is authoritative: a direct `rpc` call must fail the same way. |
 | Forms | React Hook Form + Zod resolver | Thin wrapper components over Untitled UI inputs. |
-| Tables | TanStack Table (headless) rendered with Untitled UI table primitives | Server-side pagination/sort/filter via Server Components + URL state (`nuqs`). |
-| Testing | Vitest (unit, posting engine via pg-tap style SQL tests through Supabase CLI), Playwright (critical flows) | Posting engine correctness is tested in SQL against a local Supabase. `@playwright/test` (dev dependency, Chromium only) runs `e2e/*.spec.ts` against the built app in CI. |
+| Tables | TanStack Table (headless) rendered with Untitled UI table primitives | Pagination/sort/filter in the query, URL state via `nuqs`. |
+| Testing | Vitest (unit), pgTAP (SQL), Playwright (critical flows) | Posting engine correctness is tested in SQL against a local Supabase. `@playwright/test` (dev dependency, Chromium only) runs `e2e/*.spec.ts` against `vite preview`. |
 | Lint/format | Biome | Untitled UI-owned folders (`components/{base,application,foundations,shared-assets}`, `hooks`, `providers`, `styles`, `utils`) are excluded so upstream diffs stay clean. |
 | Package manager | npm (Node 22) | `package-lock.json` committed. |
-| CI/CD | GitHub Actions → Netlify (Next.js adapter) + Supabase CLI | See `docs/architecture/06-deployment-ops.md`. |
-| Public holidays | `date-holidays` (MIT) | Server-only (Holiday List "Add Local Holidays" Server Action). Replaces ERPNext's Python `holidays` package; added P1. |
-| HTML sanitizer | `sanitize-html` (MIT) | Server-only (`src/lib/html/sanitize.ts`): allow-list for user-authored HTML (Letter Head header/footer, `html: true` fields) applied by `saveDoc`; added P1 Printing. |
+| CI/CD | GitHub Actions → Netlify (static SPA) + Supabase CLI | `vite build` publishes `dist` with an SPA fallback. See `docs/architecture/06-deployment-ops.md`. |
+| Public holidays | `date-holidays` (MIT) | Runs in the browser for Holiday List "Add Local Holidays". Replaces ERPNext's Python `holidays` package; added P1. |
+| HTML sanitizer | `app.sanitize_html(text)` in Postgres | Allow-list applied inside `app.save_doc` (and the email-template write path) for `doctype_meta` HTML columns. The cases in `src/lib/html/sanitize.test.ts` are the spec. `sanitize-html` may remain as a unit-test oracle until the SQL function matches it; it is not the security boundary. |
+
+New dependencies (this transition): `vite`, `@vitejs/plugin-react`, `@tanstack/react-router`, `@tanstack/react-query`, `@fontsource/inter`. Removed: `next`, `@supabase/ssr`.
 
 ## 3. Architecture in one page
 
 ```
-Browser (Client Components, Zustand UI state)
-   │  forms, filters, optimistic UI, live totals preview (pure TS calc = same lib as server)
+Browser (Vite SPA on Netlify, static files)
+   ├─ TanStack Router: route guards (signed-in, org in the URL)
+   ├─ TanStack Query: reads via the Supabase browser client (RLS, user JWT)
+   ├─ Mutations: Zod (field errors) → supabase.rpc(app.* / public.*) → invalidate queries
+   └─ Zustand: UI and session only (active company in localStorage)
    ▼
-Next.js 16 on Netlify
-   ├─ Server Components: read via Supabase server client (RLS enforced, user JWT)
-   ├─ Server Actions: validate (Zod) → call Postgres RPC (app.* functions) → revalidateTag
-   └─ proxy.ts: session refresh + tenant cookie (active org/company) + route guards
-   ▼
-Supabase Postgres
-   ├─ schema `public`: tenant data tables (every row has org_id; RLS on every table)
-   ├─ schema `app`: posting engine (submit/cancel), numbering, permission helpers, report functions
-   ├─ schema `auth`: Supabase Auth
-   └─ views/materialized views for reports and dashboards
+Supabase
+   ├─ Postgres public: tenant tables (org_id + RLS). security invoker RPCs.
+   ├─ Postgres app: posting, numbering, permissions, sanitizing, reports
+   ├─ Auth: session in the browser; short-lived access token; custom claims for UI hints
+   └─ Edge Functions: anything that needs a secret (email provider, service role)
 ```
 
-**Guiding rule:** anything that changes ledgers, balances, statuses of linked documents or document numbers runs **inside one Postgres transaction** (an `app.*` function). The browser only computes previews.
+**Guiding rule:** anything that changes ledgers, balances, statuses of linked documents, document numbers, or stored HTML runs **inside one Postgres transaction** (an `app.*` function). The browser only computes previews. A check that must hold when someone calls `rpc` directly belongs in SQL, not in TypeScript.
 
 Full detail: `docs/architecture/01-tenancy-auth-rls.md`, `02-database-conventions.md`, `03-posting-engine.md`, `04-client-vs-server.md`, `05-ui-ux.md`, `06-deployment-ops.md`.
 
@@ -78,15 +81,15 @@ Full detail: `docs/architecture/01-tenancy-auth-rls.md`, `02-database-convention
 | Tree doctypes (Account, Cost Center, Warehouse, Item Group, Customer Group, Supplier Group, Territory, Department, Company) | `parent_id` adjacency + `is_group`, with `path ltree` maintained by trigger for fast subtree queries. |
 | Single doctypes (settings) | One row per org (or per company where ERPNext has company-specific defaults) in `<module>_settings` tables; seeded with ERPNext defaults. |
 | Naming Series | `naming_series` table (org, company, series prefix, current). Default prefixes copied from ERPNext (`ACC-SINV-.YYYY.-`, `SAL-ORD-.YYYY.-`, `MAT-STE-.YYYY.-`, ...). |
-| Roles & Role Permissions | `roles`, `role_permissions(doctype, read/write/create/submit/cancel/amend/delete)`, `org_members(user, org, roles[])`. Evaluated by `app.has_perm()` in RLS **and** in Server Actions. Default roles: System Manager, Accounts Manager/User, Sales Manager/User, Purchase Manager/User, Stock Manager/User, Item Manager, Manufacturing Manager/User, Projects Manager/User, Auditor. |
+| Roles & Role Permissions | `roles`, `role_permissions(doctype, read/write/create/submit/cancel/amend/delete)`, `org_members(user, org, roles[])`. Evaluated by `app.has_perm()` in RLS. The browser reads the same claim only to hide buttons. Default roles: System Manager, Accounts Manager/User, Sales Manager/User, Purchase Manager/User, Stock Manager/User, Item Manager, Manufacturing Manager/User, Projects Manager/User, Auditor. |
 | User Permissions (restrict a user to a Company / Warehouse / Cost Center) | `user_permissions(user, org, doctype, record_id)` honoured by `app.allowed_records()` in RLS. |
 | GL Entry / Stock Ledger Entry / Payment Ledger Entry / Bin | Same four tables, same columns that matter (see posting engine doc). Append-only; cancellation inserts reversing rows and flags the voucher's rows `is_cancelled` (PLE: `delinked`), the only in-place update allowed (03-posting-engine). |
 | Status Updater (per_delivered, per_billed, per_received, per_ordered → status) | Implemented in `app.update_prevdoc_status()` executed inside submit/cancel. Status expressions copied from `erpnext/controllers/status_updater.py`. |
 | `make_*` mappers (Quotation → Sales Order → Delivery Note → Sales Invoice, etc.) | `app.map_doc(source_doctype, source_id, target_doctype)` SQL functions + TS `mapDoc()` for pre-fill; mapping tables documented per module. |
-| Taxes and Totals (`controllers/taxes_and_totals.py`) | One pure TypeScript library `src/lib/calc/taxes-and-totals.ts` used both in the browser (live preview) **and** re-executed server-side (authoritative) before posting. Property-tested against ERPNext examples. |
-| Workspace / Sidebar | Module sidebar JSON → our route tree in `src/app/(app)/[module]/...` and nav config in `src/config/navigation.ts`. |
+| Taxes and Totals (`controllers/taxes_and_totals.py`) | One pure TypeScript library `src/lib/calc/taxes-and-totals.ts` used in the browser as a live preview. Postgres recomputes before posting. Property-tested against ERPNext examples. |
+| Workspace / Sidebar | Module sidebar JSON → the TanStack Router tree under `src/routes` and nav config in `src/config/navigation.ts`. |
 | Dashboard (Number Cards + Dashboard Charts) | Same cards/charts as `erpnext/<module>/<module>_dashboard/*.json`, computed by SQL functions, rendered with Recharts. |
-| Print Format / Letter Head | Server-rendered print routes (`/print/[doctype]/[id]`) with a default modern template per transaction + Letter Head selection. PDF via browser print. |
+| Print Format / Letter Head | Client route `/print/[doctype]/[id]` with a default modern template per transaction + Letter Head selection. PDF via `window.print()`. |
 | Email Account / Email Template | Transactional outbound mail via Supabase Edge Function + Resend (or SMTP) using templates stored per org. No inbound mail. |
 
 ## 5. Default settings baseline ("what the setup wizard gives you")
@@ -115,7 +118,7 @@ The precise seed is specified in `docs/modules/00-setup.md` and implemented in `
 ```
 headless-erp/
 ├─ .cursorrules                      # always-on rules (short)
-├─ .cursor/rules/*.mdc               # scoped rules (supabase, nextjs, ui, zustand, posting engine, docs)
+├─ .cursor/rules/*.mdc               # scoped rules (supabase, vite spa, ui, zustand, posting engine, docs)
 ├─ .cursor/mcp.json                  # Supabase MCP (project-scoped, see 06-deployment-ops)
 ├─ docs/
 │  ├─ PLAN.md                        # this file
@@ -128,24 +131,20 @@ headless-erp/
 │  ├─ functions/                     # Edge Functions (email, scheduled jobs)
 │  ├─ seed/                          # reference data (CoA template JSON, UOMs, country list, currencies)
 │  └─ tests/                         # pgTAP tests (RLS coverage, engines, doctypes)
+├─ index.html                        # Vite entry
 ├─ src/
-│  ├─ app/
-│  │  ├─ (auth)/login, signup, invite/[token]
-│  │  ├─ (onboarding)/setup           # org + company wizard
-│  │  ├─ (app)/[org]/…                # authenticated shell; org slug in URL
-│  │  │   ├─ setup/…  accounts/…  selling/…  buying/…  stock/…  manufacturing/…  projects/…  assets/…
-│  │  │   └─ print/[doctype]/[id]
-│  │  └─ api/… (webhooks only)
+│  ├─ main.tsx                       # router + query client + auth provider
+│  ├─ routes/                        # TanStack Router: auth, setup, [org], print, invite
 │  ├─ components/base/**             # Untitled UI primitives (owned copies)
 │  ├─ components/application/**      # Untitled UI app components (tables, nav, modals)
 │  ├─ components/erp/**              # our composites: DocForm, DocList, ChildTable, LinkField, StatusBadge, DocActions, NumberCard, DashboardChart
 │  ├─ doctypes/<module>/<slug>.ts    # defineDoctype() descriptors (fields, children, perms, status map, links)
 │  ├─ lib/
-│  │  ├─ supabase/{client,server,proxy}.ts
+│  │  ├─ supabase/client.ts          # browser client only (publishable key)
 │  │  ├─ calc/                       # pure TS: taxes-and-totals, rounding, currency, uom
-│  │  ├─ actions/<module>/*.ts       # Server Actions (thin: zod → rpc → revalidate)
-│  │  ├─ queries/<module>/*.ts       # typed read helpers for Server Components
-│  │  └─ auth/{claims,permissions}.ts
+│  │  ├─ actions/<module>/*.ts       # client mutations (zod → rpc → invalidate)
+│  │  ├─ queries/<module>/*.ts       # typed reads for TanStack Query
+│  │  └─ auth/{claims,permissions,guard}.ts
 │  ├─ stores/                        # Zustand: ui.ts, session.ts, list-filters.ts, form-draft.ts
 │  ├─ config/navigation.ts           # module sidebar definitions (mirrors ERPNext sidebars)
 │  └─ types/database.ts              # generated by supabase gen types
@@ -156,13 +155,14 @@ headless-erp/
 
 ## 7. Delivery phases (each phase = mergeable, deployable increment)
 
-Work **one phase at a time**, and within a phase **one doctype at a time**: migration → RLS → seed → TS descriptor → Server Actions → list/form UI → tests → docs updated. Every PR follows the **Workflow (every PR)** in `.cursorrules`; a phase closes only on its **Phase gate** there (module doc §10 ticked or re-homed, critical flows covered by Playwright, full `npm run e2e` and `npm run db:test:linked` green, row below marked Complete).
+Work **one phase at a time**, and within a phase **one doctype at a time**: migration → RLS → seed → TS descriptor → client mutations → list/form UI → tests → docs updated. Every PR follows the **Workflow (every PR)** in `.cursorrules`; a phase closes only on its **Phase gate** there (module doc §10 ticked or re-homed, critical flows covered by Playwright, full `npm run e2e` against the hosted project and `npm run db:test:linked` green, row below marked Complete).
 
 | Phase | Deliverable | Depends on |
 |---|---|---|
 | **P0 Foundation** | Scaffold (`npx untitledui@latest init --nextjs` then merge into this repo), Biome, Supabase local, auth (email+password, magic link, invites), `organizations`/`companies`/`org_members`/roles/RLS helpers, app shell (icon rail + module sidebar + command palette), `defineDoctype()` + generic `DocList`/`DocForm`/`ChildTable`/`LinkField`, numbering, audit columns, `app.has_perm`, CI, Netlify preview deploys. | — |
 | **P1 Setup** | Onboarding wizard (org → company → fiscal year → CoA → defaults), Company, Users & invites, Organization (Branch, Department, Designation, Holiday List), Access (Roles, Role Permissions matrix, User Permissions), Printing (Letter Head, Print Settings, default print formats), Email (Email Account/outbound config, Email Templates). Provisioning seed from §5. **Complete (2026-10-15)**; also built: Address, Contact, Fiscal Year, Authorization Rule, Home onboarding checklist. Moved out: Email Digest (after P3), Terms & Conditions (P2), country tax seed and the remaining Company tabs (P2/P3), see `docs/modules/00-setup.md` §10. | P0 |
-| **P2 Masters** | Item, Item Group, UOM, Brand, Warehouse, Customer, Customer Group, Territory, Sales Person, Product Bundle, Supplier, Supplier Group, Price List + Item Price, Payment Terms, Terms & Conditions, Tax templates (Sales/Purchase/Item Tax Template, Tax Category, Tax Rule) + country tax seed, Account (CoA tree UI), Cost Center, Mode of Payment, Currency Exchange, remaining Company tabs (account/stock defaults). Address, Contact and Fiscal Year were built in P1. Specs: masters sections of `docs/modules/01-accounts.md`, `02-selling.md`, `03-buying.md`, `04-stock.md`. | P1 |
+| **P1.5 Vite SPA** | Replace Next.js with a Vite SPA: TanStack Router, TanStack Query, browser Supabase session, route guards, HTML sanitizing and link search in Postgres, static Netlify deploy. Playwright specs stay the same except the preview server. | P1 |
+| **P2 Masters** | Item, Item Group, UOM, Brand, Warehouse, Customer, Customer Group, Territory, Sales Person, Product Bundle, Supplier, Supplier Group, Price List + Item Price, Payment Terms, Terms & Conditions, Tax templates (Sales/Purchase/Item Tax Template, Tax Category, Tax Rule) + country tax seed, Account (CoA tree UI), Cost Center, Mode of Payment, Currency Exchange, remaining Company tabs (account/stock defaults). Address, Contact and Fiscal Year were built in P1. Specs: masters sections of `docs/modules/01-accounts.md`, `02-selling.md`, `03-buying.md`, `04-stock.md`. | P1.5 |
 | **P3 Accounting core** | GL posting engine, Journal Entry, Payment Entry (receive/pay/internal transfer, allocation against invoices), Payment Ledger, Payment Reconciliation (basic: allocate unallocated payments and standalone credit/debit notes to invoices), General Ledger / Trial Balance / Trial Balance for Party / Balance Sheet / P&L / Cash Flow reports (Consolidated Financial Statement and Profitability Analysis are stretch), Accounts Dashboard (the AR/AP ageing charts arrive with the P7 reports). Spec: `docs/modules/01-accounts.md`. | P2 |
 | **P4 Stock core** | Stock Ledger engine (FIFO + Moving Average, perpetual inventory GL), Bin, Stock Entry (all standard purposes), Stock Reconciliation (opening stock), Material Request, Stock Ledger / Stock Balance / Projected Qty / Ageing reports, Stock Dashboard, Serial No / Batch (basic: item flags, bundle on inward/outward, reports). Spec: `docs/modules/04-stock.md`. | P3 |
 | **P5 Selling** | Quotation → Sales Order → Delivery Note → Sales Invoice (with `update_stock` option), returns (credit note / sales return), status updater, Selling reports + dashboard, Selling Settings. Spec: `docs/modules/02-selling.md`. | P4 |
@@ -171,14 +171,14 @@ Work **one phase at a time**, and within a phase **one doctype at a time**: migr
 | **P8 Manufacturing** | Workstation, Operation, Routing, BOM (tree, cost rollup), Production Plan (from SO/MR → WO/MR), Work Order (material transfer + manufacture stock entries, backflush by BOM), Job Card (basic time logs), Subcontracting (SC Order/Receipt only, simplest flow), BOM Update Tool, reports + dashboard. | P6 |
 | **P9 Projects** | Project Type, Project Template, Project (tasks, % complete, costing from timesheets & purchase), Task (tree, dependencies, Gantt-lite), Timesheet (billable → Sales Invoice), Activity Type/Cost, reports + dashboard. | P6 (purchase costing needs Purchase Invoice) |
 | **P10 Assets** | Asset Category, Location, Asset (purchase via PR/PI with `is_fixed_asset`, CWIP, finance books = single default), Depreciation Schedule (Straight Line, WDV, Double Declining), automatic depreciation JE job, Asset Movement, Asset Value Adjustment, Asset Capitalization (basic), Maintenance (team, schedule, log, repair), Fixed Asset Register + reports + dashboard. | P7 |
-| **P11 Hardening** | Security review (RLS tests per table, permission matrix tests), performance (indexes, `use cache` for reference data, report materialization), backups verified, docs, demo data generator. | all |
+| **P11 Hardening** | Security review (RLS tests per table, permission matrix tests), performance (indexes, TanStack Query `staleTime` for reference data, report materialization), backups verified, docs, demo data generator. | all |
 
 ## 8. Definition of Done for a doctype
 
 1. Migration with table(s), FKs, indexes (`(org_id, name)`, `(org_id, company_id, docstatus, posting_date)`), RLS enabled + policies, `updated_at` trigger.
 2. Settings/defaults seeded for new orgs when ERPNext seeds them.
 3. `src/doctypes/<module>/<slug>.ts` descriptor with Zod schema; `supabase gen types` regenerated.
-4. Server Actions for save/submit/cancel/amend/delete/map; posting handled in `app.*` SQL with tests.
+4. Client mutations for save/submit/cancel/amend/delete/map (Zod for field errors, then `rpc`); posting and any rule that must survive a direct `rpc` call live in `app.*` SQL with tests.
 5. List view (filters, sort, pagination, bulk actions where ERPNext has them) and Form view (tabs mirroring ERPNext's tab breaks, child tables, link fields with quick-create, status badge, connections panel).
 6. Dashboard/report queries if the module sidebar lists them.
 7. Permission checks: default role matrix copied from the doctype JSON `permissions` array.
@@ -195,7 +195,7 @@ See `docs/erpnext-reference.md`. Short version: the doctype JSON (`erpnext/<modu
 - Every tenant table has `org_id` **and** RLS. No exceptions, including lookup tables (seed them per org, or mark them `is_global` with read-only policies).
 - Ledgers are append-only. Cancellation reverses; it never deletes. The only in-place update is the cancellation flag (`is_cancelled` / `delinked`) on the cancelled voucher's rows.
 - Financial math uses `numeric` in Postgres and `decimal.js`-free integer-safe helpers in TS (`src/lib/calc/number.ts`, precision from company currency + "float precision" setting, default 2/3/6 like ERPNext).
-- Server Actions re-validate everything; client previews are never trusted.
+- Postgres re-validates everything that matters; Zod and client previews are never the security boundary.
 - Modern, minimal UI: Untitled UI tokens, no custom colours outside `theme.css`, dense data tables, keyboard-first forms, consistent empty/loading/error states.
 - Commit small. One doctype or one engine function per PR.
 - Never commit to `main`. Every change lands through a PR with green CI and is squash-merged.

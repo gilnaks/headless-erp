@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, ChevronLeft, DotsVertical, Mail01, Printer, Trash01 } from "@untitledui/icons";
-import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Heading as AriaHeading, type Key } from "react-aria-components";
 import { type FieldErrors, type FieldValues, useForm, useWatch } from "react-hook-form";
@@ -16,8 +15,10 @@ import { getModule } from "@/config/navigation";
 import { type Doctype, docPath, type FormTab } from "@/doctypes/define";
 import { getDoctypeByName } from "@/doctypes/registry";
 import { formValuesFor, schemaFor } from "@/doctypes/schema";
-import { deleteDoc, saveDoc } from "@/lib/actions/doc";
+import { amendDoc, cancelDoc, deleteDoc, saveDoc, submitDoc } from "@/lib/actions/doc";
 import { applyFieldErrors } from "@/lib/forms";
+import { afterRedirect } from "@/lib/navigate";
+import { Link } from "@/lib/next-nav";
 import type { ReferenceOptions } from "@/lib/reference-options";
 import { AddressContactRail } from "./address-contact-rail";
 import { ChildTable } from "./child-table";
@@ -34,6 +35,9 @@ export type DocFormProps = {
     row: FieldValues | null;
     canSave: boolean;
     canDelete: boolean;
+    canSubmit?: boolean;
+    canCancel?: boolean;
+    canAmend?: boolean;
     /** Options for reference-backed Select fields (`optionSourcesOf(descriptor)`), loaded on the server. */
     referenceOptions?: ReferenceOptions;
 };
@@ -44,7 +48,18 @@ const NO_OPTIONS: ReferenceOptions = {};
  * Generic ERPNext form view: header (title, "Not Saved", Save with Ctrl/Cmd+S, Delete), tabs -> sections -> columns
  * of fields, `depends_on` visibility, server errors mapped back onto fields.
  */
-export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referenceOptions = NO_OPTIONS }: DocFormProps) {
+export function DocForm({
+    doctype,
+    orgSlug,
+    id,
+    row,
+    canSave,
+    canDelete,
+    canSubmit = false,
+    canCancel = false,
+    canAmend = false,
+    referenceOptions = NO_OPTIONS,
+}: DocFormProps) {
     const d = getDoctypeByName(doctype) as Doctype;
     const isNew = id === null;
     const editable = canSave && Number(row?.docstatus ?? 0) === 0;
@@ -57,6 +72,10 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     const [notice, setNotice] = useState<string | null>(null);
     const [emailOpen, setEmailOpen] = useState(false);
     const [tab, setTab] = useState<Key>(d.tabs[0]?.label ?? "");
+    const [workflow, setWorkflow] = useState<"submit" | "cancel" | "amend" | null>(null);
+    const docstatus = Number(row?.docstatus ?? 0);
+    const status = docstatus === 1 ? "Submitted" : docstatus === 2 ? "Cancelled" : "Draft";
+    const statusColor = docstatus === 1 ? "success" : docstatus === 2 ? "error" : "gray";
 
     // A server refresh after saving brings normalised values (e.g. upper-cased abbr); never clobber unsaved edits.
     // biome-ignore lint/correctness/useExhaustiveDependencies: reset only when the stored row changes
@@ -81,7 +100,8 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
         setError(null);
         setSaved(false);
         setNotice(null);
-        const result = await saveDoc({ orgSlug, doctype, id, values: input });
+        const result = await afterRedirect(saveDoc({ orgSlug, doctype, id, values: input }));
+        if (!result) return;
         if (!result.ok) {
             setError(result.error);
             applyFieldErrors(form.setError, result.fieldErrors);
@@ -91,6 +111,22 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
         form.reset(input);
         setSaved(true);
     }, showFirstErrorTab);
+
+    const runWorkflow = async (kind: "submit" | "cancel" | "amend") => {
+        if (!id) return;
+        setError(null);
+        setSaved(false);
+        setNotice(null);
+        setWorkflow(kind);
+        const call = kind === "submit" ? submitDoc : kind === "cancel" ? cancelDoc : amendDoc;
+        const result = await afterRedirect(call({ orgSlug, doctype, id }));
+        setWorkflow(null);
+        if (!result?.ok) {
+            if (result) setError(result.error);
+            return;
+        }
+        setNotice(kind === "submit" ? "Submitted." : "Cancelled.");
+    };
 
     const [running, setRunning] = useState(false);
     const runAction = async (actionId: string) => {
@@ -113,7 +149,8 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     // Field triggers react to user edits only; values they set do not re-trigger.
     useEffect(() => {
         const subscription = form.watch((all, { name, type }) => {
-            const trigger = type === "change" && name ? d.triggers[name] : undefined;
+            const root = name?.split(".")[0];
+            const trigger = type === "change" && name ? (d.triggers[name] ?? (root ? d.triggers[root] : undefined)) : undefined;
             if (!trigger) return;
             for (const [field, value] of Object.entries(trigger(all))) {
                 if (form.getValues(field) !== value) form.setValue(field, value, { shouldDirty: true });
@@ -201,6 +238,11 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                         </Link>
                         <div className="flex min-w-0 items-center gap-2">
                             <h1 className="truncate text-lg font-semibold text-primary">{title}</h1>
+                            {d.submittable && (
+                                <Badge size="sm" color={statusColor}>
+                                    {status}
+                                </Badge>
+                            )}
                             {(isNew || isDirty) && (
                                 <Badge size="sm" color="warning">
                                     Not Saved
@@ -254,6 +296,41 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                                 <kbd className="ml-1 text-xs font-medium opacity-70 max-md:hidden">Ctrl+S</kbd>
                             </Button>
                         )}
+                        {d.submittable && id && docstatus === 0 && canSubmit && !isDirty && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                isLoading={workflow === "submit"}
+                                isDisabled={workflow !== null}
+                                onClick={() => void runWorkflow("submit")}
+                            >
+                                Submit
+                            </Button>
+                        )}
+                        {d.submittable && id && docstatus === 1 && canCancel && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                color="secondary"
+                                isLoading={workflow === "cancel"}
+                                isDisabled={workflow !== null}
+                                onClick={() => void runWorkflow("cancel")}
+                            >
+                                Cancel
+                            </Button>
+                        )}
+                        {d.submittable && id && docstatus === 2 && canAmend && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                color="secondary"
+                                isLoading={workflow === "amend"}
+                                isDisabled={workflow !== null}
+                                onClick={() => void runWorkflow("amend")}
+                            >
+                                Amend
+                            </Button>
+                        )}
                     </div>
                 </header>
 
@@ -261,7 +338,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                     {error && <FormAlert>{error}</FormAlert>}
                     {saved && !isDirty && <FormAlert tone="success">Saved.</FormAlert>}
                     {notice && <FormAlert tone="success">{notice}</FormAlert>}
-                    {!editable && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
+                    {!editable && docstatus === 0 && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
                 </div>
 
                 <div className={rail ? "grid gap-x-8 xl:grid-cols-[minmax(0,1fr)_20rem]" : undefined}>
@@ -312,7 +389,7 @@ function MoreMenu({ doctype, title, orgSlug, id, printHref, onEmail, canDelete }
     const confirm = () =>
         startTransition(async () => {
             setError(null);
-            const result = await deleteDoc({ orgSlug, doctype, id });
+            const result = await afterRedirect(deleteDoc({ orgSlug, doctype, id }));
             if (result && !result.ok) setError(result.error);
         });
 

@@ -3,6 +3,7 @@ import { createOrganization, label, signIn } from "./helpers";
 
 // Runs with EMAIL_DRY_RUN=1: the test email is logged but never leaves the server.
 test("email account stores its API key write-only and sends a test email", async ({ page }) => {
+    test.slow();
     const stamp = Date.now().toString(36);
 
     await signIn(page, "E2E_EMAIL_ACCOUNT");

@@ -1,10 +1,10 @@
 "use client";
 
 import { X as CloseIcon } from "@untitledui/icons";
-import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { Button as AriaButton, Dialog as AriaDialog, Modal as AriaModal, ModalOverlay as AriaModalOverlay } from "react-aria-components";
 import { moduleForPath } from "@/config/navigation";
+import { usePathname } from "@/lib/next-nav";
 import { useSessionStore } from "@/stores/session";
 import { useUiStore } from "@/stores/ui";
 import { cx } from "@/utils/cx";

@@ -1,9 +1,9 @@
 "use client";
 
 import { Plus } from "@untitledui/icons";
-import Link from "next/link";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { Link } from "@/lib/next-nav";
 import type { MemberPermission } from "@/lib/queries/user-permissions";
 
 type MemberPermissionsProps = {

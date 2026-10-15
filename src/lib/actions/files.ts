@@ -1,10 +1,7 @@
-"use server";
-
-import { randomUUID } from "node:crypto";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, fail } from "@/lib/errors";
 import { getOrgBySlug } from "@/lib/queries/doc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const BUCKET = "org-files";
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -33,7 +30,7 @@ export async function createImageUpload(input: {
     if (!org) return fail("Organization not found.");
 
     const supabase = await createClient();
-    const path = `${org.id}/${input.folder}/${randomUUID()}.${ext}`;
+    const path = `${org.id}/${input.folder}/${crypto.randomUUID()}.${ext}`;
     const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
     if (error || !data) return fail("You cannot upload files here.");
     return { ok: true, data: { path: data.path, token: data.token } };

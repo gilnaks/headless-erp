@@ -1,10 +1,8 @@
-"use server";
-
 import { docPath, type FieldValues } from "@/doctypes/define";
 import { DOCTYPES } from "@/doctypes/registry";
 import { requireUser } from "@/lib/auth/claims";
 import { docTable, getOrgBySlug, searchTerm } from "@/lib/queries/doc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export type SearchHit = { doctype: string; id: string; label: string; path: string };
 

@@ -1,0 +1,19 @@
+---
+description: Vite SPA, TanStack Router, TanStack Query, and browser Supabase patterns
+globs: src/**/*.ts,src/**/*.tsx
+alwaysApply: false
+---
+
+# Vite SPA
+
+- Routes live in `src/routes` (TanStack Router). Search params are plain values. Navigate with the router, not `window.location`, except leaving the app.
+- Auth: `src/lib/supabase/client.ts` is the only Supabase client in `src/`. Session in `localStorage`, `autoRefreshToken`. Route `beforeLoad` sends signed-out users to `/login?next=`. Do not authorize rows in the guard.
+- Mutations (`lib/actions/<module>/*.ts`, plain async functions, no `"use server"`): parse with the doctype Zod schema → `supabase.rpc('save_doc' | 'submit_doc' | ...)` → `queryClient.invalidateQueries({ queryKey: ['org', orgId, doctype] })` → return `{ ok, data } | { ok: false, error }`. Map `code: message` database errors through `errorFields`. Never throw raw Postgres errors into the form.
+- Reads live in `lib/queries/<module>/*.ts` and run in `useQuery`. Reference data gets a long `staleTime`. Transactional lists refetch on focus. Query keys start with `['org', orgId, doctype]`.
+- Link search calls `rpc('search_link')` with debounce, `AbortSignal`, and `placeholderData: keepPreviousData`.
+- HTML fields are sanitized in `app.save_doc` (`app.sanitize_html`). Do not sanitize in the browser and treat that as the check.
+- URL state for lists via `nuqs` (TanStack Router adapter). UI state via Zustand selectors. No query results in stores. Active company is `localStorage`, not a cookie.
+- Generated DB types from `src/types/database.ts`; derive row types with `Tables<'sales_invoice'>`.
+- Numbers: never use `toFixed` for money; use `formatCurrency/formatNumber` from `lib/calc/number.ts`.
+- No `any`; prefer `satisfies`; exhaustive `switch` on status unions.
+- No `next/*` imports. No service-role client under `src/`.

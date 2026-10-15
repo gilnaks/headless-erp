@@ -1,10 +1,9 @@
-import "server-only";
 import { cache } from "react";
 import type { SelectItemType } from "@/components/base/select/select";
 import type { OptionSource } from "@/doctypes/define";
 import { timeZoneOptions } from "@/lib/intl";
 import { chartOfAccountsItems, countryItems, currencyItems, type ReferenceItem, type ReferenceOptions } from "@/lib/reference-options";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export const getCurrencies = cache(async () => {
     const supabase = await createClient();

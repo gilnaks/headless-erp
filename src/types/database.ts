@@ -128,6 +128,19 @@ export type Database = {
       }
       has_role: { Args: { p_org: string; p_role: string }; Returns: boolean }
       holiday_list_refresh: { Args: { p_list: string }; Returns: undefined }
+      html_attr_allowed: {
+        Args: { p_attr: string; p_tag: string }
+        Returns: boolean
+      }
+      html_clean_tag: {
+        Args: { p_name: string; p_raw: string; p_self: boolean }
+        Returns: string
+      }
+      html_filter_style: { Args: { p_style: string }; Returns: string }
+      html_url_ok: {
+        Args: { p_attr: string; p_tag: string; p_value: string }
+        Returns: boolean
+      }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
       is_half_holiday: {
         Args: { p_date?: string; p_list: string }
@@ -219,6 +232,11 @@ export type Database = {
         Args: { p_doctype: string; p_org: string }
         Returns: number
       }
+      sanitize_doc_payload: {
+        Args: { p_doctype: string; p_payload: Json }
+        Returns: Json
+      }
+      sanitize_html: { Args: { p_html: string }; Returns: string }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
       save_doc_children: {
         Args: {
@@ -228,6 +246,18 @@ export type Database = {
           p_payload: Json
         }
         Returns: undefined
+      }
+      search_link: {
+        Args: {
+          p_doctype: string
+          p_ids?: string[]
+          p_org: string
+          p_q?: string
+        }
+        Returns: {
+          id: string
+          label: string
+        }[]
       }
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
@@ -1383,6 +1413,7 @@ export type Database = {
           allow_on_submit: string[]
           child_field: string | null
           doctype: string
+          html_columns: string[]
           is_child: boolean
           is_single: boolean
           is_submittable: boolean
@@ -1399,6 +1430,7 @@ export type Database = {
           allow_on_submit?: string[]
           child_field?: string | null
           doctype: string
+          html_columns?: string[]
           is_child?: boolean
           is_single?: boolean
           is_submittable?: boolean
@@ -1415,6 +1447,7 @@ export type Database = {
           allow_on_submit?: string[]
           child_field?: string | null
           doctype?: string
+          html_columns?: string[]
           is_child?: boolean
           is_single?: boolean
           is_submittable?: boolean
@@ -3140,7 +3173,20 @@ export type Database = {
         Args: { p_doctype: string; p_org: string }
         Returns: number
       }
+      sanitize_html: { Args: { p_html: string }; Returns: string }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
+      search_link: {
+        Args: {
+          p_doctype: string
+          p_ids?: string[]
+          p_org: string
+          p_q?: string
+        }
+        Returns: {
+          id: string
+          label: string
+        }[]
+      }
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
         Returns: undefined

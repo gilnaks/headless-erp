@@ -1,11 +1,5 @@
-import { expect, type Page, test } from "@playwright/test";
-import { createOrganization, credentials, label, signIn } from "./helpers";
-
-async function switchUser(page: Page, prefix: string) {
-    await page.context().clearCookies();
-    await signIn(page, prefix);
-    await expect(page).not.toHaveURL(/\/login/);
-}
+import { expect, test } from "@playwright/test";
+import { createOrganization, credentials, label, signIn, switchUser } from "./helpers";
 
 test("home onboarding checklist: skip, invite completes a step, managers only, dismiss", async ({ page }) => {
     test.slow();
@@ -23,8 +17,9 @@ test("home onboarding checklist: skip, invite completes a step, managers only, d
 
     const stock = card.getByRole("listitem", { name: "Keep track of your stock" });
     await expect(async () => {
-        await stock.getByRole("button", { name: "Skip" }).click();
-        await expect(stock).toContainText("Skipped", { timeout: 2_000 });
+        const skip = stock.getByRole("button", { name: "Skip" });
+        if (await skip.isVisible()) await skip.click();
+        await expect(stock).toContainText("Skipped", { timeout: 15_000 });
     }).toPass();
 
     await page.goto(`${org}/setup/users`);

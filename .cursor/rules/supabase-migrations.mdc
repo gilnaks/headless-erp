@@ -30,6 +30,10 @@ alwaysApply: false
   `security definer` functions in schema `app`.
 - `security definer` functions: `set search_path = app, public, pg_temp`, first statement checks `app.has_perm(...)`,
   lock the header row `for update`, raise with `using errcode = 'P0001', message = '<machine_key>: <human text>'`.
+- Read RPCs that return tenant rows (`search_link` and the like) are `security invoker` end to end so RLS applies.
+  Do not use `security definer` to look up another org's titles.
+- HTML columns are `doctype_meta.html_columns text[]`. `app.save_doc` passes those payload values through
+  `app.sanitize_html` before insert/update. New HTML fields extend that array in the same migration.
 - Every new `app.*` function: `revoke execute ... from public, anon, authenticated` then grant only what is needed
   (Supabase's role-level default privileges otherwise grant it to anon). `app` is not exposed; RPC entry points are
   `public.<fn>` `security invoker` wrappers over the `app` implementation.

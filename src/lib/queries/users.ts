@@ -1,7 +1,6 @@
-import "server-only";
 import { cache } from "react";
 import type { InvitationRow } from "@/lib/invitations";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export type Member = {
     userId: string;

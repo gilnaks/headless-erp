@@ -1,5 +1,3 @@
-import "server-only";
-
 export type EmailMessage = {
     /** `Name <address>` or a bare address. */
     from: string;

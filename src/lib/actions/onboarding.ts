@@ -1,12 +1,10 @@
-"use server";
-
-import { refresh } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, dbError, fail } from "@/lib/errors";
 import { ONBOARDING_STEP_KEYS } from "@/lib/onboarding";
 import { getOrgBySlug } from "@/lib/queries/doc";
-import { createClient } from "@/lib/supabase/server";
+import { refresh } from "@/lib/query-client";
+import { createClient } from "@/lib/supabase/client";
 
 const skipSchema = z.object({ orgSlug: z.string().min(1), step: z.enum(ONBOARDING_STEP_KEYS) });
 const dismissSchema = z.object({ orgSlug: z.string().min(1) });

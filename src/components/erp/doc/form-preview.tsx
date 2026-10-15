@@ -130,7 +130,6 @@ function Block({ label, orgSlug, source, html, image, height, width, align }: Bl
         if (!url) return null;
         return (
             <div className={ALIGN[align] ?? "text-left"}>
-                {/* biome-ignore lint/performance/noImgElement: signed Storage URLs are short-lived; next/image would cache them */}
                 <img
                     src={url}
                     alt={`Letter head ${label.toLowerCase()}`}

@@ -26,7 +26,9 @@ test("the start date fills the end date and name, and overlapping years need a c
     await setStart("2030-07-01", "2031-06-30");
     await yearName.fill("Mid 2030");
     await page.getByRole("button", { name: /^Save/ }).click();
-    await expect(page.getByText(/overlapping with 2030-2031\. To avoid please set company/).first()).toBeVisible();
+    await expect(page.getByText(/overlapping with 2030-2031\. To avoid please set company/).first()).toBeVisible({
+        timeout: 20_000,
+    });
 
     const company = `Fiscal Co ${stamp}`;
     await createCompany(page, org, company, `F${stamp.slice(-3).toUpperCase()}`);

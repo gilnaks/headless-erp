@@ -1,7 +1,6 @@
 "use client";
 
 import { Building07, ChevronSelectorVertical, LayoutLeft, LogOut01, Menu02, Plus, SearchLg, User01 } from "@untitledui/icons";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Key } from "react-aria-components";
 import { Button as AriaButton } from "react-aria-components";
@@ -10,6 +9,8 @@ import { Avatar } from "@/components/base/avatar/avatar";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import { orgHref } from "@/config/navigation";
+import { signOut } from "@/lib/auth/sign-out";
+import { useRouter } from "@/lib/next-nav";
 import { useSessionStore } from "@/stores/session";
 import { useUiStore } from "@/stores/ui";
 import { CommandPalette } from "./command-palette";
@@ -148,11 +149,6 @@ function UserMenu({ user }: { user: ShellUser }) {
         .slice(0, 2)
         .map((w) => w[0]?.toUpperCase())
         .join("");
-
-    const signOut = async () => {
-        await fetch("/auth/signout", { method: "POST" });
-        window.location.assign("/login");
-    };
 
     return (
         <Dropdown.Root>

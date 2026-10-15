@@ -1,11 +1,9 @@
-"use server";
-
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/claims";
-import { deliver, resolveSender } from "@/lib/email/sender";
+import { dispatchEmail } from "@/lib/email/dispatch";
 import { type ActionResult, dbError, fail } from "@/lib/errors";
 import { getOrgBySlug } from "@/lib/queries/doc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const testEmailSchema = z.object({ orgSlug: z.string().min(1), id: z.uuid() });
 
@@ -30,11 +28,11 @@ export async function sendTestEmail(input: z.input<typeof testEmailSchema>): Pro
     if (error) return fail(dbError(error).message);
     if (!account) return fail("Email Account not found.");
 
-    const sender = await resolveSender(org.id, { accountId: account.id, user: { email: claims.email } });
-    if (!sender) return fail("Save an API key first, and keep the account enabled with outgoing email on.");
-
-    const result = await deliver(sender, {
+    const result = await dispatchEmail({
+        kind: "account",
         orgId: org.id,
+        accountId: account.id,
+        userEmail: claims.email,
         to: [claims.email],
         subject: `Test email from ${account.email_account_name}`,
         html: `<p>This is a test email sent through the <b>${account.email_account_name.replace(/[<>&"]/g, "")}</b> email account.</p>`,

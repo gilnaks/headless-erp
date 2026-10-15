@@ -1,8 +1,7 @@
-import "server-only";
 import { cache } from "react";
 import { getAuthClaims } from "@/lib/auth/claims";
 import type { PermRule } from "@/lib/role-permissions";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export type PermissionDoctype = { doctype: string; module: string; isSubmittable: boolean; locked: boolean };
 

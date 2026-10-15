@@ -6,6 +6,8 @@ Primary sources: `erpnext/setup/sidebar/setup/setup.json`, `erpnext/setup/setup_
 
 Conventions from `docs/architecture/01-tenancy-auth-rls.md` and `02-database-conventions.md` apply everywhere: every table has `org_id` + RLS, base columns (`id, org_id, created_at, created_by, updated_at, updated_by`), masters add `name text` + `unique (org_id, name)` + `disabled`. Field tables below list only the columns on top of those base columns. Column types follow the fieldtype map in `docs/erpnext-reference.md`.
 
+The UI is a Vite SPA (PLAN §2, phase P1.5). Reads and writes go through the Supabase browser client under the user JWT. HTML fields are sanitized by `app.sanitize_html` inside `save_doc`. Link search is `public.search_link`. Email that needs a provider key goes through an Edge Function. Checklist lines below that mention Server Actions or `proxy.ts` describe what P0/P1 shipped; those call sites move in P1.5 without changing the SQL behaviour.
+
 ---
 
 ## 1. Scope & sidebar mapping

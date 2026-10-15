@@ -2,15 +2,15 @@
 
 ## Environments
 
-| Env | Supabase | Next.js | Branch |
+| Env | Supabase | App | Branch |
 |---|---|---|---|
-| local | `supabase start` (Docker) — MCP at `http://localhost:54321/mcp` | `next dev` | feature branches |
-| preview | Supabase **dev** project (shared) or Supabase Branching (if on Pro) | Netlify Deploy Preview per PR | PR |
-| production | Supabase **prod** project | Netlify production site | `main` |
+| local | `supabase start` (Docker) — MCP at `http://localhost:54321/mcp` | `vite dev` | feature branches |
+| preview | Supabase **dev** project (shared) or Supabase Branching (if on Pro) | Netlify Deploy Preview per PR (static `dist`) | PR |
+| production | Supabase **prod** project | Netlify production site (static `dist`) | `main` |
 
 Storage: the private `org-files` bucket and its `storage.objects` policies are created by migration `0118` (no dashboard setup per environment); see 02-database-conventions "Files (Storage)".
 
-Secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new publishable key format), `SUPABASE_SERVICE_ROLE_KEY` (server-only), `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` + `SUPABASE_PROJECT_REF` (CI only), `RESEND_API_KEY` + `EMAIL_FROM` (platform email sender, server-only), `EMAIL_DRY_RUN` (`1` = log emails without sending; CI and e2e), `APP_URL`. Local values in `.env.local` (git-ignored); `.env.example` committed.
+Secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (publishable key; these land in the client bundle), `SUPABASE_SERVICE_ROLE_KEY` (Edge Functions, dev scripts, and tests only — never `VITE_`), `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` + `SUPABASE_PROJECT_REF` (CI only), `RESEND_API_KEY` + `EMAIL_FROM` (Edge Function only), `EMAIL_DRY_RUN` (`1` = log emails without sending; CI and e2e), `APP_URL`. Local values in `.env.local` (git-ignored); `.env.example` committed.
 
 ## Supabase MCP (Cursor)
 
@@ -44,10 +44,10 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 1. Job `quality`: `npm ci`, `npx biome ci .`, `npm run typecheck`, `npm test` (Vitest, excludes `*.db.test.ts`).
 2. Job `db-and-e2e` (one job so local Supabase starts once; CLI pinned to the `supabase` devDependency version):
    - `supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,mailpit` (Storage stays on for the `org-files` uploads) → `supabase db reset` (every migration from scratch + `supabase/seed.sql`, which is intentionally empty) → `supabase test db` (pgTAP via pg_prove).
-   - Local URL and keys from `supabase status -o env` are exported as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`, plus `EMAIL_DRY_RUN=1` (no Resend key in CI; sends are logged to `email_log` with a fake provider id).
+   - Local URL and keys from `supabase status -o env` are exported as `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (tests and the e2e admin helper only), `APP_URL`, plus `EMAIL_DRY_RUN=1` (no Resend key in CI; sends are logged to `email_log` with a fake provider id).
    - `node scripts/check-types.mjs` regenerates types from the local DB and fails if `src/types/database.ts` is stale. The committed file comes from the dev project (hosted generator) while CI generates locally (the CLI's newer built-in generator), so the script normalises layout (Biome), drops the `__InternalSupabase` block, `ComputedFields` and generated columns, and treats `Record<PropertyKey, never>` as `never` before comparing; anything else (a missing column, function or type change) fails. On failure the generated file is saved to `test-results/database.generated.ts` (in the uploaded artifact). Locally without Docker: `npm run db:types:check -- --linked`.
    - `npm run test:db` (`vitest.db.config.ts` → `src/doctypes/doctypes.db.test.ts`): every registered descriptor has a matching `doctype_meta` row (table, module, submittable, title field; child tables with `parent_doctype` + `child_field`) and every field / list column exists (zero-row PostgREST select).
-   - `npm run build` (`cacheComponents` on, catches dynamic-API misuse), then `npm run e2e`: Playwright (Chromium) starts `next start` and runs `e2e/smoke.spec.ts`: sign in → the `/setup` wizard creates an organization and its first company → New Company → Save → the company is in the list. Sign-up needs email confirmation, so `e2e/global-setup.ts` creates a confirmed user with the admin API. The HTML report and traces are uploaded as an artifact when the job fails. The smoke grows to "create & submit a Sales Invoice → check GL report" in P5.
+   - `npm run build` (`vite build`), then `npm run e2e`: Playwright (Chromium) starts `vite preview` and runs `e2e/*.spec.ts`. The smoke flow is sign in → the `/setup` wizard creates an organization and its first company → New Company → Save → the company is in the list. Sign-up needs email confirmation, so `e2e/global-setup.ts` creates a confirmed user with the admin API. The HTML report and traces are uploaded as an artifact when the job fails. The smoke grows to "create & submit a Sales Invoice → check GL report" in P5. Specs are not rewritten to fit the SPA; only the preview command and `APP_URL` change.
 
 `deploy-db.yml` (after `ci.yml` succeeds on `main`, or `workflow_dispatch`): job runs only when the repository variable `DEPLOY_DB_ENABLED` is `true`, in environment `production` (manual approval) → checkout the CI commit → `supabase link --project-ref $SUPABASE_PROJECT_REF` → `supabase db push --dry-run` → `supabase db push` (migrations only). `supabase functions deploy` is added when the first Edge Function exists. Until the owner completes the checklist below the workflow is skipped.
 
@@ -56,19 +56,23 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 - `supabase db dump --data-only` (excluding `auth`, `storage` internals) → `gpg --symmetric` with `BACKUP_PASSPHRASE` → upload as a 90-day GitHub Actions artifact **and** to a Supabase Storage bucket `backups` (private) in a *different* Supabase project or an S3-compatible bucket. Never commit plaintext tenant data to git.
 - Restore drill documented in `docs/runbooks/restore.md` and executed quarterly against a scratch project.
 
-Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org-level self-service export (ERPNext "Download Backups" equivalent) = Server Action producing a ZIP of CSVs for that org only (RLS-scoped), delivered via signed URL.
+Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org-level self-service export (ERPNext "Download Backups" equivalent) = an Edge Function producing a ZIP of CSVs for that org only (RLS-scoped, user JWT), delivered via signed URL.
 
 ## Netlify
 
-- Site connected to the GitHub repo; Next.js adapter auto-detected (do not pin the adapter version). Node 22.
+- Site connected to the GitHub repo as a static site (no Next.js adapter). Node 22.
 - `netlify.toml`:
 
 ```toml
 [build]
   command = "npm run build"
-  publish = ".next"
+  publish = "dist"
 [build.environment]
   NODE_VERSION = "22"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 [[headers]]
   for = "/*"
   [headers.values]
@@ -76,11 +80,12 @@ Supabase side: Pro plan → daily automatic backups + PITR enabled for prod. Org
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 http://localhost:54321; font-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'"
 ```
 
-- Env vars set per context (production / deploy-preview / branch-deploy) in the Netlify UI, never in `netlify.toml`. Deploy previews point to the Supabase dev project.
-- `proxy.ts` runs on Netlify Edge; keep it dependency-light (only `@supabase/ssr`).
-- Content Security Policy added in P11 after inventorying third-party origins (Supabase URL, fonts).
+- The SPA fallback (`/*` → `/index.html`) is what makes client routes work on refresh. `/health` is a static `dist/health` file (or a rewrite to a tiny JSON file) so uptime checks do not depend on the router.
+- Env vars set per context (production / deploy-preview / branch-deploy) in the Netlify UI, never in `netlify.toml`. Deploy previews point to the Supabase dev project. Only `VITE_*` values are visible to the bundle.
+- Content-Security-Policy ships with the SPA (session lives in `localStorage`). Widen `connect-src` only for the real Supabase project origin. Access tokens stay short-lived.
 - Scheduled work does **not** use Netlify functions; it uses `pg_cron` in Supabase (and Supabase Edge Functions for email) so the schedule survives independent of the web host. Migrations enable the extension themselves (`create extension if not exists pg_cron`, `0114`) and register jobs with `cron.schedule`, so a new project needs no dashboard step; check jobs with `select * from cron.job` and runs with `cron.job_run_details`.
 
 ## Setup checklist (owner)
@@ -93,15 +98,15 @@ CI runs without any secrets. Deploys stay inert until these steps are done by th
 4. **GitHub environment** `production` (Settings → Environments) with required reviewers and deployment branch `main`. Environment secrets: `SUPABASE_ACCESS_TOKEN` (personal access token), `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF` (prod ref).
 5. **Enable deploys**: repository variable `DEPLOY_DB_ENABLED=true` (Settings → Secrets and variables → Actions → Variables). The first run applies every migration to the empty prod project; check the dry-run output before approving.
 6. ~~**Netlify site**~~: done, [astonishing-bunny-48ac2a.netlify.app](https://astonishing-bunny-48ac2a.netlify.app/) builds `main` (`/health` returns `{ "ok": true }`); it currently uses the dev project, so it is a preview until the production project exists. Build settings come from `netlify.toml`. Env vars per context:
-   - production: prod `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL` (production domain), `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `headless-erp <no-reply@mail.example.com>`);
-   - deploy-preview / branch-deploy: the dev project (oxkskzguqlwicieorkvh) values, `APP_URL` unset (the app falls back to the request origin); add `https://deploy-preview-*--<site>.netlify.app/auth/callback**` to the dev project's redirect URLs. Set `EMAIL_DRY_RUN=1` here unless previews should send real email.
+   - production: prod `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `APP_URL` (production domain). `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and `EMAIL_FROM` (e.g. `headless-erp <no-reply@mail.example.com>`) belong on the Edge Function, not on the static site;
+   - deploy-preview / branch-deploy: the dev project (oxkskzguqlwicieorkvh) `VITE_*` values, `APP_URL` unset (the app uses `window.location.origin`); add `https://deploy-preview-*--<site>.netlify.app/auth/callback**` to the dev project's redirect URLs. Set `EMAIL_DRY_RUN=1` on the Edge Function unless previews should send real email.
    - **Resend**: verify the `EMAIL_FROM` domain in the Resend dashboard (SPF + DKIM DNS records) before setting the key; Resend rejects other senders. Tenants that add their own Email Account must verify their domain in their own Resend account.
 7. Verify: open a PR → CI green + Netlify preview; merge → approve `deploy-db` → `/health` returns `{ ok: true }` on production.
 
 ## Observability
 
 - Supabase logs via MCP `query_logs` during development; Postgres `log_min_duration_statement = 500ms` on dev.
-- Next.js: `instrumentation.ts` with OpenTelemetry → Netlify logs (or Sentry if adopted later; env-gated).
+- Browser errors: Netlify logs, or Sentry if adopted later (env-gated). No Next.js instrumentation.
 - An `app.audit_log` table for security events (login from new device, role changes, permission edits, exports) with 1-year retention.
 
 ## Release checklist
