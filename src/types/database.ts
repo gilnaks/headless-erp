@@ -150,6 +150,15 @@ export type Database = {
         }
         Returns: string
       }
+      onboarding_complete: {
+        Args: { p_org: string; p_step: string }
+        Returns: undefined
+      }
+      onboarding_dismiss: { Args: { p_org: string }; Returns: undefined }
+      onboarding_skip: {
+        Args: { p_org: string; p_step: string }
+        Returns: undefined
+      }
       org_member_directory: {
         Args: { p_org: string }
         Returns: {
@@ -223,6 +232,7 @@ export type Database = {
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
       seed_designations: { Args: { p_org: string }; Returns: undefined }
+      seed_onboarding: { Args: { p_org: string }; Returns: undefined }
       seed_print_formats: {
         Args: { p_doctype?: string; p_org: string }
         Returns: undefined
@@ -2117,6 +2127,50 @@ export type Database = {
           },
         ]
       }
+      onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          idx: number
+          org_id: string
+          skipped_at: string | null
+          step: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          idx: number
+          org_id: string
+          skipped_at?: string | null
+          step: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          idx?: number
+          org_id?: string
+          skipped_at?: string | null
+          step?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_currency: {
         Row: {
           code: string
@@ -2222,6 +2276,7 @@ export type Database = {
           id: string
           language: string
           name: string
+          onboarding_dismissed_at: string | null
           plan: string
           provisioned_at: string | null
           slug: string
@@ -2238,6 +2293,7 @@ export type Database = {
           id?: string
           language?: string
           name: string
+          onboarding_dismissed_at?: string | null
           plan?: string
           provisioned_at?: string | null
           slug: string
@@ -2254,6 +2310,7 @@ export type Database = {
           id?: string
           language?: string
           name?: string
+          onboarding_dismissed_at?: string | null
           plan?: string
           provisioned_at?: string | null
           slug?: string
@@ -2977,6 +3034,11 @@ export type Database = {
         }[]
       }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
+      onboarding_dismiss: { Args: { p_org: string }; Returns: undefined }
+      onboarding_skip: {
+        Args: { p_org: string; p_step: string }
+        Returns: undefined
+      }
       org_member_directory: {
         Args: { p_org: string }
         Returns: {

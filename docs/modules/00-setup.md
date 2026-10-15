@@ -736,7 +736,7 @@ Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language},
 | C3 | `global_defaults` | `default_currency`, `default_company_id`, `country` |
 | C4 | `stock_settings` | `item_naming_by = Item Code`, `valuation_method = FIFO`, `stock_uom = Nos`, `auto_indent = 1`, `auto_insert_price_list_rate_if_missing = 1`, `update_price_list_based_on = Rate`, `set_qty_in_transactions_based_on_serial_no_input = 1` |
 | C5 | `invitations` | one row per `p.invites` + email via platform sender (§3.4) |
-| C6 | `organizations.provisioned_at = now()`; `onboarding_progress` rows for the Home checklist (§7) | |
+| C6 | `organizations.provisioned_at = now()`; `onboarding_progress` rows for the Home checklist (§7) | the rows come from an `organizations` insert trigger (0126), so they exist before the C5 invites complete `invite_users` |
 
 Default print formats (`install.py: set_default_print_formats`) are seeded with each module's transaction tables (§2.12), not here.
 
@@ -928,6 +928,8 @@ No reports in the Setup sidebar. The **Home** workspace (`erpnext/setup/workspac
 
 Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we add nothing.
 
+- **Built (P1, `0126_setup_onboarding_progress.sql`):** `public.onboarding_progress (org_id, step, idx, completed_at, skipped_at)` (members read, no write policies) and `organizations.onboarding_dismissed_at`. An `organizations` insert trigger seeds the eight steps (`app.seed_onboarding`, C6; existing orgs backfilled). `app.onboarding_complete(org, step)` is for definer callers: an `invitations` insert trigger completes `invite_users` (backfilled from existing invitations); each module completes its own step when it lands (accounting P3, stock P4, selling P5, buying P6, manufacturing P8, projects P9, assets P10). `onboarding_skip(org, step)` / `onboarding_dismiss(org)` (public invoker wrappers over `app` definer functions) require System Manager. The Home page (`src/app/(app)/[org]/page.tsx`) shows the wizard prompt until the first company exists, then the checklist card (System Managers only, `src/components/erp/home/onboarding-card.tsx`, Skip / Start / Dismiss through `src/lib/actions/onboarding.ts`, hidden when dismissed or every step is done or skipped), the Profit and Loss chart placeholder and the three number cards as placeholders labelled with their phase (`home-cards.tsx`). pgTAP `30_onboarding_progress`, e2e `home.spec.ts`.
+
 ---
 
 ## 8. UI notes
@@ -988,6 +990,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Fiscal Year auto-creation and company monthly-sales cache run as pg_cron SQL jobs rather than Frappe scheduler. Reason: Postgres.
 - **Deviation:** The setup wizard has no persona/Modules slide (module visibility derives from permissions), no demo-data checkbox and no language slide (the organization language defaults to `en`). Invites are part of the wizard (ERPNext invites from the User list later). Reason: scope; invites save a step for multi-user tenants.
 - **Deviation:** The wizard's fiscal year end is the start + 12 months − 1 day, not the end date from `erpnext.setup.fiscal_years`. ERPNext's own start-date handler computes it the same way, and the map's `02-28` end for South Africa would fail the one-year rule in leap years. Reason: consistency with the Fiscal Year validation.
+- **Deviation:** The Home onboarding checklist shows every step (ERPNext shows only modules enabled at onboarding), because the wizard has no Modules slide; dismissing hides it for the whole organization, and skipping cannot be undone. Reason: no module selection (see the wizard deviation above).
 - **Deviation:** Wizard invites pick a role profile only (no individual roles). Reason: the organization's roles do not exist yet; profiles are the standard five, and roles can be edited on the Users page afterwards.
 
 ---
@@ -1043,6 +1046,6 @@ Decisions (2026-10-14):
 - [x] Contact + `contact_email` + `contact_phone` + `contact_link`: tables, naming, primary triggers, user match, `app.party_contacts()` — `0122_setup_contact.sql` (§2.20), descriptor `contact.ts`, Company `default_sales_contact_id` FK
 - [x] Fiscal Year + Fiscal Year Company: tables, validations, `app.auto_create_fiscal_year()` pg_cron daily — `0114_accounts_fiscal_year.sql` (§2.23), descriptor `fiscal-year.ts`, field triggers
 - [ ] Terms and Conditions: table, validation, renderer
-- [ ] Home page: onboarding checklist (`onboarding_progress`), number-card + P&L chart placeholders wired to `app.home_number_cards()` / `app.report_profit_and_loss()` as modules land
+- [x] Home page: onboarding checklist (`onboarding_progress`), number-card + P&L chart placeholders — `0126_setup_onboarding_progress.sql` (§7); the cards are wired to `app.home_number_cards()` / `app.report_profit_and_loss()` as P3–P6 land
 - [ ] `doctype_meta` rows + `role_permissions` upserts for every table above; `supabase gen types`; descriptors in `src/doctypes/setup/*.ts`
 - [ ] RLS pgTAP for every Setup table (cross-org isolation, owner cannot be demoted)
