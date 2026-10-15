@@ -1,7 +1,6 @@
-import "server-only";
-import { redirect } from "next/navigation";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "@/lib/navigate";
+import { createClient } from "@/lib/supabase/client";
 import { type OrgRoles, orgsFromClaims } from "./orgs";
 
 export type AuthClaims = {

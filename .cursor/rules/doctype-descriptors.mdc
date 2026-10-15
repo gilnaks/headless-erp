@@ -44,7 +44,8 @@ alwaysApply: false
 3. The descriptor must agree with `doctype_meta` + the migration (CI script `scripts/check-doctypes.ts` compares).
 4. `src/lib/calc/**` is pure TypeScript (no imports from React/Supabase), deterministic, unit-tested against
    fixtures ported from ERPNext tests; rounding through `round(value, precision)` (half away from zero).
-5. Server Actions are thin: Zod parse → permission check → `rpc('save_doc'|'submit_doc'|'cancel_doc'|'amend_doc'|'map_doc')`
-   → `updateTag('org:<orgId>:<doctype>')` → typed result. Business rules go in SQL (`app.*`) or `lib/calc`, not in actions.
+5. Client mutations are thin: Zod parse → `rpc('save_doc'|'submit_doc'|'cancel_doc'|'amend_doc'|'map_doc')`
+   → `invalidateQueries(['org', orgId, doctype])` → typed result. Business rules and HTML sanitizing go in SQL
+   (`app.*`) or `lib/calc`, not in the mutation. A rule that must hold on a direct `rpc` call is not done until it has a pgTAP test.
 6. Status derivations and link mappers follow `docs/architecture/03-posting-engine.md`; add the ERPNext file path
    as a comment above the ported function.

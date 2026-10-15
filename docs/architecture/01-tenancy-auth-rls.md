@@ -10,7 +10,7 @@ organizations (tenant)  1 ──< companies (ERPNext "Company")  1 ──< trans
 
 - **Organization** = ERPNext *site*. All data isolation is at `org_id`.
 - **Company** = ERPNext *Company*. Several per org are allowed (group companies). Every transactional table and most masters carry `company_id`. Masters that ERPNext keeps company-agnostic (Item, Customer, Supplier, UOM, Item Group, Customer Group, Territory, Supplier Group, Brand, Price List) are org-scoped only; company-specific defaults live in child tables (`item_default`, `party_account`) as in ERPNext.
-- Active tenant selection: URL carries the org slug (`/[org]/accounts/...`). Active company is a Zustand session value mirrored in a cookie (`hx_company`) so Server Components can read it.
+- Active tenant selection: URL carries the org slug (`/[org]/accounts/...`). Active company is a Zustand session value persisted in `localStorage` (`hx_company`, per org).
 
 ### Core tables (migration `0002_tenancy.sql`)
 
@@ -53,20 +53,17 @@ create table user_permissions (                -- ERPNext "User Permission"
 create table invitations (id uuid pk, org_id, email, roles text[], token text unique, expires_at, accepted_at);
 ```
 
-## Authentication (Supabase Auth + `@supabase/ssr`)
+## Authentication (Supabase Auth, browser session)
 
-- Providers: email+password, magic link; Google OAuth optional later. Invite flow: owner creates `invitations` row → email with `/invite/[token]` → user signs up/in → Server Action `acceptInvitation()` inserts `org_members`.
-- Three clients:
-  - `src/lib/supabase/client.ts` — `createBrowserClient` (Client Components).
-  - `src/lib/supabase/server.ts` — `createServerClient` with `cookies()` (awaited) for Server Components, Server Actions, Route Handlers.
-  - `src/lib/supabase/proxy.ts` — used by `src/proxy.ts` to refresh tokens: call `supabase.auth.getClaims()`, copy refreshed cookies to request and response, apply the `Cache-Control/Expires/Pragma` headers passed to `setAll`.
-- **Authorization on the server uses `getClaims()`** (JWT signature verified locally against JWKS). `getSession()` is only acceptable in the browser for UI hints.
-- `proxy.ts` responsibilities: refresh session; redirect unauthenticated users on non-public paths to `/login?next=<path>`; send signed-in users away from `/login`/`/signup`; send signed-in users without an org in their claims from `/` to `/setup`. It never performs data authorization. Layouts read the org from the awaited `params` and resolve it through RLS (unknown or foreign slug → 404).
-- Routes: `/auth/callback` is the single landing point for email links. It accepts a PKCE `code` (`exchangeCodeForSession`) or `token_hash` + `type` (`verifyOtp`), redirects to a sanitised same-origin `next` (`src/lib/auth/redirect.ts`), and on failure goes to `/login?error=link_invalid`. Hosted projects must list `<APP_URL>/auth/callback**` in `additional_redirect_urls` (`supabase/config.toml`, pushed with `supabase config push`). `/auth/signout` is POST-only.
-- After `provision_organization` or `accept_invitation` the Server Action calls `supabase.auth.refreshSession()` so the new membership appears in the `app.orgs` claim before redirecting to `/[slug]`.
+- Providers: email+password, magic link; Google OAuth optional later. Invite flow: owner creates `invitations` row → email with `/invite/[token]` → user signs up/in → `acceptInvitation()` calls the `accept_invitation` RPC, which inserts `org_members`.
+- One app client: `src/lib/supabase/client.ts` (`createClient` from `@supabase/supabase-js`, persist session in `localStorage`, `autoRefreshToken`). The publishable key is `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`. There is no cookie client and no `proxy.ts`.
+- **Authorization is RLS.** The JWT is a hint. `getSession()` may drive route guards and button visibility; it must not be the only check on a write. Access tokens stay short-lived (Supabase default 1 hour or less). A strict Content-Security-Policy is set on the static host (see `06-deployment-ops.md`) so a script cannot read `localStorage` from another origin.
+- Route guards (TanStack Router `beforeLoad`): public paths are `/login`, `/signup`, `/forgot-password`, `/update-password`, `/auth/callback`, `/invite/$token`. Anywhere else, a signed-out user goes to `/login?next=<path>`. Signed-in users leave `/login` and `/signup`. A signed-in user with no org in their claims who opens `/` goes to `/setup`. Guards do not authorize rows. The org layout loads the org through RLS (unknown or foreign slug → not found).
+- `/auth/callback` is a client route. It accepts a PKCE `code` (`exchangeCodeForSession`) or `token_hash` + `type` (`verifyOtp`), then navigates to a sanitised same-origin `next` (`src/lib/auth/redirect.ts`), or to `/login?error=link_invalid`. Hosted projects must list `<APP_URL>/auth/callback**` in `additional_redirect_urls` (`supabase/config.toml`, pushed with `supabase config push`). Sign-out is `supabase.auth.signOut()` from the user menu, then navigate to `/login`.
+- After `provision_organization` or `accept_invitation` the client calls `supabase.auth.refreshSession()` so the new membership appears in the `app.orgs` claim before navigating to `/[slug]`.
 - Organizations are created by `app.provision_organization(jsonb)` (`0116`, 00-setup §3.1), which runs as the signed-in user (security definer, no service role) and calls `app.create_organization(jsonb)` (`0005`) as its Stage A (the P0 `public.create_organization` RPC was dropped in `0117`). That function inserts `organizations`, syncs role permissions and adds the caller as owner with `System Manager`. Slugs match `^[a-z0-9-]{3,40}$` and may not collide with top-level routes (`app.reserved_slugs()`, `0006`; mirrored in `src/lib/schemas/organization.ts`).
 - Dev helper: `node scripts/dev-user.mjs <email> <password>` creates a confirmed user, and `--magic-link <email>` prints a sign-in URL, because the hosted mailer is rate-limited and rejects reserved domains such as `.test`. It reads the service-role key from `.env.local` and is never imported by app code.
-- Service-role key is used **only** in: scheduled jobs (Edge Functions), dev scripts, tests, and the email sender `src/lib/email/sender.ts` (`server-only`). The sender reads Email Account keys from Vault through `public.email_sender` (executable by `service_role` only) and writes `email_log`; Server Actions authorize the user (`getClaims()`, RLS reads of the org and document) before calling it. Provisioning does not need it: the Server Action verifies the caller with `getClaims()` and calls the `provision_organization` RPC as that user. It is never imported by code reachable from Client Components (`server-only` import guard).
+- Service-role key is used **only** in: Edge Functions, dev scripts, and tests. It is never prefixed `VITE_` and never imported by `src/`. Email sending moves to an Edge Function that reads Vault; the browser calls that function with the user JWT. Provisioning does not need the service role: the signed-in client calls `provision_organization`.
 
 ## Custom claims
 
@@ -76,15 +73,15 @@ Add `org_ids` and a lightweight `roles` map to the JWT via a Supabase **Custom A
 { "app": { "orgs": { "<org_uuid>": ["Accounts Manager","Stock User"] } } }
 ```
 
-The claim is for **UI hints only** (`can()` to hide buttons). RLS helpers always read `org_members`/`role_permissions` (security definer, PK-indexed), so removing a member or a role takes effect immediately instead of when the access token expires. The org layout (`src/app/(app)/[org]/layout.tsx`) passes the caller's `org_members.roles` (own row, readable through RLS) to the shell, not the claim. When the two differ (`rolesDiffer` in `src/lib/auth/orgs.ts`), it renders `ClaimsRefresher`, which calls `supabase.auth.refreshSession()` once per roles signature (guarded in `sessionStorage`) and then `router.refresh()`, so the token catches up after role edits without a refresh loop.
+The claim is for **UI hints only** (`can()` to hide buttons). RLS helpers always read `org_members`/`role_permissions` (security definer, PK-indexed), so removing a member or a role takes effect immediately instead of when the access token expires. The org layout reads the caller's `org_members.roles` (own row, readable through RLS), not the claim. When the two differ (`rolesDiffer` in `src/lib/auth/orgs.ts`), `ClaimsRefresher` calls `supabase.auth.refreshSession()` once per roles signature (guarded in `sessionStorage`), so the token catches up after role edits without a refresh loop.
 
 The hook is enabled in `supabase/config.toml` (`[auth.hook.custom_access_token]`) and pushed to hosted projects with `supabase config push`.
 
 ## Function privileges & RPC surface
 
 - Schema `app` is **not** an exposed API schema. Supabase grants `EXECUTE` on new functions to `anon`/`authenticated` through role-level default privileges, so every `app` function is revoked from `public, anon, authenticated` and granted back explicitly (`0003_framework_function_grants.sql`): RLS helpers → `authenticated` (policies run as the caller), the token hook → `supabase_auth_admin` only, trigger functions → nobody.
-- Callable entry points (`accept_invitation`, later `save_doc`, `submit_doc`, `cancel_doc`, `amend_doc`, `map_doc`) are thin `security invoker` wrappers in `public` that delegate to the `security definer` implementation in `app`, so Server Actions call `supabase.rpc('submit_doc', …)` and the advisors stay clean.
-- pgTAP (`00_rls_coverage.test.sql`) also fails when a table with `org_id` has no `doctype_meta` row (exempt: `email_log`, `invitations`, `onboarding_progress`, `org_currency`, `role_permissions`), when a tenant doctype has no System Manager read template (exempt: Naming Series, authorized by role), or when a policy on a tenant table neither filters on `org_id` nor (child tables) on `parent_id`. Add new non-document tenant tables to the exemption list deliberately.
+- Callable entry points (`accept_invitation`, `save_doc`, `submit_doc`, `cancel_doc`, `amend_doc`, `map_doc`, `search_link`) are thin `security invoker` wrappers in `public` that delegate to the implementation in `app`, so the browser calls `supabase.rpc('submit_doc', …)` and the advisors stay clean. `search_link` stays invoker end to end so RLS applies to the rows it returns.
+- pgTAP (`00_rls_coverage.test.sql`) also fails when a table with `org_id` has no `doctype_meta` row (exempt: `email_log`, `invitations`, `onboarding_progress`, `org_currency`, `role_permissions`, `gl_entry`, `payment_ledger_entry`), when a tenant doctype has no System Manager read template (exempt: Naming Series, authorized by role), or when a policy on a tenant table neither filters on `org_id` nor (child tables) on `parent_id`. Add new non-document tenant tables to the exemption list deliberately.
 - pgTAP (`00_rls_coverage.test.sql`) fails if `anon` can execute any `app` function or if a `public` function is `security definer`. Known exception: `public.rls_auto_enable()`, the Supabase-managed event-trigger function behind the "auto-enable RLS" project setting (hosted only, not callable as RPC).
 
 ## RLS helper functions (schema `app`, `security definer`, `stable`)

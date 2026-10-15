@@ -1,10 +1,9 @@
-import "server-only";
 import { appUrl } from "@/lib/app-url";
 import type { AuthClaims } from "@/lib/auth/claims";
 import { inviteLink } from "@/lib/invitations";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
+import { dispatchEmail } from "./dispatch";
 import { renderTemplate } from "./render";
-import { deliver, platformSender } from "./sender";
 import { INVITATION_TEMPLATE } from "./templates";
 
 export type InvitationDelivery = {
@@ -31,14 +30,12 @@ export async function emailInvitation(
     const email = row?.email ?? "";
     if (!row) return { email, emailed: false, emailError: "The invitation could not be loaded." };
 
-    const sender = platformSender();
-    if (!sender) return { email, emailed: false, emailError: "Email is not set up for this site." };
-
     const context = {
         doc: { organization: org.name, invite_url: inviteLink(await appUrl(), invitation.token), expires_on: row.expires_at },
         user: { full_name: profile?.full_name ?? claims.email ?? "A colleague" },
     };
-    const result = await deliver(sender, {
+    const result = await dispatchEmail({
+        kind: "platform",
         orgId: org.id,
         to: [email],
         subject: renderTemplate(INVITATION_TEMPLATE.subject, context),

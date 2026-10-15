@@ -1,49 +1,56 @@
-# 04 — Client-side vs Server-side (Supabase) Computation
+# 04 — Browser vs Postgres vs Edge Functions
+
+The app is a Vite SPA. There is no Next.js server. Three places run code:
 
 ## Decision rules
 
-| Put it **in Postgres** (`app.*` functions, views, triggers) when… | Put it in **Next.js server** (RSC / Server Actions / `use cache`) when… | Put it in the **browser** (Client Components + Zustand) when… |
+| Put it **in Postgres** (`app.*` functions, views, triggers) when… | Put it in an **Edge Function** when… | Put it in the **browser** when… |
 |---|---|---|
-| It mutates ledgers, balances, stock, document numbers, statuses of other documents | It orchestrates: validate input (Zod), check permission, call one RPC, revalidate caches, redirect | It only affects what the current user sees before saving |
-| It must be atomic across several tables | It renders data for a page (lists, forms, dashboards) with the user's JWT | It is a live preview of totals/taxes/rates while typing (same pure lib as server) |
-| It aggregates large data (reports, dashboards, ageing, stock balance) | It composes reference data cached across requests (`'use cache'` + `cacheTag('org:<id>:items')`) | It is UI state: filters, column visibility, open panels, drafts, active company, keyboard nav |
-| It must be correct regardless of client (API, import, future mobile app) | It needs secrets (service role, email provider, webhooks) | It is optimistic UI that will be confirmed by the server response |
+| It mutates ledgers, balances, stock, document numbers, statuses of other documents, or stored HTML | It needs a secret (service role, email provider, webhook signing key) | It only affects what the current user sees before saving |
+| It must be atomic across several tables | It calls a third party the browser must not see | It is a live preview of totals/taxes/rates while typing (same pure lib Postgres will recompute) |
+| It aggregates large data (reports, dashboards, ageing, stock balance) | | It is UI state: filters, column visibility, open panels, drafts, active company, keyboard nav |
+| It must be correct even if someone calls `rpc` directly | | It is optimistic UI that the server response will confirm |
+| It authorizes a write (RLS, `app.has_perm`) | | It hides a button the user could reveal; RLS still blocks the write |
 
-Never: trust client-computed amounts; call Supabase with the service role from anything but server-only modules; keep server data in Zustand.
+Never: trust client-computed amounts; ship the service role or a provider key in the client bundle; keep query results in Zustand.
+
+Zod parses forms so the user sees field errors. The same rule, if it must hold, is enforced again in SQL.
 
 ## Per-area assignment
 
-| Feature | Postgres | Next.js server | Browser |
+| Feature | Postgres | Edge Function | Browser |
 |---|---|---|---|
-| Submit / cancel / amend | `app.submit_doc` etc. (all posting) | Server Action `submitDoc(doctype, id)` → RPC → `updateTag` | button state, confirm dialog, toast |
-| Save draft | RLS-checked `insert/update` via PostgREST (header + children in one RPC `app.save_doc(doctype, payload jsonb)` to keep atomicity) | Server Action validates with Zod, maps form → payload | React Hook Form state, dirty tracking, unsaved-changes guard (Zustand `form-draft`) |
-| Taxes & totals | `app.calc_taxes_and_totals()` re-check inside `save_doc`/`submit_doc` | — | `calcTaxesAndTotals()` runs on every change for the preview |
-| Item details on row add (price from price list, UOM conversion, income/expense account, warehouse, tax template, stock qty) | `app.get_item_details(args)` (port of `stock/get_item_details.py`, default paths only) | Server Action wrapper, cached per `(org, item, price_list, customer/supplier, company)` for 60s | debounced call; row filled client-side |
-| Link field search | `app.search_link(doctype, txt, filters)` (ilike on name/title fields + `search_fields`) | Route Handler `/api/link-search` with `use cache` 30s for masters | combobox, recent items (Zustand) |
-| List views | SQL with `order by`, `limit/offset`, filters → `count(*) over()` | Server Component reads URL state (`nuqs`) → query; streams with Suspense | column chooser, saved filters, row selection, bulk actions trigger Server Actions |
-| Dashboards (number cards, charts) | SQL functions per card/chart (`app.card_*`, `app.chart_*`) + hourly materialized views for heavy ones | `'use cache'` 5 min per org, revalidated on submit of relevant doctypes | Recharts render, range picker, drill-down navigation |
-| Reports (GL, Trial Balance, BS, P&L, Stock Ledger, Stock Balance, AR/AP ageing, etc.) | One SQL function per report returning rows; tree reports return `(id, parent_id, indent)` | Server Component with filters in URL; CSV export via Route Handler streaming | client-side column sort/group of the returned page, print view |
-| Tree views (CoA, Cost Centers, Warehouses, Item Groups, BOM tree) | `ltree` subtree queries, balances per node via one aggregate query | RSC renders expanded nodes; lazy-load children via Server Action | expand/collapse state in Zustand |
-| Permissions | authoritative (RLS + `app.has_perm` in functions) | `can(action, doctype)` helper from claims for hiding UI | hide/disable buttons |
-| Numbering | `app.next_name` on submit | — | shows "New Sales Invoice" until submitted |
-| Print | — | `/print/[doctype]/[id]` Server Component, letter head applied | `window.print()` |
-| Email send | — | Edge Function / Server Action with provider key | compose dialog |
-| Scheduled statuses (Overdue, Expired, depreciation) | `pg_cron` → SQL | — | — |
-| Onboarding provisioning | `app.provision_organization(jsonb)` (security definer) | Server Action as the signed-in user | wizard steps in one React Hook Form |
-| File uploads (item images, attachments) | Storage RLS by org prefix | signed upload URL via Server Action | drag & drop |
+| Submit / cancel / amend | `app.submit_doc` etc. (all posting) | — | `submitDoc` calls `rpc`, then invalidates `['org', orgId, doctype]`; button, confirm dialog, toast |
+| Save draft | `app.save_doc` (RLS). HTML columns pass through `app.sanitize_html` | — | Zod, then `rpc`; React Hook Form, dirty tracking, unsaved-changes guard |
+| Taxes & totals | `app.calc_taxes_and_totals()` inside `save_doc` / `submit_doc` | — | `calcTaxesAndTotals()` on every change, preview only |
+| Item details on row add | `app.get_item_details(args)` | — | debounced `useQuery`, 60s `staleTime` |
+| Link field search | `public.search_link(org_id, doctype, q, ids)` security invoker | — | debounced `useQuery`, abort, keep previous data, 60s `staleTime` |
+| List views | SQL with `order by`, `limit/offset`, filters, `count(*) over()` | — | `useQuery` keyed by the `nuqs` URL state; column chooser and row selection in the client |
+| Dashboards | `app.card_*`, `app.chart_*`; materialized views for heavy ones | — | Recharts; query `staleTime` 60s, `gcTime` 5 min, keyed by org, company, fiscal year, range |
+| Reports | One SQL function per report | — | filters in the URL; CSV built in the browser from the returned page |
+| Tree views | `ltree` subtree queries | — | load nodes with `useQuery`; expand/collapse in Zustand |
+| Permissions | RLS + `app.has_perm` | — | `can()` from the JWT hides buttons |
+| Numbering | `app.next_name` on submit | — | shows "New …" until submitted |
+| Print | — | — | `/print/[doctype]/[id]` route, `window.print()` |
+| Email send | templates and `email_log` | `send-email` (provider key) | compose dialog calls the function |
+| Scheduled statuses | `pg_cron` → SQL | — | — |
+| Onboarding | `app.provision_organization(jsonb)` security definer | — | wizard calls `rpc` as the signed-in user, then `refreshSession()` |
+| File uploads | Storage RLS by org prefix | — | browser uploads with the user JWT; signed URL from a security-invoker RPC |
+| Public holidays | — | — | `date-holidays` in the Holiday List action |
 
-## Caching in Next.js 16 (Cache Components)
+## Caching (TanStack Query)
 
-- Reference data that rarely changes (company settings, CoA list, UOMs, item groups, naming series options, role matrix): wrap reads in `'use cache'` functions with `cacheTag('org:<org_id>:<doctype>')` and `cacheLife('minutes')`; invalidate with `updateTag()` in the Server Action that changes them.
-- Transactional lists and forms: **not cached** (request-time render). Use `<Suspense>` boundaries so the shell streams instantly.
-- Never put the user's JWT-derived data into a cached function's closure without including org/user in the cache key (cache key = function args).
-- Dashboards: `'use cache'` with `cacheLife({ stale: 60, revalidate: 300, expire: 3600 })` keyed by `(orgId, companyId, fiscalYearId, range)`.
+- Reference data (company settings, currencies, UOMs, role matrix): `staleTime` of several minutes. Query key includes `orgId`.
+- Transactional lists and forms: `staleTime: 0` (refetch on focus) but show the cached page immediately (`placeholderData`).
+- After a mutation, `queryClient.invalidateQueries({ queryKey: ['org', orgId, doctype] })`.
+- Dashboards: `staleTime: 60_000`, keyed by `(orgId, companyId, fiscalYearId, range)`.
+- Do not put the JWT in a query key. The Supabase client sends it. Include `orgId` (and `userId` when the row set is per user).
 
 ## Zustand stores
 
 | Store | State | Persist |
 |---|---|---|
-| `session.ts` | `orgId, orgSlug, companyId, fiscalYearId, userRoles[]` (hydrated from server layout props) | cookie-mirrored `companyId` only |
+| `session.ts` | `orgId, orgSlug, companyId, fiscalYearId, userRoles[]` | `companyId` in `localStorage` (per org). Not a cookie. |
 | `ui.ts` | sidebar collapsed, theme, command palette open, density | localStorage |
 | `list-filters.ts` | per-doctype saved filters, column visibility, page size | localStorage (per org) |
 | `form-draft.ts` | unsaved draft payload per `(doctype, id|'new')`, dirty flag, last autosave time | sessionStorage |

@@ -14,8 +14,9 @@ type SessionState = {
     setCompany: (companyId: string) => void;
 };
 
-function writeCompanyCookie(companyId: string) {
-    // biome-ignore lint/suspicious/noDocumentCookie: plain cookie so Server Components can read it; Cookie Store API lacks Safari < 18.4 support
+function writeCompany(companyId: string) {
+    localStorage.setItem(COMPANY_COOKIE, companyId);
+    // biome-ignore lint/suspicious/noDocumentCookie: kept so a tab that still reads the cookie stays in sync
     document.cookie = `${COMPANY_COOKIE}=${encodeURIComponent(companyId)}; path=/; max-age=31536000; samesite=lax`;
 }
 
@@ -28,7 +29,7 @@ export const useSessionStore = create<SessionState>()(
             userRoles: [],
             hydrate: (values) => set(values, false, "session/hydrate"),
             setCompany: (companyId) => {
-                writeCompanyCookie(companyId);
+                writeCompany(companyId);
                 set({ companyId }, false, "session/setCompany");
             },
         }),

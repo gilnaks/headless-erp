@@ -1,9 +1,7 @@
-"use server";
-
-import { redirect } from "next/navigation";
 import { appUrl } from "@/lib/app-url";
 import { safeNext } from "@/lib/auth/redirect";
 import { type ActionResult, authErrorMessage, fail, zodFieldErrors } from "@/lib/errors";
+import { redirect } from "@/lib/navigate";
 import {
     type ForgotPasswordInput,
     forgotPasswordSchema,
@@ -16,7 +14,7 @@ import {
     type UpdatePasswordInput,
     updatePasswordSchema,
 } from "@/lib/schemas/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const RATE_LIMIT_CODES = new Set(["over_email_send_rate_limit", "over_request_rate_limit"]);
 

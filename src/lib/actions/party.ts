@@ -1,10 +1,8 @@
-"use server";
-
 import { LINK_DOCTYPES } from "@/doctypes/setup/address";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, fail } from "@/lib/errors";
 import { formatAddress } from "@/lib/format/address";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

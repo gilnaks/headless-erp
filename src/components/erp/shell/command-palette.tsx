@@ -1,7 +1,6 @@
 "use client";
 
 import { File06, Plus, SearchLg } from "@untitledui/icons";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Key } from "react-aria-components";
 import { Autocomplete, Header, Menu, MenuItem, MenuSection, SearchField } from "react-aria-components";
@@ -12,6 +11,7 @@ import { BUILT_PAGES, MODULES, moduleLinks, orgHref } from "@/config/navigation"
 import { docPath } from "@/doctypes/define";
 import { DOCTYPES, getDoctypeByName } from "@/doctypes/registry";
 import { type SearchHit, searchDocs } from "@/lib/actions/search";
+import { useRouter } from "@/lib/next-nav";
 import { cx } from "@/utils/cx";
 
 type Entry = { id: string; label: string; detail?: string; badge?: string; path: string };

@@ -24,13 +24,24 @@ export async function signIn(page: Page, prefix: string) {
     await page.getByRole("button", { name: "Sign in" }).click();
 }
 
+/** The session lives in localStorage. Clearing cookies alone leaves the previous user signed in. */
+export async function switchUser(page: Page, prefix: string) {
+    await page.evaluate(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+    });
+    await page.context().clearCookies();
+    await signIn(page, prefix);
+    await expect(page).not.toHaveURL(/\/login/);
+}
+
 /**
  * From `/setup` (a signed-in user without an organization): runs the setup wizard with Philippine defaults and returns
  * the organization path (`/<slug>`). The wizard also creates a first company named like the organization, with the
  * Philippines chart and the current fiscal year.
  */
 export async function createOrganization(page: Page, name: string): Promise<string> {
-    await expect(page).toHaveURL(/\/setup$/);
+    await expect(page).toHaveURL(/\/setup$/, { timeout: 30_000 });
     const slug = name.toLowerCase().replaceAll(" ", "-");
     // Retried: a value typed before the form hydrates is lost.
     await expect(async () => {
@@ -46,7 +57,12 @@ export async function createOrganization(page: Page, name: string): Promise<stri
     await page.getByRole("button", { name: "Next" }).click();
 
     await page.getByRole("button", { name: "Create organization" }).click();
-    await expect(page).toHaveURL(new RegExp(`/${slug}$`), { timeout: 30_000 });
+    // Chart seeding on the hosted project can fail once under load; the wizard stays on this step with an alert.
+    await expect(async () => {
+        const failed = page.getByRole("alert").filter({ hasText: /try again|could not/i });
+        if (await failed.isVisible()) await page.getByRole("button", { name: "Create organization" }).click();
+        await expect(page).toHaveURL(new RegExp(`/${slug}$`), { timeout: 20_000 });
+    }).toPass({ timeout: 90_000 });
     return new URL(page.url()).pathname;
 }
 

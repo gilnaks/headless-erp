@@ -1,12 +1,12 @@
 "use client";
 
 import { ArrowRight, CheckCircle } from "@untitledui/icons";
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { dismissOnboarding, skipOnboardingStep } from "@/lib/actions/onboarding";
+import { Link } from "@/lib/next-nav";
 import { ONBOARDING_STEPS, type OnboardingStepKey, type OnboardingStepState } from "@/lib/onboarding";
 
 type OnboardingCardProps = { orgSlug: string; steps: OnboardingStepState[] };

@@ -1,10 +1,10 @@
 "use client";
 
 import { Plus } from "@untitledui/icons";
-import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import { getAddressesAndContacts, type PartyAddress, type PartyContact } from "@/lib/actions/party";
+import { Link } from "@/lib/next-nav";
 
 type RailProps = { orgSlug: string; doctype: string; id: string };
 

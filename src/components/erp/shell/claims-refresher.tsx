@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "@/lib/next-nav";
 import { createClient } from "@/lib/supabase/client";
 
 const STORAGE_KEY = "hx-claims-refresh";

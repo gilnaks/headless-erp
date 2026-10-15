@@ -21,9 +21,11 @@ test("sign in, create an organization and a company, see it in the list", async 
     const chart = page.getByRole("combobox", { name: label("Chart Of Accounts Template") });
     await chart.click();
     await chart.fill("");
-    await expect(page.getByRole("option", { name: "Philippines" })).toBeVisible();
-    await expect(page.getByRole("option", { name: /^SKR04/ })).toHaveCount(0);
-    await page.getByRole("option", { name: "Philippines" }).click();
+    // The country combobox can leave its listbox mounted, so "Philippines" is also a country option.
+    const chartList = page.locator("[role='listbox']:visible");
+    await expect(chartList.getByRole("option", { name: "Philippines" })).toBeVisible();
+    await expect(chartList.getByRole("option", { name: /^SKR04/ })).toHaveCount(0);
+    await chartList.getByRole("option", { name: "Philippines" }).click();
     await page.getByRole("button", { name: /^Save/ }).click();
 
     await expect(page).toHaveURL(new RegExp(`${org}/setup/company/[0-9a-f-]{36}$`), { timeout: 15_000 });

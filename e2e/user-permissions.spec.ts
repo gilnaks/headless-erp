@@ -1,11 +1,5 @@
-import { expect, type Page, test } from "@playwright/test";
-import { createCompany, createOrganization, credentials, label, pick, signIn } from "./helpers";
-
-async function switchUser(page: Page, prefix: string) {
-    await page.context().clearCookies();
-    await signIn(page, prefix);
-    await expect(page).not.toHaveURL(/\/login/);
-}
+import { expect, test } from "@playwright/test";
+import { createCompany, createOrganization, credentials, label, pick, signIn, switchUser } from "./helpers";
 
 test("a Company user permission shows names in the list and limits the member to that company", async ({ page }) => {
     test.slow();

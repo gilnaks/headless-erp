@@ -1,11 +1,9 @@
-"use server";
-
 import Holidays from "date-holidays";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, fail } from "@/lib/errors";
 import type { LocalHoliday } from "@/lib/holidays";
 import { getOrgBySlug } from "@/lib/queries/doc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_YEARS = 10;

@@ -1,17 +1,14 @@
-"use server";
-
 import { z } from "zod";
 import type { Doctype, FieldValues } from "@/doctypes/define";
 import { getDoctypeByName } from "@/doctypes/registry";
 import { appUrl } from "@/lib/app-url";
 import { type AuthClaims, requireUser } from "@/lib/auth/claims";
+import { dispatchEmail } from "@/lib/email/dispatch";
 import { escapeHtml, renderTemplate, type TemplateContext } from "@/lib/email/render";
-import { deliver, resolveSender } from "@/lib/email/sender";
 import { SEND_DOCUMENT_TEMPLATE } from "@/lib/email/templates";
 import { type ActionResult, fail } from "@/lib/errors";
-import { sanitizeHtml } from "@/lib/html/sanitize";
 import { getDoc, getOrgBySlug } from "@/lib/queries/doc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_RECIPIENTS = 20;
@@ -143,18 +140,20 @@ export async function sendDocumentEmail(
     if (typeof loaded === "string") return fail(loaded);
     const { claims, org, d, companyId, context } = loaded;
 
-    const sender = await resolveSender(org.id, {
-        companyId,
-        user: { name: String(context.user?.full_name ?? "") || null, email: claims.email },
-    });
-    if (!sender) return fail("Email is not set up. Add an Email Account with an API key in Setup → Email Account.");
+    const supabase = await createClient();
+    const { data: cleanHtml, error: cleanError } = await supabase.rpc("sanitize_html", { p_html: parsed.data.html });
+    if (cleanError || cleanHtml == null) return fail("The message could not be prepared.");
 
-    const result = await deliver(sender, {
+    const result = await dispatchEmail({
+        kind: "account",
         orgId: org.id,
+        companyId,
+        userName: String(context.user?.full_name ?? "") || null,
+        userEmail: claims.email,
         to,
         cc,
         subject: parsed.data.subject,
-        html: sanitizeHtml(parsed.data.html),
+        html: cleanHtml,
         reference: { doctype: d.doctype, id: input.id },
         sentBy: claims.userId,
     });

@@ -1,7 +1,6 @@
-import "server-only";
 import { titleKey } from "@/lib/link-titles";
 import { getLinkTitles } from "@/lib/queries/links";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export type MemberPermission = {
     id: string;

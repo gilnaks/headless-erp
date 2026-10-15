@@ -1,12 +1,10 @@
-"use server";
-
-import { refresh } from "next/cache";
 import { requireUser } from "@/lib/auth/claims";
 import { emailInvitation, type InvitationDelivery } from "@/lib/email/invitation";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
 import { getOrgBySlug } from "@/lib/queries/doc";
+import { refresh } from "@/lib/query-client";
 import { type CreateInvitationInput, createInvitationSchema, type InvitationRefInput, invitationRefSchema } from "@/lib/schemas/users";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const FIELD_FOR: Record<string, string> = {
     invalid_email: "email",

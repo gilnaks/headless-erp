@@ -1,10 +1,8 @@
-"use server";
-
-import { refresh } from "next/cache";
-import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
+import { redirect } from "@/lib/navigate";
 import { getOrgBySlug } from "@/lib/queries/doc";
+import { refresh } from "@/lib/query-client";
 import {
     type RemoveMemberInput,
     removeMemberSchema,
@@ -13,7 +11,7 @@ import {
     type UpdateMemberRolesInput,
     updateMemberRolesSchema,
 } from "@/lib/schemas/users";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const NOT_ALLOWED = "You do not have permission to change users. Ask a System Manager.";
 

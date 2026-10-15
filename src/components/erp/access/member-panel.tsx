@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, Trash01 } from "@untitledui/icons";
-import Link from "next/link";
 import { type ReactNode, useState, useTransition } from "react";
 import { Heading as AriaHeading } from "react-aria-components";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
@@ -10,6 +9,8 @@ import { Button } from "@/components/base/buttons/button";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { FormAlert } from "@/components/erp/form-alert";
 import { removeMember, setMemberStatus, updateMemberRoles } from "@/lib/actions/setup/users";
+import { afterRedirect } from "@/lib/navigate";
+import { Link } from "@/lib/next-nav";
 import type { Member, RoleProfileOption } from "@/lib/queries/users";
 import { formatDateTime, MemberStatusBadge } from "./member-badges";
 import { type RoleOption, RolePicker, useRoleAssignment } from "./role-picker";
@@ -165,7 +166,7 @@ function RemoveMember({ orgSlug, member, title }: { orgSlug: string; member: Mem
     const confirm = () =>
         startTransition(async () => {
             setError(null);
-            const result = await removeMember({ orgSlug, userId: member.userId });
+            const result = await afterRedirect(removeMember({ orgSlug, userId: member.userId }));
             if (result && !result.ok) setError(result.error);
         });
 

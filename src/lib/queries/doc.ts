@@ -1,11 +1,10 @@
-import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import type { Doctype, FieldValues } from "@/doctypes/define";
 import { getAuthClaims } from "@/lib/auth/claims";
 import { can, type RolePermission } from "@/lib/auth/permissions";
 import { PAGE_SIZES } from "@/lib/list-params";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * Query builder for a table chosen at runtime (descriptor / doctype_meta). Generated types cannot follow a dynamic
@@ -17,7 +16,15 @@ export function docTable(supabase: Awaited<ReturnType<typeof createClient>>, tab
 
 export type ListParams = { q?: string; sort?: string; desc?: boolean; page?: number; pageSize?: number };
 export type ListResult = { rows: FieldValues[]; count: number; page: number; pageSize: number; sort: string; desc: boolean };
-export type DocPermissions = { read: boolean; write: boolean; create: boolean; delete: boolean };
+export type DocPermissions = {
+    read: boolean;
+    write: boolean;
+    create: boolean;
+    delete: boolean;
+    submit: boolean;
+    cancel: boolean;
+    amend: boolean;
+};
 
 /** The organization for a URL slug, resolved through RLS (null when the caller is not a member). */
 export const getOrgBySlug = cache(async (slug: string) => {
@@ -107,7 +114,7 @@ export async function getDocPermissions(orgId: string, doctype: string): Promise
             .maybeSingle(),
         supabase
             .from("role_permissions")
-            .select("role, doctype, can_read, can_write, can_create, can_delete")
+            .select("role, doctype, can_read, can_write, can_create, can_submit, can_cancel, can_amend, can_delete")
             .eq("org_id", orgId)
             .eq("doctype", doctype),
     ]);
@@ -118,5 +125,8 @@ export async function getDocPermissions(orgId: string, doctype: string): Promise
         write: can(roles, rows, doctype, "write"),
         create: can(roles, rows, doctype, "create"),
         delete: can(roles, rows, doctype, "delete"),
+        submit: can(roles, rows, doctype, "submit"),
+        cancel: can(roles, rows, doctype, "cancel"),
+        amend: can(roles, rows, doctype, "amend"),
     };
 }

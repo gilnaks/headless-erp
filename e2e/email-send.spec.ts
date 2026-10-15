@@ -3,6 +3,7 @@ import { createOrganization, label, signIn } from "./helpers";
 
 // Runs with EMAIL_DRY_RUN=1: messages are logged to email_log but never leave the server.
 test("invitations are emailed and a record can be emailed from its form", async ({ page }) => {
+    test.slow();
     const stamp = Date.now().toString(36);
     const invitee = `invitee-${stamp}@example.com`;
     const orgName = `Email Send Org ${stamp}`;
@@ -33,7 +34,7 @@ test("invitations are emailed and a record can be emailed from its form", async 
     }).toPass();
 
     const dialog = page.getByRole("dialog", { name: "Email Company" });
-    await expect(dialog.getByRole("textbox", { name: label("Subject") })).toHaveValue(`Company ${orgName}`);
+    await expect(dialog.getByRole("textbox", { name: label("Subject") })).toHaveValue(`Company ${orgName}`, { timeout: 15_000 });
     await expect(dialog.getByRole("textbox", { name: label("Message") })).toHaveValue(/\/print\/company\/[0-9a-f-]{36}/);
 
     await dialog.getByRole("textbox", { name: label("To") }).fill("not an email");

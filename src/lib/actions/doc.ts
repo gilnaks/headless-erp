@@ -1,17 +1,13 @@
-"use server";
-
-import { refresh, updateTag } from "next/cache";
-import { redirect } from "next/navigation";
 import { docPath, type FieldValues } from "@/doctypes/define";
 import { getDoctypeByName } from "@/doctypes/registry";
 import { formToPayload, schemaFor } from "@/doctypes/schema";
 import { requireUser } from "@/lib/auth/claims";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
-import { sanitizeHtml } from "@/lib/html/sanitize";
 import type { LinkOption } from "@/lib/link-titles";
+import { redirect } from "@/lib/navigate";
 import { getOrgBySlug } from "@/lib/queries/doc";
-import { getLinkTitles, searchLinkTitles } from "@/lib/queries/links";
-import { createClient } from "@/lib/supabase/server";
+import { refresh, updateTag } from "@/lib/query-client";
+import { createClient } from "@/lib/supabase/client";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -43,10 +39,6 @@ export async function saveDoc(input: {
     if (!parsed.success) return fail("Check the highlighted fields.", zodFieldErrors(parsed.error));
 
     const values = { ...(parsed.data as FieldValues) };
-    for (const [name, field] of Object.entries(d.fields)) {
-        if (field.html && typeof values[name] === "string") values[name] = sanitizeHtml(values[name]);
-    }
-
     const isNew = input.id === null;
     const payload = { ...formToPayload(d, values, { isNew }), ...(isNew ? { org_id: org.id } : { id: input.id }) };
 
@@ -98,23 +90,74 @@ export async function deleteDoc(input: { orgSlug: string; doctype: string; id: s
     redirect(`/${org.slug}/${docPath(d)}`);
 }
 
+async function workflowDoc(
+    rpc: "submit_doc" | "cancel_doc" | "amend_doc",
+    input: { orgSlug: string; doctype: string; id: string },
+): Promise<ActionResult<{ id: string }>> {
+    await requireUser(`/${input.orgSlug}`);
+    const d = getDoctypeByName(input.doctype);
+    if (!d) return fail(`${input.doctype} is not a document type.`);
+    const org = await getOrgBySlug(input.orgSlug);
+    if (!org) return fail("Organization not found.");
+    if (!UUID.test(input.id)) return fail(`${d.doctype} not found.`);
+
+    const supabase = await createClient();
+    // These three RPCs are added with the first submittable doctype (P3, see 0008_framework_doc_engine.sql).
+    const { data, error } = await (
+        supabase.rpc as unknown as (name: typeof rpc, args: { p_doctype: string; p_id: string }) => ReturnType<typeof supabase.rpc>
+    )(rpc, { p_doctype: d.doctype, p_id: input.id });
+    if (error) {
+        const { code, message } = dbError(error);
+        const field = d.errorFields[code];
+        return field ? fail(message, { [field]: message }) : fail(message);
+    }
+    const id = data && typeof data === "object" && "id" in data && typeof data.id === "string" ? data.id : input.id;
+    updateTag(docTag(org.id, d.doctype));
+    if (rpc === "amend_doc") redirect(`/${org.slug}/${docPath(d)}/${id}`);
+    refresh();
+    return { ok: true, data: { id } };
+}
+
+/** Submit a draft (`app.submit_doc`). The database names it, posts ledgers, and sets docstatus. */
+export function submitDoc(input: { orgSlug: string; doctype: string; id: string }) {
+    return workflowDoc("submit_doc", input);
+}
+
+/** Cancel a submitted document (`app.cancel_doc`). Ledger rows are reversed, not deleted. */
+export function cancelDoc(input: { orgSlug: string; doctype: string; id: string }) {
+    return workflowDoc("cancel_doc", input);
+}
+
+/** Copy a cancelled document to a new draft (`app.amend_doc`) and open it. */
+export function amendDoc(input: { orgSlug: string; doctype: string; id: string }) {
+    return workflowDoc("amend_doc", input);
+}
+
 /**
  * Options for a Link field: records of `doctype` whose title matches `q`, plus the labels of `ids` (the current
  * value). Any doctype in `doctype_meta` works, so Links can target doctypes without a descriptor yet; `User` lists
  * the organization's members.
  */
-export async function searchLink(input: { orgSlug: string; doctype: string; q?: string; ids?: string[] }): Promise<LinkOption[]> {
+export async function searchLink(input: {
+    orgSlug: string;
+    doctype: string;
+    q?: string;
+    ids?: string[];
+    signal?: AbortSignal;
+}): Promise<LinkOption[]> {
     await requireUser(`/${input.orgSlug}`);
     const org = await getOrgBySlug(input.orgSlug);
     if (!org) return [];
 
     const ids = (input.ids ?? []).filter((id) => UUID.test(id));
-    const [selected, found] = await Promise.all([
-        getLinkTitles(org.id, input.doctype, ids),
-        searchLinkTitles(org.id, input.doctype, input.q ?? ""),
-    ]);
-
-    const options = new Map<string, LinkOption>();
-    for (const option of [...selected, ...found]) options.set(option.id, option);
-    return [...options.values()];
+    const supabase = await createClient();
+    const request = supabase.rpc("search_link", {
+        p_org: org.id,
+        p_doctype: input.doctype,
+        p_q: input.q ?? "",
+        p_ids: ids,
+    });
+    const { data, error } = await (input.signal ? request.abortSignal(input.signal) : request);
+    if (error || !data) return [];
+    return data.map((row) => ({ id: row.id, label: row.label }));
 }

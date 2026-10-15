@@ -12,26 +12,27 @@ module you touch. If the task conflicts with the plan, stop and say so before co
   HR/Payroll, Pricing Rules, Item Variants, Accounting Dimensions, Deferred accounting, Period Closing, Repost tools.
 
 ## Stack (fixed)
-Next.js 16.4+ App Router (React 19, TS strict, Turbopack, `cacheComponents` on, `proxy.ts`), Supabase (Postgres, Auth via
-`@supabase/ssr`, Storage, pg_cron), Zustand (UI/session state only), Untitled UI React (Tailwind v4 + React Aria,
-components copied into `src/components/base|application`), Recharts 3, Zod, React Hook Form, TanStack Table, nuqs,
-Biome, Vitest, pgTAP, Playwright, GitHub Actions → Netlify.
+Vite SPA (React 19, TS strict), TanStack Router, TanStack Query, Supabase (Postgres, Auth via `@supabase/supabase-js`
+in the browser, Storage, Edge Functions for secrets, pg_cron), Zustand (UI/session state only), Untitled UI React
+(Tailwind v4 + React Aria, components copied into `src/components/base|application`), Recharts 3, Zod, React Hook Form,
+TanStack Table, nuqs (TanStack Router adapter), Biome, Vitest, pgTAP, Playwright, GitHub Actions → Netlify static `dist`.
 
 ## Non-negotiables
 1. Every tenant table has `org_id` and RLS enabled + policies (see `docs/architecture/01-tenancy-auth-rls.md`). No
    migration without RLS. Ledger tables are append-only; cancel = reversal rows + the
    `is_cancelled`/`delinked` flag on the cancelled voucher's rows (the only allowed update).
-2. All ledger/status/numbering mutations happen in `app.*` Postgres functions called from Server Actions
-   (`app.submit_doc`, `app.cancel_doc`, `app.amend_doc`, `app.save_doc`). Never write `gl_entry`,
+2. All ledger/status/numbering/HTML mutations happen in `app.*` Postgres functions called from client mutations
+   (`app.submit_doc`, `app.cancel_doc`, `app.amend_doc`, `app.save_doc`, `app.sanitize_html`). Never write `gl_entry`,
    `stock_ledger_entry`, `payment_ledger_entry`, `bin` from TypeScript.
-3. Server authorization uses `supabase.auth.getClaims()`; never `getSession()` on the server; never import the
-   service-role client outside `server-only` modules (provisioning, cron, tests).
+3. Authorization is RLS under the user JWT. Route guards may read the session for navigation only. Never `getSession()`
+   as the check on a write. Never put the service-role key in client code or in a `VITE_` variable. Edge Functions,
+   dev scripts, and tests are the only service-role callers.
 4. Money/qty are `numeric` in SQL; rounding via `app.round()` / `src/lib/calc/number.ts`. Client totals are previews;
-   the server recomputes before posting.
+   Postgres recomputes before posting.
 5. One doctype = one migration (+RLS +doctype_meta +role_permissions) + `src/doctypes/<module>/<slug>.ts` descriptor +
-   Zod schema + Server Actions + list/form UI + tests. Regenerate `src/types/database.ts` after schema changes.
-6. `params`, `searchParams`, `cookies()`, `headers()` are async — always `await`. Default to Server Components;
-   `'use client'` only for interactive leaves (forms, tables, charts, stores).
+   Zod schema + client mutation + list/form UI + tests. Regenerate `src/types/database.ts` after schema changes.
+6. Routes live in `src/routes` (TanStack Router). Data for screens comes from TanStack Query. `'use client'` is not used.
+   Interactive pieces are just components.
 7. UI: Untitled UI tokens only (no raw hex), compact density, keyboard-first, tabular numerals, empty/loading/error
    states for every list/form. No new dependency without a note in `docs/PLAN.md §2`.
 8. Small commits (one doctype or one engine function). Conventional commits. Never commit secrets or tenant data.
@@ -43,7 +44,8 @@ Biome, Vitest, pgTAP, Playwright, GitHub Actions → Netlify.
   over one-off pages. Add a descriptor, not a bespoke screen.
 - Use the Supabase MCP for `apply_migration` (local/dev only), `execute_sql` (reads), `get_advisors`
   (must be clean), `generate_typescript_types`. Production changes go through CI only.
-- Hosted Supabase is the dev project only. Load `.env.local` without echoing it and clear the variables afterwards.
+- Hosted Supabase is the dev project only. Load `.env.local` without echoing it and clear the variables afterwards
+  (e2e needs `VITE_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`). Each pgTAP file rolls back.
   `db reset --linked` only when the project should be wiped; the local `supabase db reset` job runs in GitHub Actions.
 
 ## Workflow (every PR)

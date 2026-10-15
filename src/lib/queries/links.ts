@@ -1,9 +1,8 @@
-import "server-only";
 import type { Doctype, FieldValues } from "@/doctypes/define";
 import { type LinkOption, type LinkTitles, linkRequests, titleKey } from "@/lib/link-titles";
 import { docTable } from "@/lib/queries/doc";
 import { getMemberDirectory } from "@/lib/queries/users";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 const SEARCH_LIMIT = 20;
 

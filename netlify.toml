@@ -1,9 +1,21 @@
 [build]
   command = "npm run build"
-  publish = ".next"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
+  # The site was created while Next.js was detected, so Netlify still runs that adapter.
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/health"
+  [headers.values]
+    Content-Type = "application/json"
 
 [[headers]]
   for = "/*"
@@ -12,3 +24,4 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 http://localhost:54321; font-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'"

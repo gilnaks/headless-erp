@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("server-only", () => ({}));
-
 const { sendViaResend } = await import("./transport");
 
 const message = { from: '"Acme" <hello@acme.test>', to: ["jane@x.test"], subject: "Hi", html: "<p>Hi</p>" };

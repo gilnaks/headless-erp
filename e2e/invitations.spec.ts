@@ -1,13 +1,8 @@
-import { expect, type Page, test } from "@playwright/test";
-import { createOrganization, credentials, label, signIn } from "./helpers";
-
-async function switchUser(page: Page, prefix: string) {
-    await page.context().clearCookies();
-    await signIn(page, prefix);
-    await expect(page).not.toHaveURL(/\/login/);
-}
+import { expect, test } from "@playwright/test";
+import { createOrganization, credentials, label, signIn, switchUser } from "./helpers";
 
 test("owner invites with a role profile, the invitee accepts the copied link and joins with the profile roles", async ({ page }) => {
+    test.slow();
     const stamp = Date.now().toString(36);
     const invitee = credentials("E2E_INVITEE").email;
 

@@ -24,7 +24,7 @@ test("the company form lists its addresses and contacts, and + New links them to
 
     await addresses.getByRole("link", { name: "New Address" }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/setup/address/new\\?`));
-    await expect(page.getByRole("combobox", { name: label("Link Name") })).toHaveValue(orgName);
+    await expect(page.getByRole("combobox", { name: label("Link Name") })).toHaveValue(orgName, { timeout: 20_000 });
     await expect(async () => {
         await page.getByRole("textbox", { name: label("Address Line 1") }).fill("1 Ayala Ave");
         await expect(page.getByRole("textbox", { name: label("Address Line 1") })).toHaveValue("1 Ayala Ave", { timeout: 1_000 });

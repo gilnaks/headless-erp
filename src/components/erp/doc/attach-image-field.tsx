@@ -73,7 +73,6 @@ export function AttachImageField({ control, name, field, orgSlug, isDisabled }: 
                 <div className="flex items-start gap-2 rounded-lg p-2 ring-1 ring-secondary ring-inset">
                     <div className="flex h-20 min-w-0 flex-1 items-center justify-center">
                         {url ? (
-                            // biome-ignore lint/performance/noImgElement: signed Storage URLs are short-lived; next/image would cache them
                             <img src={url} alt={field.label} className="max-h-20 max-w-full object-contain" />
                         ) : (
                             <LoadingIndicator type="line-simple" size="sm" />
