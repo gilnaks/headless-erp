@@ -5,6 +5,7 @@ import { findLink } from "@/config/navigation";
 import { type ChildDoctype, type Doctype, defineDoctype, docPath, layoutFields } from "./define";
 import { DOCTYPES, getDoctype, getDoctypeByName } from "./registry";
 import { formToPayload, formValuesFor, newChildRow, prefillValues, schemaFor } from "./schema";
+import { address } from "./setup/address";
 import { company } from "./setup/company";
 import { roleProfile } from "./setup/role-profile";
 import { userPermission } from "./setup/user-permission";
@@ -183,6 +184,15 @@ describe("DynamicLink (User Permission)", () => {
         });
         expect(prefillValues(userPermission, {})).toBeNull();
         expect(formValuesFor(userPermission, prefillValues(userPermission, { user_id: userId }) ?? undefined).user_id).toBe(userId);
+    });
+
+    it("seeds one child row from <table>.<field> query keys", () => {
+        const prefill = prefillValues(address, { "links.link_doctype": "Company", "links.link_id": userId, city: "Makati" });
+        expect(prefill).toEqual({ city: "Makati", links: [{ link_doctype: "Company", link_id: userId }] });
+        const values = formValuesFor(address, prefill ?? undefined);
+        expect(values.links).toEqual([{ link_doctype: "Company", link_id: userId }]);
+        expect(values.address_type).toBe("Billing");
+        expect(prefillValues(address, { "links.nope": "x", links: "y" })).toBeNull();
     });
 });
 

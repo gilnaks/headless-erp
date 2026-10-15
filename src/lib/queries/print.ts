@@ -1,6 +1,7 @@
 import "server-only";
 import { type Doctype, type FieldValues, layoutFields } from "@/doctypes/define";
 import { DOCTYPES } from "@/doctypes/registry";
+import { formatAddress } from "@/lib/format/address";
 import { sanitizeHtml } from "@/lib/html/sanitize";
 import { type LinkTitles, linkRequests, titleKey } from "@/lib/link-titles";
 import {
@@ -36,6 +37,8 @@ export type PrintContext = {
     /** Frappe `validate_print_permission` message when the docstatus cannot be printed. */
     blocked: string | null;
     draftHeading: boolean;
+    /** The company's preferred billing address as display lines (ERPNext `get_default_company_address`). */
+    companyAddress: string[] | null;
 };
 
 /** Printable doctype for the `/print/[doctype]` segment (the descriptor slug). */
@@ -115,8 +118,8 @@ export async function getPrintContext(slug: string, id: string, formatId?: strin
     if (!doc) return null;
 
     const companyId = d.doctype === "Company" ? id : typeof doc.company_id === "string" ? doc.company_id : null;
-    const [{ data: org }, { data: settingsRow }, { data: formatRows }, { data: orgDefault }, { data: company }, titles] = await Promise.all(
-        [
+    const [{ data: org }, { data: settingsRow }, { data: formatRows }, { data: orgDefault }, { data: company }, titles, { data: address }] =
+        await Promise.all([
             supabase.from("organizations").select("id, slug").eq("id", orgId).single(),
             supabase.from("print_settings").select("*").eq("org_id", orgId).maybeSingle(),
             supabase
@@ -130,8 +133,8 @@ export async function getPrintContext(slug: string, id: string, formatId?: strin
                 ? supabase.from("companies").select("default_letter_head_id").eq("id", companyId).maybeSingle()
                 : Promise.resolve({ data: null }),
             resolveTitles(d, orgId, doc),
-        ],
-    );
+            companyId ? supabase.rpc("company_address", { p_company: companyId }).maybeSingle() : Promise.resolve({ data: null }),
+        ]);
     if (!org) return null;
 
     const settings: PrintSettingsLike = settingsRow
@@ -172,5 +175,6 @@ export async function getPrintContext(slug: string, id: string, formatId?: strin
         letterHead,
         blocked: printBlockedReason(docstatus, settings),
         draftHeading: showDraftHeading(docstatus, d.submittable, settings),
+        companyAddress: address ? formatAddress(address) : null,
     };
 }

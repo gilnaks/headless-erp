@@ -152,6 +152,7 @@ export const company = defineDoctype({
         defaultSort: { field: "company_name" },
     },
     tree: { parentField: "parent_id", groupField: "is_group" },
+    addressContact: true,
     errorFields: {
         abbr_required: "abbr",
         abbr_taken: "abbr",
