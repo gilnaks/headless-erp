@@ -19,7 +19,8 @@ Biome, Vitest, pgTAP, Playwright, GitHub Actions → Netlify.
 
 ## Non-negotiables
 1. Every tenant table has `org_id` and RLS enabled + policies (see `docs/architecture/01-tenancy-auth-rls.md`). No
-   migration without RLS. Ledger tables are append-only; cancel = reversal rows.
+   migration without RLS. Ledger tables are append-only; cancel = reversal rows + the
+   `is_cancelled`/`delinked` flag on the cancelled voucher's rows (the only allowed update).
 2. All ledger/status/numbering mutations happen in `app.*` Postgres functions called from Server Actions
    (`app.submit_doc`, `app.cancel_doc`, `app.amend_doc`, `app.save_doc`). Never write `gl_entry`,
    `stock_ledger_entry`, `payment_ledger_entry`, `bin` from TypeScript.

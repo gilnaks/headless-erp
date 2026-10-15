@@ -17,7 +17,10 @@ against text,                                       -- human summary of counter 
 against_voucher_type text, against_voucher_id uuid, -- invoice a payment settles
 voucher_type text, voucher_id uuid, voucher_no text, voucher_detail_id uuid, voucher_subtype text,
 remarks text, is_opening bool, is_advance bool, due_date date,
-is_cancelled bool default false, created_at
+is_cancelled bool default false, created_at,
+transaction_currency, transaction_exchange_rate, debit_in_transaction_currency, credit_in_transaction_currency,
+advance_voucher_type text, advance_voucher_id uuid,  -- order a PE/JE advance was booked for
+is_system_generated bool default false
 ```
 
 ### `stock_ledger_entry` (from `Stock Ledger Entry`)
@@ -38,7 +41,8 @@ creation_order bigserial                                   -- tie-break ordering
 id, org_id, company_id, posting_date, account_type ('Receivable'|'Payable'), account_id,
 party_type, party_id, voucher_type, voucher_id, against_voucher_type, against_voucher_id,
 amount, account_currency, amount_in_account_currency, due_date, cost_center_id, project_id,
-delinked bool default false, voucher_detail_id, remarks
+delinked bool default false, voucher_detail_id, remarks,
+voucher_no text, against_voucher_no text, advance_voucher_type text, advance_voucher_id uuid
 ```
 
 Outstanding of an invoice = `sum(amount)` of PLE rows where `(against_voucher_type, against_voucher_id)` = the invoice (invoice row positive, payments/credit notes negative). `app.refresh_outstanding(voucher_type, voucher_id)` writes `outstanding_amount` + status (Paid / Unpaid / Partly Paid / Overdue / Return / Credit Note Issued) back on the invoice.
@@ -52,10 +56,12 @@ Outstanding of an invoice = `sum(amount)` of PLE rows where `(against_voucher_ty
 1. Validate: company + fiscal year open (posting_date inside a fiscal year, not before `companies.accounts_frozen_till_date` unless role allowed), accounts enabled and non-group, account belongs to the company, party required for Receivable/Payable accounts, cost center required for P&L accounts (default to company cost center).
 2. Merge similar entries (same account, party, cost center, against voucher, project) unless `merge=false` (Journal Entry keeps rows).
 3. Flip negative debit/credit into the other column.
-4. Check `sum(debit) = sum(credit)` within rounding allowance; if off by less than `0.5 × 10^-precision × rows`, post the difference to `companies.round_off_account` / `round_off_cost_center`, else raise.
+4. Check `sum(debit) = sum(credit)` (`process_debit_credit_difference`): `diff` rounded to currency precision; allowance is `5 / 10^precision` for Journal Entry and Payment Entry and `0.5` for every other voucher. `|diff| >` allowance → raise "Debit and Credit not equal…"; otherwise any `|diff| ≥ 1 / 10^precision` becomes a round-off row on `companies.round_off_account` (fallback `default_expense_account`) and `round_off_cost_center` (opening vouchers: `round_off_for_opening`). Full detail in `docs/modules/01-accounts.md` §4.0.
 5. Budget check (`app.validate_budget`) for expense accounts against `budget` rows when budgeting is configured (action Stop/Warn/Ignore per budget, default from ERPNext: `Stop` on actual expense).
 6. Insert `gl_entry` rows; for Receivable/Payable accounts also insert `payment_ledger_entry` rows; refresh outstanding of referenced invoices.
-7. Cancellation (`app.reverse_gl_entries(voucher_type, voucher_id)`): mark original rows `is_cancelled=true`, insert mirrored rows (debit↔credit) also flagged `is_cancelled=true` (ERPNext's "immutable ledger" default-off behaviour still writes reversal rows; reports filter `is_cancelled=false`). Also delink PLE rows and refresh outstanding of invoices that the cancelled payment had settled.
+7. Cancellation (`app.reverse_gl_entries(voucher_type, voucher_id)`): mark original rows `is_cancelled=true`, insert mirrored rows (debit↔credit) also flagged `is_cancelled=true` (ERPNext's "immutable ledger" default-off behaviour still writes reversal rows; reports filter `is_cancelled=false`). Also delink PLE rows (negated copies + `delinked=true` on the originals) and refresh outstanding of invoices that the cancelled payment had settled.
+
+**Append-only, precisely:** ledger rows are never deleted and their amounts, accounts, parties and dates are never updated. The only in-place change is setting the cancellation flag (`gl_entry.is_cancelled`, `stock_ledger_entry.is_cancelled`, `payment_ledger_entry.delinked`) on rows of the voucher being cancelled, inside `app.cancel_doc`. A pgTAP test asserts no other `update` touches ledger tables. `bin` is a derived balance table and is recomputed, not appended.
 
 ## `app.make_sl_entries(entries jsonb)` (port of `stock_ledger.make_sl_entries` + `update_entries_after`)
 
@@ -82,7 +88,7 @@ Serial & Batch (basic scope): `serial_and_batch_bundle` + `serial_and_batch_entr
 | **Payment Entry** (Receive) | — | Dr `paid_to` (Bank/Cash) ; Cr Debtors (party) split per allocation (`against_voucher` = invoice) ; unallocated remainder Cr Debtors with `is_advance` ; deductions Dr/Cr deduction account | negative amount per allocated invoice; advance row against the PE itself | invoice outstanding/status; SO/PO `advance_paid` when allocated to orders |
 | **Payment Entry** (Pay) | — | Dr Creditors (party) per allocation ; Cr `paid_from` | same, payable | same |
 | **Payment Entry** (Internal Transfer) | — | Dr `paid_to` ; Cr `paid_from` | — | — |
-| **Sales Invoice** | only if `update_stock`: outward per item (warehouse) | Dr Debtors (party, `grand_total`, due_date) ; Cr Income account per item `base_net_amount` ; Cr tax `account_head` per tax row ; rounding to Round Off ; if `update_stock`: Dr COGS (item `expense_account`) / Cr Stock In Hand at valuation ; if `is_return`: all reversed, Cr Debtors against original invoice | +grand_total against itself (negative for returns, against original `return_against`) | SO `per_billed`/status; DN `per_billed`/status; timesheets `billed` ; if return against SI: original `status = Credit Note Issued` when fully returned |
+| **Sales Invoice** | only if `update_stock`: outward per item (warehouse) | Dr Debtors (party, `grand_total`, due_date) ; Cr Income account per item `base_net_amount` ; Cr tax `account_head` per tax row ; rounding to Round Off ; if `update_stock`: Dr COGS (item `expense_account`) / Cr Stock In Hand at valuation ; if `is_return`: all reversed, Cr Debtors against the original invoice (`update_outstanding_for_self = 0`, the field default) — but when the return amount exceeds the original's outstanding (e.g. already paid), `validate_against_voucher_outstanding` forces `update_outstanding_for_self = 1` and the credit note stands alone (Cr Debtors against itself), settled later by Payment Reconciliation or a refund Payment Entry | +grand_total against itself (returns: negative, against `return_against`, or against itself when `update_outstanding_for_self = 1`) | SO `per_billed`/status; DN `per_billed`/status; timesheets `billed` ; if return against SI: original `status = Credit Note Issued` when fully returned |
 | **Purchase Invoice** | only if `update_stock`: inward per item | Cr Creditors (party, `grand_total`) ; per item: Dr **Stock Received But Not Billed** if received via PR, else Dr item `expense_account` (or Dr Stock In Hand when `update_stock`) ; Dr tax accounts for `add_deduct_tax = Add` & category `Total`; `Valuation` taxes go to item valuation (Dr SRBNB/stock) instead ; rounding ; asset items: Dr CWIP / Asset Received But Not Billed path (Assets module) | +grand_total | PO `per_billed`; PR `per_billed`; `is_return` mirrors |
 | **Delivery Note** | outward per item from `warehouse` at valuation (incoming_rate) | Dr COGS (`expense_account` per item, default company `default_expense_account`) ; Cr Stock In Hand (warehouse's account, default company `default_inventory_account`) | — | SO `per_delivered`, `delivered_qty`; `reserved_qty` in bin ; return against DN sets `per_returned` |
 | **Purchase Receipt** | inward per item at `rate` + valuation taxes + landed cost (`valuation_rate` on item row); rejected qty goes to `rejected_warehouse` at zero value | Dr Stock In Hand (valuation amount) ; Cr Stock Received But Not Billed (`base_net_amount`) ; Cr tax `account_head` for `Valuation`/`Valuation and Total` rows (ERPNext books to "Expenses Included In Valuation" via the tax account) | — | PO `per_received`, `received_qty`; bin `ordered_qty` ; MR `per_received` |
@@ -107,7 +113,7 @@ Serial & Batch (basic scope): `serial_and_batch_bundle` + `serial_and_batch_entr
 - **Purchase Receipt**: `To Bill` / `Partly Billed` / `Completed` / `Return` / `Return Issued` / `Cancelled` / `Closed`.
 - **Material Request**: `Pending` / `Partially Ordered` / `Ordered` / `Transferred` / `Issued` / `Partially Received` / `Received` / `Stopped` / `Cancelled` — by `material_request_type`.
 - **Quotation**: `Draft` / `Open` / `Lost` / `Partially Ordered` / `Ordered` / `Expired` (valid_till passed, via nightly job) / `Cancelled`.
-- **Invoices**: `Draft`, `Unpaid`, `Partly Paid`, `Paid`, `Overdue` (nightly job compares due_date), `Return`, `Credit Note Issued` / `Debit Note Issued`, `Internal Transfer`, `Cancelled`.
+- **Invoices**: `Draft`, `Submitted` (zero grand total), `Unpaid`, `Partly Paid`, `Paid`, `Overdue` (nightly job compares due_date), `Return`, `Credit Note Issued` / `Debit Note Issued`, `Internal Transfer`, `Cancelled`. The `… and Discounted` variants belong to Invoice Discounting (out of scope). Exact rules: `docs/modules/01-accounts.md` §5.
 - **Work Order**: `Draft`, `Not Started`, `In Process`, `Completed`, `Stopped`, `Closed`, `Cancelled`.
 - **Project/Task/Asset/Timesheet**: in module docs.
 
@@ -117,14 +123,14 @@ Percent fields written back: `per_delivered`, `per_billed`, `per_received`, `per
 
 Deterministic pipeline, identical on client and server:
 
-1. Item rows: `amount = qty × rate`; `rate` derived from `price_list_rate`, `discount_percentage`/`discount_amount` (margins out of scope); `stock_qty = qty × conversion_factor`; `base_*` = × `conversion_rate`.
+1. Item rows: `amount = qty × rate`; `rate` derived from `price_list_rate`, the manually entered item margin (`margin_type` Percentage/Amount → `rate_with_margin`; Pricing Rules that would set it are out of scope) and `discount_percentage`/`discount_amount`; `stock_qty = qty × conversion_factor`; `base_*` = × `conversion_rate`.
 2. `total`, `base_total`, `net_total` (after item-level discount distribution of `discount_amount` when `apply_discount_on = Net Total`).
 3. Tax rows in order with `charge_type`: `Actual`, `On Net Total`, `On Previous Row Amount`, `On Previous Row Total`, `On Item Quantity`; `included_in_print_rate` (inclusive tax back-calculation); item-wise tax from `item_tax_template` when `add_taxes_from_item_tax_template` and no explicit tax rows; cumulative `total` per row; `base_` mirrors.
 4. `grand_total`, `rounding_adjustment` (round to currency precision per `disable_rounded_total` default false → `rounded_total`), `in_words`.
 5. Buying extras: `add_deduct_tax`, `category` (`Valuation`, `Total`, `Valuation and Total`); `taxes_and_charges_added/deducted`, item `valuation_rate` (landed cost = share of valuation taxes by net amount).
 6. Payment schedule from Payment Terms Template (`due_date`, `invoice_portion`, `payment_amount`); default single term `due_date = posting_date` (or template credit days).
 
-Rounding: `app.round(value, precision)` in SQL = banker's-free half-away-from-zero, same as `flt(v, p)` in Frappe. The TS port must match bit-for-bit on the regression fixtures in `src/lib/calc/__fixtures__/erpnext-cases.json` (hand-extracted from ERPNext tests `test_taxes_and_totals.py` / `test_sales_invoice.py`).
+Rounding: `app.round(value, precision)` in SQL and `round()` in `src/lib/calc/number.ts` = **round half to even** (Frappe System Settings `rounding_method = "Banker's Rounding"`, which ERPNext's test suite sets in `erpnext/tests/utils.py`; e.g. `19453.125 → 19453.12`), same as `flt(v, p)` in Frappe. Postgres `round(numeric)` rounds half away from zero, so `app.round` must implement half-even explicitly. `rounded_total` uses the currency's smallest fraction (`round_based_on_smallest_currency_fraction`; whole units when the currency has none). The TS port must match bit-for-bit on the regression fixtures in `src/lib/calc/__fixtures__/erpnext-cases.json` (hand-extracted from ERPNext tests `test_taxes_and_totals.py` / `test_sales_invoice.py`).
 
 ## Scheduled jobs (Supabase `pg_cron` → SQL functions; Edge Function only when email/network needed)
 
