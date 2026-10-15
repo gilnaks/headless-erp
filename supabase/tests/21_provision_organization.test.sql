@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(27);
 
 insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-0000000021f1', 'founder21@test.local', 'authenticated', 'authenticated'),
@@ -44,6 +44,15 @@ select ok(
   exists (select 1 from public.system_settings s join public.organizations o on o.id = s.org_id where o.slug = 'acme-21')
   and (select count(*) from public.designation d join public.organizations o on o.id = d.org_id where o.slug = 'acme-21') = 31,
   'A4/A18: system settings and the 31 designations are seeded'
+);
+
+select ok(
+  exists (
+    select 1 from public.print_settings p join public.organizations o on o.id = p.org_id
+     where o.slug = 'acme-21' and p.print_style = 'Modern' and p.font_size = 9 and p.pdf_page_size = 'A4'
+       and p.with_letterhead and p.compact_item_print and not p.allow_print_for_cancelled
+  ),
+  'A4: print settings are seeded with the Frappe/ERPNext defaults'
 );
 
 select results_eq(

@@ -1558,6 +1558,102 @@ export type Database = {
           },
         ]
       }
+      print_settings: {
+        Row: {
+          add_draft_heading: boolean
+          allow_page_break_inside_tables: boolean
+          allow_print_for_cancelled: boolean
+          allow_print_for_draft: boolean
+          attach_view_link: boolean
+          compact_item_print: boolean
+          created_at: string
+          created_by: string | null
+          font: string
+          font_size: number
+          id: string
+          letter_head_id: string | null
+          org_id: string
+          pdf_page_height: number | null
+          pdf_page_size: string
+          pdf_page_width: number | null
+          print_style: string
+          print_taxes_with_zero_amount: boolean
+          print_uom_after_quantity: boolean
+          repeat_header_footer: boolean
+          send_print_as_pdf: boolean
+          updated_at: string
+          updated_by: string | null
+          with_letterhead: boolean
+        }
+        Insert: {
+          add_draft_heading?: boolean
+          allow_page_break_inside_tables?: boolean
+          allow_print_for_cancelled?: boolean
+          allow_print_for_draft?: boolean
+          attach_view_link?: boolean
+          compact_item_print?: boolean
+          created_at?: string
+          created_by?: string | null
+          font?: string
+          font_size?: number
+          id?: string
+          letter_head_id?: string | null
+          org_id: string
+          pdf_page_height?: number | null
+          pdf_page_size?: string
+          pdf_page_width?: number | null
+          print_style?: string
+          print_taxes_with_zero_amount?: boolean
+          print_uom_after_quantity?: boolean
+          repeat_header_footer?: boolean
+          send_print_as_pdf?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          with_letterhead?: boolean
+        }
+        Update: {
+          add_draft_heading?: boolean
+          allow_page_break_inside_tables?: boolean
+          allow_print_for_cancelled?: boolean
+          allow_print_for_draft?: boolean
+          attach_view_link?: boolean
+          compact_item_print?: boolean
+          created_at?: string
+          created_by?: string | null
+          font?: string
+          font_size?: number
+          id?: string
+          letter_head_id?: string | null
+          org_id?: string
+          pdf_page_height?: number | null
+          pdf_page_size?: string
+          pdf_page_width?: number | null
+          print_style?: string
+          print_taxes_with_zero_amount?: boolean
+          print_uom_after_quantity?: boolean
+          repeat_header_footer?: boolean
+          send_print_as_pdf?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          with_letterhead?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_settings_letter_head_fkey"
+            columns: ["org_id", "letter_head_id"]
+            isOneToOne: false
+            referencedRelation: "letter_head"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "print_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permission_template: {
         Row: {
           can_amend: boolean
