@@ -1,5 +1,6 @@
 import { fiscalYear } from "./accounts/fiscal-year";
 import type { Doctype } from "./define";
+import { address } from "./setup/address";
 import { branch } from "./setup/branch";
 import { company } from "./setup/company";
 import { department } from "./setup/department";
@@ -30,6 +31,7 @@ export const DOCTYPES: readonly Doctype[] = [
     letterHead,
     printSettings,
     printFormat,
+    address,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {

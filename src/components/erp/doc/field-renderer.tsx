@@ -10,6 +10,7 @@ import { MultiSelect } from "@/components/base/select/multi-select";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import type { FieldDef, OptionSource } from "@/doctypes/define";
+import { siblingPath } from "@/doctypes/grid";
 import type { ReferenceOptions } from "@/lib/reference-options";
 import { cx } from "@/utils/cx";
 import { AttachImageField } from "./attach-image-field";
@@ -64,9 +65,9 @@ export function FieldRenderer(props: FieldRendererProps) {
     }
 }
 
-/** ERPNext Dynamic Link: a Link whose target doctype is the value of `field.optionsField`. */
+/** ERPNext Dynamic Link: a Link whose target doctype is the value of `field.optionsField` (in the same row). */
 function DynamicLinkField(props: FieldRendererProps) {
-    const target = useWatch({ control: props.control, name: props.field.optionsField ?? "" });
+    const target = useWatch({ control: props.control, name: siblingPath(props.name, props.field.optionsField ?? "") });
     return <LinkField {...props} target={typeof target === "string" ? target : ""} />;
 }
 

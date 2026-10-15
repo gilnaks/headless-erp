@@ -21,6 +21,7 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      address_refresh: { Args: { p_address: string }; Returns: undefined }
       allowed_records: {
         Args: { p_doctype: string; p_for?: string; p_org: string }
         Returns: string[]
@@ -48,6 +49,16 @@ export type Database = {
         }[]
       }
       company_abbr: { Args: { p_company_name: string }; Returns: string }
+      company_address: {
+        Args: { p_company: string; p_kind?: string }
+        Returns: Database["public"]["Tables"]["address"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "address"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       company_allowed: {
         Args: { p_company: string; p_for?: string; p_org: string }
         Returns: boolean
@@ -132,6 +143,16 @@ export type Database = {
         Returns: string[]
       }
       orgs_with_role: { Args: { p_role: string }; Returns: string[] }
+      party_addresses: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: Database["public"]["Tables"]["address"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "address"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       print_format_clear_default: {
         Args: { p_doc_type: string; p_keep: string; p_org: string }
         Returns: undefined
@@ -187,6 +208,144 @@ export type Database = {
   }
   public: {
     Tables: {
+      address: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          address_title: string | null
+          address_type: string
+          city: string
+          country: string
+          county: string | null
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          email_id: string | null
+          fax: string | null
+          id: string
+          is_primary_address: boolean
+          is_shipping_address: boolean
+          is_your_company_address: boolean
+          name: string | null
+          org_id: string
+          phone: string | null
+          pincode: string | null
+          state: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          address_title?: string | null
+          address_type?: string
+          city: string
+          country: string
+          county?: string | null
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          email_id?: string | null
+          fax?: string | null
+          id?: string
+          is_primary_address?: boolean
+          is_shipping_address?: boolean
+          is_your_company_address?: boolean
+          name?: string | null
+          org_id: string
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          address_title?: string | null
+          address_type?: string
+          city?: string
+          country?: string
+          county?: string | null
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          email_id?: string | null
+          fax?: string | null
+          id?: string
+          is_primary_address?: boolean
+          is_shipping_address?: boolean
+          is_your_company_address?: boolean
+          name?: string | null
+          org_id?: string
+          phone?: string | null
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "address_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "address_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "address_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      address_link: {
+        Row: {
+          id: string
+          idx: number
+          link_doctype: string
+          link_id: string
+          link_title: string | null
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          id?: string
+          idx: number
+          link_doctype: string
+          link_id: string
+          link_title?: string | null
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          id?: string
+          idx?: number
+          link_doctype?: string
+          link_id?: string
+          link_title?: string | null
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "address_link_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "address"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       branch: {
         Row: {
           branch: string
@@ -2195,6 +2354,40 @@ export type Database = {
           name: string
         }[]
       }
+      company_address: {
+        Args: { p_company: string; p_kind?: string }
+        Returns: {
+          address_line1: string
+          address_line2: string | null
+          address_title: string | null
+          address_type: string
+          city: string
+          country: string
+          county: string | null
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          email_id: string | null
+          fax: string | null
+          id: string
+          is_primary_address: boolean
+          is_shipping_address: boolean
+          is_your_company_address: boolean
+          name: string | null
+          org_id: string
+          phone: string | null
+          pincode: string | null
+          state: string | null
+          updated_at: string
+          updated_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "address"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       create_company: { Args: { p: Json }; Returns: Json }
       create_invitation: {
         Args: {
@@ -2224,6 +2417,40 @@ export type Database = {
           status: string
           user_id: string
         }[]
+      }
+      party_addresses: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: {
+          address_line1: string
+          address_line2: string | null
+          address_title: string | null
+          address_type: string
+          city: string
+          country: string
+          county: string | null
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          email_id: string | null
+          fax: string | null
+          id: string
+          is_primary_address: boolean
+          is_shipping_address: boolean
+          is_your_company_address: boolean
+          name: string | null
+          org_id: string
+          phone: string | null
+          pincode: string | null
+          state: string | null
+          updated_at: string
+          updated_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "address"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       permission_doctypes: {
         Args: never

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defineChildDoctype } from "./define";
-import { gridColumns, gridKeyTarget, moveTarget, removalOrder } from "./grid";
+import { gridColumns, gridKeyTarget, moveTarget, removalOrder, siblingPath } from "./grid";
 import { newChildRow } from "./schema";
 
 // Any child-shaped table works; the grid only reads the descriptor.
@@ -55,5 +55,16 @@ describe("removalOrder", () => {
     it("dedupes, drops out-of-range indices and sorts descending", () => {
         expect(removalOrder([0, 2, 2, 5, -1], 3)).toEqual([2, 0]);
         expect(removalOrder(new Set<number>(), 3)).toEqual([]);
+    });
+});
+
+describe("siblingPath", () => {
+    it("resolves a DynamicLink's doctype field in the same grid row", () => {
+        expect(siblingPath("links.0.link_id", "link_doctype")).toBe("links.0.link_doctype");
+        expect(siblingPath("links.12.link_id", "link_doctype")).toBe("links.12.link_doctype");
+    });
+
+    it("resolves top-level fields as they are", () => {
+        expect(siblingPath("for_value", "allow")).toBe("allow");
     });
 });

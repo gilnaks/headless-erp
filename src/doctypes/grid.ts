@@ -33,3 +33,9 @@ export function gridKeyTarget(index: number, key: string, count: number): { row:
 export function removalOrder(selected: Iterable<number>, count: number): number[] {
     return [...new Set(selected)].filter((i) => i >= 0 && i < count).sort((a, b) => b - a);
 }
+
+/** Form path of a sibling field in the same row: `links.0.link_id` + `link_doctype` -> `links.0.link_doctype`. */
+export function siblingPath(name: string, sibling: string): string {
+    const dot = name.lastIndexOf(".");
+    return dot < 0 ? sibling : `${name.slice(0, dot + 1)}${sibling}`;
+}
