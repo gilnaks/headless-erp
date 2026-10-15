@@ -100,6 +100,7 @@ export type Database = {
         Returns: boolean
       }
       is_member: { Args: { p_org: string }; Returns: boolean }
+      is_printable: { Args: { p_doctype: string }; Returns: boolean }
       jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
       locked_permission_doctypes: { Args: never; Returns: string[] }
       next_name: {
@@ -131,6 +132,10 @@ export type Database = {
         Returns: string[]
       }
       orgs_with_role: { Args: { p_role: string }; Returns: string[] }
+      print_format_clear_default: {
+        Args: { p_doc_type: string; p_keep: string; p_org: string }
+        Returns: undefined
+      }
       provision_organization: { Args: { p: Json }; Returns: Json }
       record_allowed: {
         Args: {
@@ -160,6 +165,10 @@ export type Database = {
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
       seed_designations: { Args: { p_org: string }; Returns: undefined }
+      seed_print_formats: {
+        Args: { p_doctype?: string; p_org: string }
+        Returns: undefined
+      }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }
@@ -1555,6 +1564,69 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currency"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      print_format: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          doc_type: string
+          id: string
+          is_default: boolean
+          is_standard: boolean
+          name: string
+          options: Json
+          org_id: string
+          template_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          doc_type: string
+          id?: string
+          is_default?: boolean
+          is_standard?: boolean
+          name: string
+          options?: Json
+          org_id: string
+          template_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          doc_type?: string
+          id?: string
+          is_default?: boolean
+          is_standard?: boolean
+          name?: string
+          options?: Json
+          org_id?: string
+          template_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_format_doc_type_fkey"
+            columns: ["doc_type"]
+            isOneToOne: false
+            referencedRelation: "doctype_meta"
+            referencedColumns: ["doctype"]
+          },
+          {
+            foreignKeyName: "print_format_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }

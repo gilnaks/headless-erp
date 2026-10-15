@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(28);
 
 insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-0000000021f1', 'founder21@test.local', 'authenticated', 'authenticated'),
@@ -53,6 +53,13 @@ select ok(
        and p.with_letterhead and p.compact_item_print and not p.allow_print_for_cancelled
   ),
   'A4: print settings are seeded with the Frappe/ERPNext defaults'
+);
+
+select is(
+  (select count(*)::int from public.print_format p join public.organizations o on o.id = p.org_id
+    where o.slug = 'acme-21' and p.is_standard and p.is_default and p.template_key = 'record'),
+  (select count(*)::int from public.doctype_meta m where app.is_printable(m.doctype)),
+  'A4: a default "<Doctype> Standard" print format is seeded per printable doctype'
 );
 
 select results_eq(

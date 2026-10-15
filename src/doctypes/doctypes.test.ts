@@ -18,6 +18,8 @@ describe("registry", () => {
     it("has unique doctype names and module/slug pairs", () => {
         expect(new Set(DOCTYPES.map((d) => d.doctype)).size).toBe(DOCTYPES.length);
         expect(new Set(DOCTYPES.map(docPath)).size).toBe(DOCTYPES.length);
+        // The print route addresses doctypes by slug alone (`/print/<slug>/<id>`).
+        expect(new Set(DOCTYPES.map((d) => d.slug)).size).toBe(DOCTYPES.length);
     });
 
     it("looks doctypes up by route and by name", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, ChevronLeft, DotsVertical, Trash01 } from "@untitledui/icons";
+import { ChevronDown, ChevronLeft, DotsVertical, Printer, Trash01 } from "@untitledui/icons";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Heading as AriaHeading, type Key } from "react-aria-components";
@@ -216,7 +216,16 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                                 </Dropdown.Popover>
                             </Dropdown.Root>
                         )}
-                        {!isNew && canDelete && <DeleteMenu doctype={d.doctype} title={title} orgSlug={orgSlug} id={id} />}
+                        {!isNew && (canDelete || !d.single) && (
+                            <MoreMenu
+                                doctype={d.doctype}
+                                title={title}
+                                orgSlug={orgSlug}
+                                id={id}
+                                printHref={d.single ? null : `/print/${d.slug}/${id}`}
+                                canDelete={canDelete}
+                            />
+                        )}
                         {editable && (
                             <Button type="submit" size="sm" isLoading={isSubmitting} showTextWhileLoading>
                                 Save
@@ -256,7 +265,10 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     );
 }
 
-function DeleteMenu({ doctype, title, orgSlug, id }: { doctype: string; title: string; orgSlug: string; id: string }) {
+type MoreMenuProps = { doctype: string; title: string; orgSlug: string; id: string; printHref: string | null; canDelete: boolean };
+
+/** Overflow menu: Print (new tab, `/print/<slug>/<id>`) and Delete with a confirm dialog. */
+function MoreMenu({ doctype, title, orgSlug, id, printHref, canDelete }: MoreMenuProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
@@ -273,8 +285,15 @@ function DeleteMenu({ doctype, title, orgSlug, id }: { doctype: string; title: s
             <Dropdown.Root>
                 <Button size="sm" color="secondary" iconLeading={DotsVertical} aria-label="More actions" />
                 <Dropdown.Popover placement="bottom right">
-                    <Dropdown.Menu aria-label="Actions" onAction={(key) => key === "delete" && setOpen(true)}>
-                        <Dropdown.Item id="delete" icon={Trash01} label="Delete" />
+                    <Dropdown.Menu
+                        aria-label="More actions"
+                        onAction={(key) => {
+                            if (key === "print" && printHref) window.open(printHref, "_blank", "noopener");
+                            if (key === "delete") setOpen(true);
+                        }}
+                    >
+                        {printHref ? <Dropdown.Item id="print" icon={Printer} label="Print" /> : null}
+                        {canDelete ? <Dropdown.Item id="delete" icon={Trash01} label="Delete" /> : null}
                     </Dropdown.Menu>
                 </Dropdown.Popover>
             </Dropdown.Root>
