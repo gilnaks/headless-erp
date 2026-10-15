@@ -44,7 +44,7 @@ jobs:
           version: 2.120.0
 
       - name: Start local Supabase
-        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api,mailpit
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,mailpit
 
       - name: Reset database (all migrations + seed)
         run: supabase db reset
