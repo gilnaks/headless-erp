@@ -6,6 +6,7 @@ import { department } from "./setup/department";
 import { designation } from "./setup/designation";
 import { globalDefaults } from "./setup/global-defaults";
 import { holidayList } from "./setup/holiday-list";
+import { letterHead } from "./setup/letter-head";
 import { role } from "./setup/role";
 import { roleProfile } from "./setup/role-profile";
 import { systemSettings } from "./setup/system-settings";
@@ -24,6 +25,7 @@ export const DOCTYPES: readonly Doctype[] = [
     department,
     holidayList,
     fiscalYear,
+    letterHead,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {

@@ -8,6 +8,8 @@
 | preview | Supabase **dev** project (shared) or Supabase Branching (if on Pro) | Netlify Deploy Preview per PR | PR |
 | production | Supabase **prod** project | Netlify production site | `main` |
 
+Storage: the private `org-files` bucket and its `storage.objects` policies are created by migration `0118` (no dashboard setup per environment); see 02-database-conventions "Files (Storage)".
+
 Secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new publishable key format), `SUPABASE_SERVICE_ROLE_KEY` (server-only), `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` + `SUPABASE_PROJECT_REF` (CI only), `EMAIL_PROVIDER_API_KEY`, `APP_URL`. Local values in `.env.local` (git-ignored); `.env.example` committed.
 
 ## Supabase MCP (Cursor)

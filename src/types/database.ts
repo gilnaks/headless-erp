@@ -26,6 +26,7 @@ export type Database = {
         Returns: string[]
       }
       auto_create_fiscal_year: { Args: never; Returns: number }
+      can_write_file: { Args: { p_name: string }; Returns: boolean }
       coa_template_preview: {
         Args: { p_template: string }
         Returns: {
@@ -76,6 +77,8 @@ export type Database = {
         Args: { p_code: string; p_org: string }
         Returns: undefined
       }
+      file_doctype: { Args: { p_name: string }; Returns: string }
+      file_org: { Args: { p_name: string }; Returns: string }
       fiscal_year_check_overlap: { Args: { p_fy: string }; Returns: undefined }
       fiscal_year_name: {
         Args: { p_end: string; p_start: string }
@@ -616,6 +619,13 @@ export type Database = {
             columns: ["org_id", "default_holiday_list_id"]
             isOneToOne: false
             referencedRelation: "holiday_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_default_letter_head_fkey"
+            columns: ["org_id", "default_letter_head_id"]
+            isOneToOne: false
+            referencedRelation: "letter_head"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -1255,6 +1265,86 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "role_profile"
             referencedColumns: ["org_id", "name"]
+          },
+        ]
+      }
+      letter_head: {
+        Row: {
+          align: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          footer: string | null
+          footer_align: string
+          footer_image: string | null
+          footer_image_height: number | null
+          footer_image_width: number | null
+          footer_source: string
+          id: string
+          image: string | null
+          image_height: number | null
+          image_width: number | null
+          is_default: boolean
+          letter_head_name: string
+          org_id: string
+          source: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          align?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          footer?: string | null
+          footer_align?: string
+          footer_image?: string | null
+          footer_image_height?: number | null
+          footer_image_width?: number | null
+          footer_source?: string
+          id?: string
+          image?: string | null
+          image_height?: number | null
+          image_width?: number | null
+          is_default?: boolean
+          letter_head_name: string
+          org_id: string
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          align?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          footer?: string | null
+          footer_align?: string
+          footer_image?: string | null
+          footer_image_height?: number | null
+          footer_image_width?: number | null
+          footer_source?: string
+          id?: string
+          image?: string | null
+          image_height?: number | null
+          image_width?: number | null
+          is_default?: boolean
+          letter_head_name?: string
+          org_id?: string
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_head_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }

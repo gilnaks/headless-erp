@@ -39,6 +39,7 @@ Source of truth for behaviour: the ERPNext clone at `C:\Users\John\Desktop\erpne
 | Package manager | npm (Node 22) | `package-lock.json` committed. |
 | CI/CD | GitHub Actions → Netlify (Next.js adapter) + Supabase CLI | See `docs/architecture/06-deployment-ops.md`. |
 | Public holidays | `date-holidays` (MIT) | Server-only (Holiday List "Add Local Holidays" Server Action). Replaces ERPNext's Python `holidays` package; added P1. |
+| HTML sanitizer | `sanitize-html` (MIT) | Server-only (`src/lib/html/sanitize.ts`): allow-list for user-authored HTML (Letter Head header/footer, `html: true` fields) applied by `saveDoc`; added P1 Printing. |
 
 ## 3. Architecture in one page
 

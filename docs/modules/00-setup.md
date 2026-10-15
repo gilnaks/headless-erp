@@ -322,6 +322,15 @@ Frappe doctype; ERPNext adds `Company.default_letter_head` / `default_letter_hea
 - Frappe `header_script` / `footer_script` dropped (**Deviation:** no arbitrary JS in prints). HTML is sanitised server-side (allow-list: block/inline formatting, img, table).
 - Print route resolution: document `letter_head` field → company `default_letter_head` → org default (`is_default`) → none.
 - Permissions: System Manager rwcd, all roles read. List: name, source, is_default, disabled.
+- **Built (0118):** `public.letter_head` (name unique per org, case-insensitive; `source` / `footer_source` `HTML|Image`; `align` / `footer_align` `Left|Right|Center`; image paths must start with `<org_id>/letter-head/`; partial unique index = one default per org).
+  - `app.letter_head_validate` (before trigger) ports `validate_disabled_and_default` (`letter_head_disabled_default`: "Letter Head cannot be both disabled and default"), the "first enabled letter head becomes the default" rule, and `set_as_default` (setting `is_default` clears the org's previous default).
+  - `companies.default_letter_head_id` gets its FK (`companies_default_letter_head_fkey`, same org, `on delete set null (default_letter_head_id)`, so deleting a letter head clears the company link) and the Company form shows it.
+  - Images live in the private `org-files` storage bucket (created by the migration; see `docs/architecture/02-database-conventions.md`), uploaded through the `AttachImage` field and shown with signed URLs.
+  - Header/Footer HTML are `html: true` Text fields: `saveDoc` sanitizes them with `src/lib/html/sanitize.ts` (`sanitize-html` allow-list). The form shows a live A4 preview (unsaved HTML in a sandboxed frame without scripts).
+  - Frappe `footer_image_height`, `footer_image_width` and `footer_align` are kept alongside the header ones.
+  - **Deviation:** Frappe stores the generated `<img>` HTML in `content` when the source is Image; we keep the image fields and render them at print time. `default_letter_head_report` (report prints) is not ported.
+  - **Deviation:** Frappe Letter Head ported from memory (the frappe repo is not cloned locally).
+  - Descriptor `letter-head.ts`; pgTAP `22_letter_head.test.sql`; Vitest `sanitize.test.ts`; e2e `letter-head.spec.ts`.
 
 ### 2.12 Print Format → `print_format`
 
@@ -901,6 +910,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Department / Company**: `TreeView` with company filter (Department tree root is `All Departments`; `get_children` hides disabled unless toggled).
   - Built: both list routes have a List / Tree toggle (`?view=tree`). Department filters by Company (`?company_id=`), keeping the root above the company's departments, and has "Include disabled". "Add child" on a group opens the new form with the parent and company prefilled (the root takes the company from the filter, as `add_node` does). See 05-ui-ux `TreeView`.
 - **Letter Head**: live preview of header/footer over an A4 frame; Image vs HTML toggle.
+  - Built on the generic `DocForm`: "Letter Head Based On" / "Footer Based On" switch the HTML and image fields (`dependsOn`); the descriptor's `preview: "LetterHead"` adds the A4-width Preview panel below the form (`form-preview.tsx`), updated as you type.
 - **Print Format**: read-only registry list with "Set as default" per doctype and a preview link to `/print/<doctype>/<sample>`.
 - **Email Account**: provider toggle (Resend / SMTP), "Send test email" action (Edge Function), default-outgoing switch.
 - **Email Digest**: checkbox groups mirroring ERPNext sections (Accounts → Sales/Purchase → Projects/Overdue POs), recipients multi-select of members, "Send now" preview (`get_digest_msg`).
@@ -978,7 +988,7 @@ Decisions (2026-10-14):
 - [x] Role Permissions matrix page + Server Actions + "reset to defaults" — `0108_setup_role_permission_manager.sql` (§2.8, §8), per-doctype reset
 - [x] User Permissions: list/form, picker for Company/Warehouse/Cost Center — `0109_setup_user_permissions.sql` (§2.9), descriptor `user-permission.ts`, `DynamicLink` field type; Warehouse/Cost Center join the picker with their P2 tables
 - [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
-- [ ] Letter Head: table, storage upload, preview, default trigger
+- [x] Letter Head: table, storage upload, preview, default trigger
 - [ ] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
 - [ ] Print Settings: table + SettingsPage
 - [ ] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action
