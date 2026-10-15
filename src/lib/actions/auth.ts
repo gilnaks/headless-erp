@@ -1,7 +1,7 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { appUrl } from "@/lib/app-url";
 import { safeNext } from "@/lib/auth/redirect";
 import { type ActionResult, authErrorMessage, fail, zodFieldErrors } from "@/lib/errors";
 import {
@@ -19,12 +19,6 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 const RATE_LIMIT_CODES = new Set(["over_email_send_rate_limit", "over_request_rate_limit"]);
-
-/** Base URL for email links; must be covered by the Auth redirect allow-list (`/auth/callback**`). */
-async function appUrl(): Promise<string> {
-    const origin = (await headers()).get("origin");
-    return origin ?? process.env.APP_URL ?? "http://localhost:3000";
-}
 
 async function callbackUrl(next: string): Promise<string> {
     return `${await appUrl()}/auth/callback?next=${encodeURIComponent(safeNext(next))}`;

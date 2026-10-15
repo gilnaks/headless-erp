@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/claims";
+import { emailInvitation } from "@/lib/email/invitation";
 import { type ActionResult, dbError, fail, zodFieldErrors } from "@/lib/errors";
 import { type ProvisionOrganizationInput, provisionOrganizationSchema } from "@/lib/schemas/organization";
 import { createClient } from "@/lib/supabase/server";
@@ -26,7 +27,7 @@ const FIELD_FOR: Record<string, string> = {
 
 /** Setup wizard submit (frappe `setup_complete`): one `provision_organization` call, then into the new organization. */
 export async function provisionOrganization(input: ProvisionOrganizationInput): Promise<ActionResult> {
-    await requireUser("/setup");
+    const claims = await requireUser("/setup");
     const parsed = provisionOrganizationSchema.safeParse(input);
     if (!parsed.success) return fail("Check the highlighted fields.", zodFieldErrors(parsed.error));
 
@@ -43,7 +44,20 @@ export async function provisionOrganization(input: ProvisionOrganizationInput): 
 
     // Re-issue the access token so `app.orgs` in the JWT includes the new organization.
     await supabase.auth.refreshSession();
-    redirect(`/${(data as { slug: string }).slug}`);
+    const created = data as { id: string; slug: string };
+
+    // Best effort: a failed send leaves the invitation open; the Users page can resend or copy the link.
+    if (invites.length) {
+        const { data: invitations } = await supabase
+            .from("invitations")
+            .select("id, token")
+            .eq("org_id", created.id)
+            .is("accepted_at", null);
+        for (const invitation of invitations ?? []) {
+            await emailInvitation({ id: created.id, name: org.name }, invitation, claims).catch(() => null);
+        }
+    }
+    redirect(`/${created.slug}`);
 }
 
 export type ChartOption = { name: string; isDefault: boolean };

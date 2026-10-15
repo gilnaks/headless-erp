@@ -448,6 +448,7 @@ Frappe `Email Account` plus ERPNext custom field `company` (`install.py: create_
   - Live preview (`preview: "EmailTemplate"`): subject and body rendered against a sample Sales Invoice; the HTML body is shown in a sandboxed frame, and compile errors are shown in place.
   - App-level templates live in code (`src/lib/email/templates.ts`): `Invitation` and `Send Document` (subject `{{doc.doctype}} {{doc.name}}`).
   - pgTAP `28_email_template`, Vitest `render.test.ts`, e2e `email-template.spec.ts`.
+- **Built — form "Email" action** (Frappe `CommunicationComposer` / `make`): saved, non-single documents get **Email** in the form's More menu. The compose dialog (`email-dialog.tsx`) has To, CC, a template picker (Send Document by default, plus the org's templates), Subject and an HTML Message. Defaults come from `getEmailDraft`, which reads the record with RLS (no access = not found) and renders the template with `doc` = the record plus `doctype`, `name` and `print_url`, `company` = the record's company (or the Company itself), and `user` = the sender. To defaults to the record's `contact_email` / `email_id` / `email`. `sendDocumentEmail` re-reads the record, validates up to 20 addresses, sanitizes the message, sends through `resolveSender(org, company)` (company account, else org default, else the platform sender) and logs to `email_log` against the record. e2e `email-send.spec.ts` (dry run).
 
 ### 2.16 Email Digest → `email_digest` + child `email_digest_recipient`
 
@@ -670,7 +671,7 @@ Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language},
   - B3-B7, B9, B10 and B13 need the P2 account, cost center, warehouse, tax and mode-of-payment tables and are added by those migrations.
 - **Stage C:**
   - C3: `global_defaults` gets `default_company_id`, `default_currency` and `country`.
-  - C5: one `app.create_invitation` per invite (link only, §3.4).
+  - C5: one `app.create_invitation` per invite. After provisioning, the `provisionOrganization` Server Action emails each open invitation (§3.4). This is best effort: a failed send leaves the invitation open for Resend or Copy link on the Users page.
   - C6: `provisioned_at = now()`.
   - C1, C2 and C4 wait for their tables.
 - **Idempotency:** re-running for a slug the caller owns that is already provisioned returns `{id, slug, company_id}` unchanged; any other existing slug fails with `slug_taken`.
@@ -841,14 +842,16 @@ Same as Stage B (B2–B13) without the Fiscal Year (B1); `global_defaults.defaul
 
 Owner/System Manager → `invitations(org_id, email, roles[], role_profile?, token, expires_at = now + 7 days)` → email via platform sender using template `Invitation` with `/invite/[token]` → recipient signs up/in → Server Action `acceptInvitation(token)`: verifies not expired/accepted, inserts `org_members(status = active, roles)`, `user_profile` if missing, sets `accepted_at`, forces token refresh. Resend / revoke actions on the Users page. Mirrors Frappe's "Add User → welcome email" (`invite_users` onboarding step: *Invite your team — Add the people you work with and choose what they can see*).
 
-**Built (P1, `0107_setup_invitations.sql`) — link-only delivery until the Email track:** no email is sent. The System Manager copies `/invite/<token>` from the invite drawer (or from the invitation row) and shares it.
+**Built (P1, `0107_setup_invitations.sql`; email delivery from the Email track):**
+
+- `createInvitation` and `resendInvitation` send the app-level `Invitation` template (`src/lib/email/templates.ts`) through the platform sender (`RESEND_API_KEY` + `EMAIL_FROM`) and log it to `email_log` (reference doctype `Invitation`). The drawer says "Invitation emailed to …" and still shows the link. When email is not configured or the send fails, the invitation is kept, the drawer explains why no email went out, and "Copy link" is the fallback. Resend from the list emails the new link, or copies it when sending is not possible.
 
 - `app.create_invitation(p_org, p_email, p_roles, p_role_profile)` (System Manager only, else `42501`) returns `{ id, token }`. It raises `roles_required` (neither roles nor profile), `already_member` (the email belongs to an active member; disabled members can be re-invited and are re-activated on accept), `invite_pending` (an open invitation exists; resend it instead), `invalid_role` and `invalid_email`. An expired open invitation is revoked automatically so a new one can be created. A partial unique index keeps one open invitation per `(org_id, email)`.
 - `invitations` gained `role_profile` (FK to `role_profile`, cascades on rename, set null on delete) and `revoked_at`. A trigger lower-cases the email, copies the profile's roles into `roles` when a profile is set, dedupes, and validates roles.
 - `app.resend_invitation(id)` issues a new token and a fresh 7-day expiry (the old link stops working); accepted or revoked invitations raise `invitation_closed`. Revoke is an RLS update setting `revoked_at`.
 - `app.invitation_preview(token)` (signed-in callers only) returns `{ org_name, email, state }` for `/invite/[token]`, which shows the organization, refuses closed invitations with a message, and offers "Sign out and switch account" when the signed-in email differs.
 - `app.accept_invitation` also refuses revoked invitations and applies the invitation's `role_profile` (the membership gets the profile and its roles; without a profile, roles are merged into an existing membership as before).
-- The link's origin is the browser's (`window.location.origin`), so it matches the deployment the System Manager is using.
+- The link's origin is the browser's (`window.location.origin`) for "Copy link", and the request's origin (else `APP_URL`, `src/lib/app-url.ts`) in the email, so both match the deployment the System Manager is using.
 
 ### 3.5 Address / Contact quick-create from party forms
 
@@ -965,7 +968,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Role permission edits change the org's `role_permissions` rows directly instead of creating Custom DocPerm copies; "Reset to defaults" re-copies the doctype's rows from `role_permission_template`. Reason: per-tenant table, same visible result.
 - **Deviation:** Roles seeded are the 19 standard ones; Analytics, Shop Floor, HR, Academics, Delivery, Customer/Supplier website roles omitted. Reason: scope.
 - **Deviation:** Every seeded (standard) role is protected from rename/delete, System Manager cannot be disabled, and the Access doctypes' permissions are fixed to System Manager (`permission_locked`). Reason: no Administrator account exists to recover from a lockout.
-- **Deviation (temporary):** Inviting a user creates a copyable link instead of sending a welcome email. Reason: email sending is deferred to the Email track (P1 decision); the invitation row and token are already what the email will carry.
+- **Deviation:** Emailing a record (form "Email", Frappe `CommunicationComposer`) attaches no PDF; the message links to the print view, which opens for signed-in members of the organization only. Sends are recorded in `email_log`, not as Communication documents with a timeline. Reason: no server-side PDF rendering yet; Communication is part of the out-of-scope inbox.
 - **Deviation:** Disabling a role keeps it assigned (it simply grants nothing) instead of deleting the Has Role rows. Reason: reversible.
 - **Deviation:** Authorization Rule limited to Grand Total on SO/PO/SI/PI with role/user approver; discount-based rules, Quotation/DN/PR, employee/designation targets dropped. Reason: Pricing/HR out of scope.
 - **Deviation:** Print Format = one server-rendered modern template per doctype; no Print Format Builder, Jinja/JS formats, `Classic`/`Standard` legacy formats or raw printing. Reason: `05-ui-ux.md`, simplicity.
@@ -1032,7 +1035,7 @@ Decisions (2026-10-14):
 - [x] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
 - [x] Print Settings: table + SettingsPage
 - [x] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action — `0123_setup_email_account.sql` (§2.14), descriptor `email-account.ts`, `email_log`; sending is a server-only module (`src/lib/email/transport.ts`, `sender.ts`) instead of an Edge Function; SMTP deferred
-- [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action — table, renderer, templates and form are built (`0124_setup_email_template.sql`, §2.15); the form "Email" action is next
+- [x] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action — `0124_setup_email_template.sql` (§2.15); the form "Email" action is `email-dialog.tsx` + `src/lib/actions/email.ts` (§2.15); invitations are emailed (§3.4)
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
 - [ ] Global Defaults + System Settings pages (**done in P0**, single-doctype forms); Settings pointer list in sidebar
 - [x] Address + `address_link`: tables, naming, preferred/company-address triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS — `0121_setup_address.sql` (§2.19), descriptor `address.ts`

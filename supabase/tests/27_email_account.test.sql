@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email, aud, role) values
   ('00000000-0000-0000-0000-0000000027a1', 'email-owner-a@test.local', 'authenticated', 'authenticated'),
@@ -138,6 +138,12 @@ insert into public.email_log (org_id, email_account_id, sender, recipients, subj
   (current_setting('test.org')::uuid, current_setting('test.a1')::uuid, 'hello@acme.test', '{a@b.c}', 'From owner', 'Sent', '00000000-0000-0000-0000-0000000027a1');
 select throws_ok(
   $$update public.email_log set subject = 'changed'$$, '42501', null, 'the email log is append-only'
+);
+select throws_ok(
+  format($$insert into public.email_log (org_id, sender, recipients, subject, status, reference_doctype, reference_id)
+           values (%L, 'x@y.z', '{a@b.c}', 'Hi', 'Queued', 'Company', '00000000-0000-0000-0000-0000000027c1')$$,
+    current_setting('test.org')),
+  '23514', null, 'log rows are Sent or Error'
 );
 
 reset role;
