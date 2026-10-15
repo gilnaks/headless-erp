@@ -122,7 +122,7 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 ### 2.3 UOM → `uom`
 
-- **Naming:** `field:uom_name`. **Perms:** Item Manager rwcd, Stock Manager r, Stock User r, Sales User r, Sales Manager r.
+- **Naming:** `field:uom_name`. **Perms:** Item Manager rwcd; Stock Manager, Stock User, Sales User and Sales Manager read. System Manager also reads (the JSON omits that role and lists Desk User select, which is not seeded). UOM Category uses the same roles. UOM Conversion Factor grants System Manager rwcd, as in its JSON, plus those same roles.
 - Fields: `uom_name` ✔ unique, `must_be_whole_number` default false, `enabled` default true, `symbol`, `common_code`, `description`, `category`.
 - **Seed (00-setup A19):** the curated subset (Nos, Unit, Box, Kg, Gram, Litre, Meter, Hour, Day, Set, Pair, Dozen, and the rest of that list) plus their conversions. "Import all UOMs" copies the global template. `Nos` has `must_be_whole_number = 1`.
 - `uom_conversion_factor` (org-level, from the template) is the default factor when an item has no row for that pair. An item row wins.
@@ -386,7 +386,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 
 ### P2 — masters
 
-- [ ] `uom`, `uom_category`, `uom_conversion_factor` + A19 — §2.3
+- [x] `uom`, `uom_category`, `uom_conversion_factor` + A19 — §2.3
 - [ ] `item_group` + A5 — §2.1
 - [ ] `brand` — §2.4
 - [ ] `warehouse`, `warehouse_type` + A16 + B5 — §2.5

@@ -76,6 +76,7 @@ export type Database = {
         Returns: boolean
       }
       contact_refresh: { Args: { p_contact: string }; Returns: undefined }
+      copy_uoms: { Args: { p_all: boolean; p_org: string }; Returns: undefined }
       create_company: { Args: { p: Json }; Returns: Json }
       create_invitation: {
         Args: {
@@ -141,6 +142,7 @@ export type Database = {
         Args: { p_attr: string; p_tag: string; p_value: string }
         Returns: boolean
       }
+      import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
       is_half_holiday: {
         Args: { p_date?: string; p_list: string }
@@ -267,12 +269,14 @@ export type Database = {
         Args: { p_doctype?: string; p_org: string }
         Returns: undefined
       }
+      seed_uoms: { Args: { p_org: string }; Returns: undefined }
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
         Returns: undefined
       }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tree_label: { Args: { p_id: string }; Returns: unknown }
+      uom_names_curated: { Args: never; Returns: string[] }
       user_org_ids: { Args: never; Returns: string[] }
       user_roles: { Args: { p_org: string }; Returns: string[] }
       validate_approving_authority: {
@@ -2833,6 +2837,154 @@ export type Database = {
           },
         ]
       }
+      uom: {
+        Row: {
+          category_id: string | null
+          common_code: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          id: string
+          must_be_whole_number: boolean
+          org_id: string
+          symbol: string | null
+          uom_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          common_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          must_be_whole_number?: boolean
+          org_id: string
+          symbol?: string | null
+          uom_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          common_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          must_be_whole_number?: boolean
+          org_id?: string
+          symbol?: string | null
+          uom_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uom_org_id_category_id_fkey"
+            columns: ["org_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "uom_category"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "uom_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uom_category: {
+        Row: {
+          category_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uom_category_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uom_conversion_factor: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          from_uom: string
+          id: string
+          org_id: string
+          to_uom: string
+          updated_at: string
+          updated_by: string | null
+          value: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_uom: string
+          id?: string
+          org_id: string
+          to_uom: string
+          updated_at?: string
+          updated_by?: string | null
+          value: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          from_uom?: string
+          id?: string
+          org_id?: string
+          to_uom?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uom_conversion_factor_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uom_conversion_template: {
         Row: {
           category: string
@@ -3066,6 +3218,7 @@ export type Database = {
           signature: string
         }[]
       }
+      import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
       onboarding_dismiss: { Args: { p_org: string }; Returns: undefined }
       onboarding_skip: {
