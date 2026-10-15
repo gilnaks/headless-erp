@@ -13,7 +13,9 @@ test("email template previews placeholders and rejects unknown helpers", async (
         await expect(page.getByRole("textbox", { name: label("Name") })).toHaveValue("Payment Reminder", { timeout: 1_000 });
     }).toPass();
     await page.getByRole("textbox", { name: label("Subject") }).fill("Reminder: {{doc.name}}");
-    await page.getByRole("textbox", { name: label("Response") }).fill("<p>Dear {{doc.customer_name}}, please pay {{shout doc.grand_total}}.</p>");
+    await page
+        .getByRole("textbox", { name: label("Response") })
+        .fill("<p>Dear {{doc.customer_name}}, please pay {{shout doc.grand_total}}.</p>");
 
     const preview = page.getByTestId("email-template-preview");
     await expect(preview).toContainText("Subject: Reminder: ACC-SINV-2026-00001");
@@ -26,7 +28,9 @@ test("email template previews placeholders and rejects unknown helpers", async (
     await page
         .getByRole("textbox", { name: label("Response") })
         .fill("<p>Dear {{doc.customer_name}}, please pay {{money doc.grand_total}}.</p><script>alert(1)</script>");
-    await expect(preview.frameLocator('iframe[title="Email body preview"]').getByText("Dear Sample Customer, please pay $1,250.00.")).toBeVisible();
+    await expect(
+        preview.frameLocator('iframe[title="Email body preview"]').getByText("Dear Sample Customer, please pay $1,250.00."),
+    ).toBeVisible();
     await page.getByRole("button", { name: /^Save/ }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/setup/email-template/[0-9a-f-]{36}$`));
 
