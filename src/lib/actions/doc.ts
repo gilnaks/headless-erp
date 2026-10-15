@@ -62,6 +62,18 @@ export async function saveDoc(input: {
     }
 
     const id = (data as { id: string }).id;
+    for (const [name, field] of Object.entries(d.fields)) {
+        const secret = values[name];
+        if (field.type !== "Password" || !field.secretRpc || typeof secret !== "string" || !secret.trim()) continue;
+        const { error: secretError } = await supabase.rpc(field.secretRpc, { p_id: id, p_secret: secret });
+        if (secretError) {
+            updateTag(docTag(org.id, d.doctype));
+            const message = `${d.doctype} saved, but ${field.label} was not: ${dbError(secretError).message}`;
+            if (isNew) redirect(`/${org.slug}/${docPath(d)}/${id}`);
+            return fail(message, { [name]: message });
+        }
+    }
+
     updateTag(docTag(org.id, d.doctype));
     if (isNew) redirect(`/${org.slug}/${docPath(d)}/${id}`);
     refresh();

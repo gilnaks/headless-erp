@@ -10,7 +10,7 @@
 
 Storage: the private `org-files` bucket and its `storage.objects` policies are created by migration `0118` (no dashboard setup per environment); see 02-database-conventions "Files (Storage)".
 
-Secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new publishable key format), `SUPABASE_SERVICE_ROLE_KEY` (server-only), `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` + `SUPABASE_PROJECT_REF` (CI only), `EMAIL_PROVIDER_API_KEY`, `APP_URL`. Local values in `.env.local` (git-ignored); `.env.example` committed.
+Secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new publishable key format), `SUPABASE_SERVICE_ROLE_KEY` (server-only), `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` + `SUPABASE_PROJECT_REF` (CI only), `RESEND_API_KEY` + `EMAIL_FROM` (platform email sender, server-only), `EMAIL_DRY_RUN` (`1` = log emails without sending; CI and e2e), `APP_URL`. Local values in `.env.local` (git-ignored); `.env.example` committed.
 
 ## Supabase MCP (Cursor)
 
@@ -44,7 +44,7 @@ Rules for the agent: use the MCP for `list_tables`, `apply_migration` (dev/local
 1. Job `quality`: `npm ci`, `npx biome ci .`, `npm run typecheck`, `npm test` (Vitest, excludes `*.db.test.ts`).
 2. Job `db-and-e2e` (one job so local Supabase starts once; CLI pinned to the `supabase` devDependency version):
    - `supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,mailpit` (Storage stays on for the `org-files` uploads) → `supabase db reset` (every migration from scratch + `supabase/seed.sql`, which is intentionally empty) → `supabase test db` (pgTAP via pg_prove).
-   - Local URL and keys from `supabase status -o env` are exported as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`.
+   - Local URL and keys from `supabase status -o env` are exported as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`, plus `EMAIL_DRY_RUN=1` (no Resend key in CI; sends are logged to `email_log` with a fake provider id).
    - `node scripts/check-types.mjs` regenerates types from the local DB and fails if `src/types/database.ts` is stale. The committed file comes from the dev project (hosted generator) while CI generates locally (the CLI's newer built-in generator), so the script normalises layout (Biome), drops the `__InternalSupabase` block, `ComputedFields` and generated columns, and treats `Record<PropertyKey, never>` as `never` before comparing; anything else (a missing column, function or type change) fails. On failure the generated file is saved to `test-results/database.generated.ts` (in the uploaded artifact). Locally without Docker: `npm run db:types:check -- --linked`.
    - `npm run test:db` (`vitest.db.config.ts` → `src/doctypes/doctypes.db.test.ts`): every registered descriptor has a matching `doctype_meta` row (table, module, submittable, title field; child tables with `parent_doctype` + `child_field`) and every field / list column exists (zero-row PostgREST select).
    - `npm run build` (`cacheComponents` on, catches dynamic-API misuse), then `npm run e2e`: Playwright (Chromium) starts `next start` and runs `e2e/smoke.spec.ts`: sign in → the `/setup` wizard creates an organization and its first company → New Company → Save → the company is in the list. Sign-up needs email confirmation, so `e2e/global-setup.ts` creates a confirmed user with the admin API. The HTML report and traces are uploaded as an artifact when the job fails. The smoke grows to "create & submit a Sales Invoice → check GL report" in P5.
@@ -93,8 +93,9 @@ CI runs without any secrets. Deploys stay inert until these steps are done by th
 4. **GitHub environment** `production` (Settings → Environments) with required reviewers and deployment branch `main`. Environment secrets: `SUPABASE_ACCESS_TOKEN` (personal access token), `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF` (prod ref).
 5. **Enable deploys**: repository variable `DEPLOY_DB_ENABLED=true` (Settings → Secrets and variables → Actions → Variables). The first run applies every migration to the empty prod project; check the dry-run output before approving.
 6. ~~**Netlify site**~~: done, [astonishing-bunny-48ac2a.netlify.app](https://astonishing-bunny-48ac2a.netlify.app/) builds `main` (`/health` returns `{ "ok": true }`); it currently uses the dev project, so it is a preview until the production project exists. Build settings come from `netlify.toml`. Env vars per context:
-   - production: prod `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL` (production domain), `EMAIL_PROVIDER_API_KEY` when email lands;
-   - deploy-preview / branch-deploy: the dev project (oxkskzguqlwicieorkvh) values, `APP_URL` unset (the app falls back to the request origin); add `https://deploy-preview-*--<site>.netlify.app/auth/callback**` to the dev project's redirect URLs.
+   - production: prod `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL` (production domain), `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `headless-erp <no-reply@mail.example.com>`);
+   - deploy-preview / branch-deploy: the dev project (oxkskzguqlwicieorkvh) values, `APP_URL` unset (the app falls back to the request origin); add `https://deploy-preview-*--<site>.netlify.app/auth/callback**` to the dev project's redirect URLs. Set `EMAIL_DRY_RUN=1` here unless previews should send real email.
+   - **Resend**: verify the `EMAIL_FROM` domain in the Resend dashboard (SPF + DKIM DNS records) before setting the key; Resend rejects other senders. Tenants that add their own Email Account must verify their domain in their own Resend account.
 7. Verify: open a PR → CI green + Netlify preview; merge → approve `deploy-db` → `/health` returns `{ ok: true }` on production.
 
 ## Observability

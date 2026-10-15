@@ -85,6 +85,20 @@ export type Database = {
         Args: { p_exclude?: string[]; p_keys: string[]; p_table: string }
         Returns: string[]
       }
+      email_sender: {
+        Args: { p_account?: string; p_company?: string; p_org: string }
+        Returns: {
+          add_signature: boolean
+          always_use_account_email_id_as_sender: boolean
+          always_use_account_name_as_sender_name: boolean
+          api_key: string
+          email_account_id: string
+          email_account_name: string
+          email_id: string
+          footer: string
+          signature: string
+        }[]
+      }
       enable_org_currency: {
         Args: { p_code: string; p_org: string }
         Returns: undefined
@@ -199,6 +213,10 @@ export type Database = {
       seed_designations: { Args: { p_org: string }; Returns: undefined }
       seed_print_formats: {
         Args: { p_doctype?: string; p_org: string }
+        Returns: undefined
+      }
+      set_email_account_key: {
+        Args: { p_id: string; p_secret: string }
         Returns: undefined
       }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
@@ -1302,6 +1320,156 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "doctype_meta"
             referencedColumns: ["doctype"]
+          },
+        ]
+      }
+      email_account: {
+        Row: {
+          add_signature: boolean
+          always_use_account_email_id_as_sender: boolean
+          always_use_account_name_as_sender_name: boolean
+          api_key_secret: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          default_outgoing: boolean
+          email_account_name: string
+          email_id: string
+          enable_outgoing: boolean
+          enabled: boolean
+          footer: string | null
+          has_api_key: boolean | null
+          id: string
+          org_id: string
+          provider: string
+          signature: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          add_signature?: boolean
+          always_use_account_email_id_as_sender?: boolean
+          always_use_account_name_as_sender_name?: boolean
+          api_key_secret?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_outgoing?: boolean
+          email_account_name: string
+          email_id: string
+          enable_outgoing?: boolean
+          enabled?: boolean
+          footer?: string | null
+          has_api_key?: boolean | null
+          id?: string
+          org_id: string
+          provider?: string
+          signature?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          add_signature?: boolean
+          always_use_account_email_id_as_sender?: boolean
+          always_use_account_name_as_sender_name?: boolean
+          api_key_secret?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_outgoing?: boolean
+          email_account_name?: string
+          email_id?: string
+          enable_outgoing?: boolean
+          enabled?: boolean
+          footer?: string | null
+          has_api_key?: boolean | null
+          id?: string
+          org_id?: string
+          provider?: string
+          signature?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "email_account_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_log: {
+        Row: {
+          cc: string[]
+          created_at: string
+          email_account_id: string | null
+          error: string | null
+          id: string
+          org_id: string
+          provider_message_id: string | null
+          recipients: string[]
+          reference_doctype: string | null
+          reference_id: string | null
+          sender: string
+          sent_by: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          cc?: string[]
+          created_at?: string
+          email_account_id?: string | null
+          error?: string | null
+          id?: string
+          org_id: string
+          provider_message_id?: string | null
+          recipients: string[]
+          reference_doctype?: string | null
+          reference_id?: string | null
+          sender: string
+          sent_by?: string | null
+          status: string
+          subject: string
+        }
+        Update: {
+          cc?: string[]
+          created_at?: string
+          email_account_id?: string | null
+          error?: string | null
+          id?: string
+          org_id?: string
+          provider_message_id?: string | null
+          recipients?: string[]
+          reference_doctype?: string | null
+          reference_id?: string | null
+          sender?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_email_account_id_fkey"
+            columns: ["email_account_id"]
+            isOneToOne: false
+            referencedRelation: "email_account"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2640,6 +2808,20 @@ export type Database = {
         Args: { p_doctype: string; p_id: string }
         Returns: undefined
       }
+      email_sender: {
+        Args: { p_account?: string; p_company?: string; p_org: string }
+        Returns: {
+          add_signature: boolean
+          always_use_account_email_id_as_sender: boolean
+          always_use_account_name_as_sender_name: boolean
+          api_key: string
+          email_account_id: string
+          email_account_name: string
+          email_id: string
+          footer: string
+          signature: string
+        }[]
+      }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
       org_member_directory: {
         Args: { p_org: string }
@@ -2743,6 +2925,10 @@ export type Database = {
         Returns: number
       }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
+      set_email_account_key: {
+        Args: { p_id: string; p_secret: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

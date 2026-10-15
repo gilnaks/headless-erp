@@ -95,6 +95,7 @@ function toInput(field: FieldDef, value: unknown): unknown {
     if (field.type === "Check") return isEmpty(value) ? Boolean(field.default) : Boolean(value);
     if (field.type === "Table") return Array.isArray(value) ? value : [];
     if (field.type === "MultiSelect") return stringItems(value);
+    if (field.type === "Password") return "";
     if (isEmpty(value)) return field.default === undefined ? "" : String(field.default);
     return String(value);
 }
@@ -117,7 +118,7 @@ export function formValuesFor(d: Doctype, row?: FieldValues): FieldValues {
 
 function queryValue(field: FieldDef, raw: string | string[] | undefined): unknown {
     const value = Array.isArray(raw) ? raw[0] : raw;
-    if (value === undefined || field.readOnly || ARRAY_TYPES.has(field.type)) return undefined;
+    if (value === undefined || field.readOnly || field.type === "Password" || ARRAY_TYPES.has(field.type)) return undefined;
     return field.type === "Check" ? value === "1" || value === "true" : value;
 }
 
@@ -162,14 +163,14 @@ function toPayload(field: FieldDef, value: unknown): unknown {
 function rowToPayload(fields: Record<string, FieldDef>, values: FieldValues, isNew: boolean): FieldValues {
     const out: FieldValues = {};
     for (const [name, field] of Object.entries(fields)) {
-        if (field.readOnly || field.type === "Table" || !(name in values)) continue;
+        if (field.readOnly || field.type === "Table" || field.type === "Password" || !(name in values)) continue;
         if (field.setOnlyOnce && !isNew) continue;
         out[name] = toPayload(field, values[name]);
     }
     return out;
 }
 
-/** Validated form values -> `app.save_doc` payload (read-only fields dropped, "" -> null, numbers parsed). */
+/** Validated form values -> `app.save_doc` payload (read-only and Password fields dropped, "" -> null, numbers parsed). */
 export function formToPayload(d: Doctype, values: FieldValues, options: { isNew: boolean }): FieldValues {
     const payload = rowToPayload(d.fields, values, options.isNew);
     for (const [name, child] of Object.entries(d.children)) {

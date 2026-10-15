@@ -404,21 +404,29 @@ Frappe `Email Account` plus ERPNext custom field `company` (`install.py: create_
 | email_account_name | text | ✔ | | = name |
 | email_id | text | ✔ | | sender address; must be a verified domain/sender at the provider |
 | company_id | uuid → companies | | null | ERPNext custom field; null = org-wide |
-| provider | text check | ✔ | `'resend'` | `resend \| smtp` (**Deviation:** Frappe `service` presets replaced) |
-| api_key_secret | uuid → vault.secrets | | | Resend API key stored in Supabase Vault |
-| smtp_server, smtp_port, use_tls, use_ssl_for_outgoing, login_id, password_secret, no_smtp_authentication | text / int / bool / uuid | | 587 / true / false | SMTP branch |
+| provider | text check | ✔ | `'resend'` | `resend` only for now; `smtp` deferred (**Deviation:** Frappe `service` presets replaced) |
+| api_key_secret | uuid → vault.secrets | | | Resend API key stored in Supabase Vault; `has_api_key` (generated) shows whether one is saved |
+| smtp_server, smtp_port, use_tls, use_ssl_for_outgoing, login_id, password_secret, no_smtp_authentication | text / int / bool / uuid | | 587 / true / false | SMTP branch (deferred, not built) |
 | enable_outgoing | boolean | | true | |
 | default_outgoing | boolean | | | one per org (trigger) |
-| always_use_account_email_id_as_sender | boolean | | false | else sender = user's email with account as envelope sender |
-| always_use_account_name_as_sender_name | boolean | | false | |
+| always_use_account_email_id_as_sender | boolean | | false | else Reply-To = the sending user's email (From stays the account address) |
+| always_use_account_name_as_sender_name | boolean | | false | else the display name is the sending user's |
 | add_signature / signature | boolean / text (html) | | false | |
-| footer | text (html) | | ERPNext `default_mail_footer` | |
-| send_unsubscribe_message | boolean | | true | |
-| track_email_status | boolean | | true | provider webhooks → `communication.status` |
+| footer | text (html) | | null | appended to every email from the account |
+| send_unsubscribe_message | boolean | | true | dropped (no bulk mail) |
+| track_email_status | boolean | | true | dropped (no provider webhooks yet) |
 | enabled | boolean | | true | |
 
-- Sending runs in Edge Function `send-email` (service role; reads Vault). Resolution: document's company account → org default → platform account (app-level sender, used for invitations).
+- Resolution (Frappe `get_outgoing_email_account`): the document's company account, then the org's default outgoing account, then the platform sender (`RESEND_API_KEY` + `EMAIL_FROM`, also used for invitations).
 - Permissions: System Manager rwcd. List: name, email_id, company, provider, default_outgoing.
+- **Built (P1, `0123_setup_email_account.sql`, descriptor `email-account.ts`):**
+  - `app.email_account_validate` trims, lower-cases and format-checks `email_id` (`invalid_email`), rejects a default outgoing account that is disabled or has outgoing off (`email_default_disabled`), and clears the previous default. Unlike Letter Head, the first account is not made the default automatically.
+  - The key is write-only. `public.set_email_account_key(p_id, p_secret)` (definer, needs Email Account write) creates or updates the Vault secret. `save_doc` cannot change `api_key_secret` (the trigger keeps the stored id), and deleting an account deletes its secret.
+  - `public.email_sender(p_org, p_company, p_account)` returns the resolved account with its decrypted key. Only `service_role` can execute it. Accounts without a saved key are skipped.
+  - `email_log` records every send (`Sent` / `Error`, provider message id, reference document, `sent_by`). It is append-only: no role can update or delete rows, and only the service role inserts. System Managers read the org's rows; other users read the rows they sent.
+  - The app sends from a server-only module, not an Edge Function. `src/lib/email/transport.ts` posts to the Resend API (`EMAIL_DRY_RUN=1` returns a fake id and sends nothing). `src/lib/email/sender.ts` (`resolveSender`, `deliver`) is the only code that reads credentials, using the service-role client.
+  - Form: the generic `Password` field type (never pre-filled, kept out of the `save_doc` payload, saved through the descriptor's `secretRpc` after the document is saved) and a "Send Test Email" action that sends through the account to the signed-in user.
+  - pgTAP `27_email_account`, Vitest `transport.test.ts` / `sender.test.ts`, e2e `email-account.spec.ts` (dry run).
 
 ### 2.15 Email Template → `email_template`
 
@@ -937,6 +945,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Print Format**: read-only registry list with "Set as default" per doctype and a preview link to `/print/<doctype>/<sample>`.
   - Built on the generic `DocList` / `DocForm`: Default is a checkbox on the form (setting it clears the previous default) instead of a list action; previews come from a record's "More actions" → Print.
 - **Email Account**: provider toggle (Resend / SMTP), "Send test email" action (Edge Function), default-outgoing switch.
+  - Built on the generic `DocForm`: Resend only, so the Service select has one option; the API Key is a write-only password field with an "API Key Saved" indicator; "Send Test Email" is a form action backed by a Server Action (no Edge Function).
 - **Email Digest**: checkbox groups mirroring ERPNext sections (Accounts → Sales/Purchase → Projects/Overdue POs), recipients multi-select of members, "Send now" preview (`get_digest_msg`).
 - **Address / Contact**: full forms opened from the party rail with the link row pre-filled (no drawer); the Links grid is a normal child table with Dynamic Link cells.
 
@@ -954,7 +963,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 - **Deviation:** Authorization Rule limited to Grand Total on SO/PO/SI/PI with role/user approver; discount-based rules, Quotation/DN/PR, employee/designation targets dropped. Reason: Pricing/HR out of scope.
 - **Deviation:** Print Format = one server-rendered modern template per doctype; no Print Format Builder, Jinja/JS formats, `Classic`/`Standard` legacy formats or raw printing. Reason: `05-ui-ux.md`, simplicity.
 - **Deviation:** Print Settings `print_style` fixed to Modern; Letter Head `header_script/footer_script` dropped; HTML sanitised. Reason: security.
-- **Deviation:** Email Account is outbound-only (Resend API or SMTP, secrets in Supabase Vault); no IMAP/POP, auto-reply, append-to, Communication inbox. Reason: PLAN §4.
+- **Deviation:** Email Account is outbound-only (Resend API, secrets in Supabase Vault; SMTP deferred); no IMAP/POP, auto-reply, append-to, Communication inbox, unsubscribe footer or delivery tracking. The From address is always the account's (verified) address. The default footer is empty, not ERPNext's "Sent via ERPNext" `default_mail_footer`. Reason: PLAN §4; the provider only sends from verified domains.
 - **Deviation:** Email Template / Terms and Conditions render a handlebars-style subset instead of Jinja. Reason: no server-side Python; safety.
 - **Deviation:** Email Digest drops `issue`, `calendar_events`, `todo_list`, `notifications`, `add_quote`; no 24h card cache. Reason: Support/Frappe-desk features out of scope.
 - **Deviation:** Address Template doctype replaced by code (`src/lib/format/address.ts`) covering the default + 9 country templates. Reason: simplicity.
@@ -994,7 +1003,7 @@ Shortcuts/links on Home are empty in ERPNext (`shortcuts: []`, `links: []`); we 
 Decisions (2026-10-14):
 - **Staged provisioning.** `app.provision_organization()` seeds only tables that exist in P1. Each later migration that creates a seeded table (item groups, territories, groups, accounts, cost centers, warehouses, modes of payment, price lists, UOMs, module settings) adds its seed step to provisioning and backfills existing orgs. §3.1 is the target end state, not the P1 deliverable.
 - **Order:** Users and invites + Roles, Role Profiles and the Role Permissions matrix, then the Organization doctypes (Branch, Designation, Department, Holiday List), then the onboarding wizard and provisioning, then Printing and Email.
-- **Email sending deferred:** Email Account and Email Template tables and UI are built; the provider (Edge Function, Vault) comes later.
+- **Email sending (2026-10-15):** Server Actions send through a server-only module (`src/lib/email/`) with the Resend API; keys live in Vault and only that module reads them (service role). An Edge Function comes later, for the Email Digest only. SMTP and Email Digest are deferred.
 - **Workflow:** one branch and PR per item, merged when CI is green.
 
 - [x] `app.provision_organization(jsonb)` implementing §3.1 Stages A–C (idempotent, single transaction) + pgTAP test asserting counts/names of every seeded record — `0116_setup_provision_organization.sql`, `21_provision_organization.test.sql`; staged: the P1 steps (A1-A4, A18, B1, B2, B8, B11, C3, C5, C6) are built, and each P2+ migration adds its steps and assertions, including every `companies.*_account_id` default
@@ -1015,7 +1024,7 @@ Decisions (2026-10-14):
 - [x] Letter Head: table, storage upload, preview, default trigger
 - [x] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
 - [x] Print Settings: table + SettingsPage
-- [ ] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action
+- [x] Email Account: table, Vault secret handling, Edge Function `send-email` (Resend + SMTP), test-send action — `0123_setup_email_account.sql` (§2.14), descriptor `email-account.ts`, `email_log`; sending is a server-only module (`src/lib/email/transport.ts`, `sender.ts`) instead of an Edge Function; SMTP deferred
 - [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
 - [ ] Global Defaults + System Settings pages (**done in P0**, single-doctype forms); Settings pointer list in sidebar
