@@ -44,7 +44,7 @@ Additionally owned by this doc (not sidebar items):
 | Concern | Tables / functions | Phase |
 |---|---|---|
 | Provisioning spec (setup wizard + `Company.on_update`) | `app.provision_organization(jsonb)`, `app.create_company(jsonb)` | P1 |
-| Shared masters | `address`, `contact`, `contact_email`, `contact_phone`, `dynamic_link`, `currency` (global), `country` (global), `fiscal_year`, `fiscal_year_company`, `terms_and_conditions` | P1 tables (UI for Address/Contact/T&C/Fiscal Year ships in P2 per PLAN §7) |
+| Shared masters | `address` + `address_link`, `contact`, `contact_email`, `contact_phone`, `contact_link`, `currency` (global), `country` (global), `fiscal_year`, `fiscal_year_company`, `terms_and_conditions` | P1 tables (UI for Address/Contact/T&C/Fiscal Year ships in P2 per PLAN §7) |
 | Home workspace | onboarding checklist, number cards, P&L chart | P1 shell, data as modules land |
 
 ---
@@ -513,7 +513,7 @@ Only the fields that affect our behaviour; defaults are Frappe's.
 - Permissions: System Manager rw.
 - **Built (P0, `0104_setup_system_settings.sql`):** one row per org, seeded on `organizations` insert: `date_format`/`time_format` from the country, `number_format` from the currency, `time_zone` from the org (unknown zones fall back to `UTC`). Selects are text with Frappe's option lists as check constraints (`float_precision` 2–9, `currency_precision` empty or 0–9). `time_zone_unknown` rejects zones Postgres does not know. Members read the row through RLS. **Deviation:** Frappe grants System Settings and Global Defaults to System Manager only; every other standard role gets read-only access so the pages open for them. `email_footer_address` is left empty until the wizard sets it. Number and date rendering still use the current formatting; applying these settings is a follow-up.
 
-### 2.19 Address → `address` + `dynamic_link`
+### 2.19 Address → `address` + `address_link`
 
 Frappe `Address` (extended by `erpnext/accounts/custom/address.py: ERPNextAddress`) + ERPNext custom fields from `install.py: create_address_and_contact_custom_fields()`.
 
@@ -536,7 +536,7 @@ Frappe `Address` (extended by `erpnext/accounts/custom/address.py: ERPNextAddres
 | **tax_category_id** (ERPNext) | uuid → tax_category | | null | drives Tax Rule lookup (P2) |
 | **is_your_company_address** (ERPNext) | boolean | | false | auto-set when a `Company` link exists; if set, a Company link is required (`validate_reference`) |
 
-`dynamic_link` (shared child for Address and Contact): `parent_doctype text check ('Address','Contact')`, `parent_id uuid`, `link_doctype text`, `link_id uuid`, `link_title text`, `idx`. Dedupe `(parent, link_doctype, link_id)`. Allowed `link_doctype` in scope: Customer, Supplier, Company, Sales Partner (P5), Lead/Prospect are out.
+`address_link` (Address `links`; Frappe `Dynamic Link`): `parent_id uuid`, `link_doctype text`, `link_id uuid`, `link_title text`, `idx`. Unique `(parent_id, link_doctype, link_id)`. Allowed `link_doctype`: Company now; Customer, Supplier (P2) and Sales Partner (P5) widen the check when their tables land; Lead/Prospect are out. **Deviation:** one link table per parent (`address_link`, `contact_link`) instead of a shared `dynamic_link`, because the doc engine maps a child doctype to one parent (`02-database-conventions.md`, Link integrity).
 
 - `on_update`: refreshes `customer.primary_address` display text for customers whose `customer_primary_address` is this row. `get_default_company_address(company, sort_key)` → company address for prints (`is_primary_address`) and `get_shipping_address(company)` (`is_shipping_address` + `is_your_company_address`) → `app.company_address(company_id, kind)`.
 - Address display: Frappe renders `Address Template` (Jinja, per country). Default template (`frappe/contacts/doctype/address_template/address_template.py`):
@@ -555,7 +555,8 @@ Frappe `Address` (extended by `erpnext/accounts/custom/address.py: ERPNextAddres
 
   **Deviation:** no `address_template` table; `src/lib/format/address.ts` implements the default and the 9 country variants from `erpnext/regional/address_template/templates/` (Bosnia and Herzegovina, Croatia, Denmark, Germany, Luxembourg, Sweden, Switzerland, Taiwan, United States) as code.
 - Permissions (Frappe JSON + `install.py: grant_address_read_to_accounts_manager`): Sales User, Purchase User, Maintenance User, Accounts User, Stock User rwcd; Accounts Manager read (export off); Sales/Purchase Manager rwcd. We seed those.
-- List: name, address_type, city, country, linked party.
+- List: name, address_type, city, country.
+- **Built** (0121, descriptor `address.ts`): `app.address_validate` (trims; `name` is write-once; `country` falls back to the organization's), `app.address_link_validate` (same-org target, `link_title`), deferred `app.address_refresh` (naming, `update_company_address` + `validate_reference`, `validate_preferred_address` per linked party), `app.dynamic_link_sync('Company')` on `companies` (renames refresh titles; deletes drop the links and clear `is_your_company_address` when no Company link is left), `app.company_address(company, 'primary'|'shipping')` and `app.party_addresses(doctype, id)` (+ `public.*` RPC wrappers, RLS applies), `src/lib/format/address.ts` `formatAddress()`. The form's Links grid uses `DynamicLink` cells that read `link_doctype` from the same row. `tax_category_id` waits for Tax Category (P2); the `customer.primary_address` refresh waits for Customer (P2). pgTAP `25_address`, e2e `address.spec.ts`.
 
 ### 2.20 Contact → `contact` + `contact_email` + `contact_phone` + `dynamic_link`
 
@@ -1016,7 +1017,8 @@ Decisions (2026-10-14):
 - [ ] Email Template: table, handlebars-subset renderer (`src/lib/email/render.ts`), app-level `Invitation` + `Send Document` templates, form "Email" action
 - [ ] Email Digest + Recipient: tables, `app.email_digest_payload()`, Edge Function `send-email-digest`, pg_cron daily job, "Send now" preview
 - [ ] Global Defaults + System Settings pages (**done in P0**, single-doctype forms); Settings pointer list in sidebar
-- [ ] Address + Contact + `contact_email` + `contact_phone` + `dynamic_link`: tables, naming, preferred/primary triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS
+- [x] Address + `address_link`: tables, naming, preferred/company-address triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS — `0121_setup_address.sql` (§2.19), descriptor `address.ts`
+- [ ] Contact + `contact_email` + `contact_phone` + `contact_link`: tables, naming, primary triggers, user match, `app.party_contacts()`
 - [x] Fiscal Year + Fiscal Year Company: tables, validations, `app.auto_create_fiscal_year()` pg_cron daily — `0114_accounts_fiscal_year.sql` (§2.23), descriptor `fiscal-year.ts`, field triggers
 - [ ] Terms and Conditions: table, validation, renderer
 - [ ] Home page: onboarding checklist (`onboarding_progress`), number-card + P&L chart placeholders wired to `app.home_number_cards()` / `app.report_profit_and_loss()` as modules land

@@ -511,6 +511,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Department", "setup/department", "P1"),
                     doctype("Designation", "setup/designation", "P1"),
                     doctype("Holiday List", "setup/holiday-list", "P1"),
+                    doctype("Address", "setup/address", "P1"),
                 ],
             },
             {
