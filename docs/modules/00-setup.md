@@ -300,6 +300,7 @@ ERPNext behaviour (`erpnext/setup/doctype/authorization_rule/authorization_rule.
 Naming: `HR-ARU-.#####` (ERPNext `autoname`); we keep the same series. Fields `to_emp`, `to_designation`, `master_name`, `customer_or_item` are dropped (Employee/expense-claim path). Enforcement `app.validate_approving_authority(doctype, company_id, grand_total, user)` replicates the user → role → global precedence and the company-specific-first lookup; message texts copied.
 
 - Permissions: System Manager rwcd. List: transaction, based_on, company, value, approving_role/user.
+- **Built (P1, `0125_setup_authorization_rule.sql`, descriptor `authorization-rule.ts`):** `public.authorization_rule` with composite FKs to `companies` and `roles` (deleted roles clear the field), `system_user` / `approving_user` → `auth.users` (deleted users clear the field; both must be members). `system_user` is a reserved word since Postgres 16, so DDL quotes it; the column keeps the ERPNext name. `app.authorization_rule_validate` issues the name from `HR-ARU-.#####` (write-once), runs `check_duplicate_entry` (null-safe on the applicable/approving fields, `duplicate:` names the existing rule) and `validate_rule` (`approver_required`, `approving_user_same`, `approving_role_same`, messages copied); cascaded FK updates skip validation. `app.validate_approving_authority(doctype, company_id, total, user)` (definer, not callable by API roles) ports `validate_approving_authority`: user rules if the user has any for the transaction, else rules for the user's roles, else global rules; per level the largest threshold ≤ total (company rules first, then company-less) selects the approvers of rules at that threshold or above the total; raises `not_authorized: Not authorized since Grand Total exceeds limits. Can be approved by <roles/emails joined with "or">`. Wired into submit in P5/P6. pgTAP `29_authorization_rule`, e2e `authorization-rule.spec.ts`.
 
 ### 2.11 Letter Head → `letter_head`
 
@@ -1030,7 +1031,7 @@ Decisions (2026-10-14):
 - [x] Roles: list/form (custom roles), Role Profile list/form — `0105_setup_roles.sql` (§2.7), descriptors `role.ts` / `role-profile.ts`, `MultiSelect` field type
 - [x] Role Permissions matrix page + Server Actions + "reset to defaults" — `0108_setup_role_permission_manager.sql` (§2.8, §8), per-doctype reset
 - [x] User Permissions: list/form, picker for Company/Warehouse/Cost Center — `0109_setup_user_permissions.sql` (§2.9), descriptor `user-permission.ts`, `DynamicLink` field type; Warehouse/Cost Center join the picker with their P2 tables
-- [ ] Authorization Rule: table, descriptor, list/form (enforcement `app.validate_approving_authority` wired in P5/P6 submit paths)
+- [x] Authorization Rule: table, descriptor, list/form, `app.validate_approving_authority` (0125; wired into the P5/P6 submit paths)
 - [x] Letter Head: table, storage upload, preview, default trigger
 - [x] Print Format registry table + `/print/[doctype]/[id]` route shell + generic record template; standard templates added per module
 - [x] Print Settings: table + SettingsPage

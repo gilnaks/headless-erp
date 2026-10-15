@@ -1,6 +1,7 @@
 import { fiscalYear } from "./accounts/fiscal-year";
 import type { Doctype } from "./define";
 import { address } from "./setup/address";
+import { authorizationRule } from "./setup/authorization-rule";
 import { branch } from "./setup/branch";
 import { company } from "./setup/company";
 import { contact } from "./setup/contact";
@@ -26,6 +27,7 @@ export const DOCTYPES: readonly Doctype[] = [
     role,
     roleProfile,
     userPermission,
+    authorizationRule,
     branch,
     designation,
     department,

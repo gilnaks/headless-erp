@@ -26,6 +26,18 @@ export type Database = {
         Args: { p_doctype: string; p_for?: string; p_org: string }
         Returns: string[]
       }
+      authorization_check_level: {
+        Args: {
+          p_company: string
+          p_doctype: string
+          p_level: number
+          p_org: string
+          p_roles: string[]
+          p_total: number
+          p_user: string
+        }
+        Returns: undefined
+      }
       auto_create_fiscal_year: { Args: never; Returns: number }
       can_write_file: { Args: { p_name: string }; Returns: boolean }
       coa_template_preview: {
@@ -223,6 +235,15 @@ export type Database = {
       tree_label: { Args: { p_id: string }; Returns: unknown }
       user_org_ids: { Args: never; Returns: string[] }
       user_roles: { Args: { p_org: string }; Returns: string[] }
+      validate_approving_authority: {
+        Args: {
+          p_company: string
+          p_doctype: string
+          p_total: number
+          p_user?: string
+        }
+        Returns: undefined
+      }
       validate_country_currency: {
         Args: { p_country: string; p_currency: string }
         Returns: undefined
@@ -372,6 +393,89 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "address"
             referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      authorization_rule: {
+        Row: {
+          approving_role: string | null
+          approving_user: string | null
+          based_on: string
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          system_role: string | null
+          system_user: string | null
+          transaction: string
+          updated_at: string
+          updated_by: string | null
+          value: number
+        }
+        Insert: {
+          approving_role?: string | null
+          approving_user?: string | null
+          based_on?: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          system_role?: string | null
+          system_user?: string | null
+          transaction: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Update: {
+          approving_role?: string | null
+          approving_user?: string | null
+          based_on?: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          system_role?: string | null
+          system_user?: string | null
+          transaction?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authorization_rule_org_id_approving_role_fkey"
+            columns: ["org_id", "approving_role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "authorization_rule_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "authorization_rule_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "authorization_rule_org_id_system_role_fkey"
+            columns: ["org_id", "system_role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
           },
         ]
       }
