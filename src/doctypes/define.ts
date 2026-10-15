@@ -10,6 +10,11 @@ export type CreateRpc = {
     [K in keyof PublicFunctions]: PublicFunctions[K]["Args"] extends { p: unknown } ? K : never;
 }[keyof PublicFunctions];
 
+/** Public RPCs shaped like `app.set_email_account_key(p_id uuid, p_secret text)`: store a Password field's value. */
+export type SecretRpc = {
+    [K in keyof PublicFunctions]: PublicFunctions[K]["Args"] extends { p_id: string; p_secret: string } ? K : never;
+}[keyof PublicFunctions];
+
 /** ERPNext fieldtypes implemented so far; add more when a doctype needs them (docs/architecture/05-ui-ux.md). */
 export type FieldType =
     | "Data"
@@ -26,6 +31,7 @@ export type FieldType =
     | "Percent"
     | "Color"
     | "AttachImage"
+    | "Password"
     | "Table";
 
 /**
@@ -61,6 +67,11 @@ export type FieldDef = {
     html?: boolean;
     /** AttachImage: folder below `<org_id>/` in the private `org-files` bucket (see `app.file_doctype`). */
     folder?: string;
+    /**
+     * Password: the column holds a reference to the secret (e.g. a Vault id), so the form never shows it and save_doc
+     * never writes it; a non-empty value is passed to this RPC after the document is saved.
+     */
+    secretRpc?: SecretRpc;
 };
 
 /** Live panels shown below a form (`src/components/erp/doc/form-preview.tsx`). */
@@ -88,12 +99,18 @@ export type TreeOptions = {
     disabledField?: string;
 };
 
-export type FormActionContext = { orgSlug: string };
+export type FormActionContext = {
+    orgSlug: string;
+    /** The saved document's id; null on a new document. */
+    id: string | null;
+    /** Shows a success message on the form. */
+    notify: (message: string) => void;
+};
 
 /**
  * A form button that edits the unsaved document (ERPNext whitelisted controller methods such as
- * `get_weekly_off_dates`). `run` returns the fields it changes; throw an `Error` to show its message. The server
- * still validates on save.
+ * `get_weekly_off_dates`) or acts on the saved one (e.g. "Send test email"). `run` returns the fields it changes;
+ * throw an `Error` to show its message. The server still validates on save.
  */
 export type FormAction = {
     id: string;

@@ -83,7 +83,8 @@ function InputField({ control, name, field, isDisabled, compact }: FieldRenderer
             {...labelProps(field, compact)}
             ref={f.ref}
             name={f.name}
-            type={field.type === "Date" ? "date" : "text"}
+            type={field.type === "Date" ? "date" : field.type === "Password" ? "password" : "text"}
+            autoComplete={field.type === "Password" ? "new-password" : undefined}
             inputMode={numeric}
             size="sm"
             value={typeof f.value === "string" ? f.value : ""}

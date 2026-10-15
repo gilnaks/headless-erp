@@ -61,6 +61,7 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${PUBLISHABLE_KEY:-$ANON_KEY}"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
             echo "APP_URL=http://localhost:3000"
+            echo "EMAIL_DRY_RUN=1"
           } >> "$GITHUB_ENV"
 
       - name: Generated types are up to date

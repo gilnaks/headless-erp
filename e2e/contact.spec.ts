@@ -47,6 +47,9 @@ test("a contact takes its email and phone from the primary rows and becomes the 
     await page.getByRole("button", { name: /^Save/ }).click();
     await expect(page.getByText("Not Saved")).toBeHidden();
     await page.reload();
-    await page.getByRole("tab", { name: "Buying and Selling" }).click();
-    await expect(page.getByRole("combobox", { name: label("Default Sales Contact") })).toHaveValue(contactName);
+    // The tab only switches once the form has hydrated.
+    await expect(async () => {
+        await page.getByRole("tab", { name: "Buying and Selling" }).click();
+        await expect(page.getByRole("combobox", { name: label("Default Sales Contact") })).toHaveValue(contactName, { timeout: 1_000 });
+    }).toPass();
 });

@@ -53,6 +53,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     const values = useWatch({ control: form.control });
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState(false);
+    const [notice, setNotice] = useState<string | null>(null);
     const [tab, setTab] = useState<Key>(d.tabs[0]?.label ?? "");
 
     // A server refresh after saving brings normalised values (e.g. upper-cased abbr); never clobber unsaved edits.
@@ -77,6 +78,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
     const onSubmit = form.handleSubmit(async (input) => {
         setError(null);
         setSaved(false);
+        setNotice(null);
         const result = await saveDoc({ orgSlug, doctype, id, values: input });
         if (!result.ok) {
             setError(result.error);
@@ -94,9 +96,10 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
         if (!action) return;
         setError(null);
         setSaved(false);
+        setNotice(null);
         setRunning(true);
         try {
-            const changes = await action.run(form.getValues(), { orgSlug });
+            const changes = await action.run(form.getValues(), { orgSlug, id, notify: setNotice });
             for (const [name, value] of Object.entries(changes)) form.setValue(name, value, { shouldDirty: true });
         } catch (e) {
             setError(e instanceof Error ? e.message : `${action.label} failed.`);
@@ -240,6 +243,7 @@ export function DocForm({ doctype, orgSlug, id, row, canSave, canDelete, referen
                 <div className="flex flex-col gap-3 pt-4">
                     {error && <FormAlert>{error}</FormAlert>}
                     {saved && !isDirty && <FormAlert tone="success">Saved.</FormAlert>}
+                    {notice && <FormAlert tone="success">{notice}</FormAlert>}
                     {!editable && <FormAlert tone="info">You can view this {d.doctype} but not change it.</FormAlert>}
                 </div>
 
