@@ -18,6 +18,7 @@ import { role } from "./setup/role";
 import { roleProfile } from "./setup/role-profile";
 import { systemSettings } from "./setup/system-settings";
 import { userPermission } from "./setup/user-permission";
+import { brand } from "./stock/brand";
 import { itemGroup } from "./stock/item-group";
 import { uom } from "./stock/uom";
 import { uomCategory } from "./stock/uom-category";
@@ -48,6 +49,7 @@ export const DOCTYPES: readonly Doctype[] = [
     uomCategory,
     uomConversionFactor,
     itemGroup,
+    brand,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {
