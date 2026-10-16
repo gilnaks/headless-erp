@@ -1,6 +1,7 @@
 import { fiscalYear } from "./accounts/fiscal-year";
 import type { Doctype } from "./define";
 import { customerGroup } from "./selling/customer-group";
+import { industryType } from "./selling/industry-type";
 import { salesPerson } from "./selling/sales-person";
 import { territory } from "./selling/territory";
 import { address } from "./setup/address";
@@ -56,6 +57,7 @@ export const DOCTYPES: readonly Doctype[] = [
     customerGroup,
     salesPerson,
     territory,
+    industryType,
 ];
 
 export function getDoctype(module: string, slug: string): Doctype | undefined {
