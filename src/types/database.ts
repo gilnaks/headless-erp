@@ -307,6 +307,8 @@ export type Database = {
       seed_supplier_groups: { Args: { p_org: string }; Returns: undefined }
       seed_territories: { Args: { p_org: string }; Returns: undefined }
       seed_uoms: { Args: { p_org: string }; Returns: undefined }
+      seed_warehouse_types: { Args: { p_org: string }; Returns: undefined }
+      seed_warehouses: { Args: { p_company: string }; Returns: undefined }
       set_default_accounts: { Args: { p_company: string }; Returns: undefined }
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
@@ -1232,6 +1234,13 @@ export type Database = {
             referencedColumns: ["org_id", "id"]
           },
           {
+            foreignKeyName: "companies_default_warehouse_fk"
+            columns: ["org_id", "default_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_depreciation_cost_center_fk"
             columns: ["org_id", "depreciation_cost_center_id"]
             isOneToOne: false
@@ -1243,6 +1252,20 @@ export type Database = {
             columns: ["org_id", "default_expense_account_id"]
             isOneToOne: false
             referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_fg_warehouse_fk"
+            columns: ["org_id", "default_fg_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_in_transit_warehouse_fk"
+            columns: ["org_id", "default_in_transit_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -1330,6 +1353,27 @@ export type Database = {
             referencedColumns: ["org_id", "id"]
           },
           {
+            foreignKeyName: "companies_sales_return_warehouse_fk"
+            columns: ["org_id", "default_warehouse_for_sales_return_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_sample_retention_warehouse_fk"
+            columns: ["org_id", "sample_retention_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_scrap_warehouse_fk"
+            columns: ["org_id", "default_scrap_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_srbnb_fk"
             columns: ["org_id", "stock_received_but_not_billed_id"]
             isOneToOne: false
@@ -1341,6 +1385,13 @@ export type Database = {
             columns: ["org_id", "stock_adjustment_account_id"]
             isOneToOne: false
             referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_wip_warehouse_fk"
+            columns: ["org_id", "default_wip_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -3940,6 +3991,161 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      warehouse: {
+        Row: {
+          account_id: string | null
+          address_line_1: string | null
+          address_line_2: string | null
+          city: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          email_id: string | null
+          id: string
+          is_group: boolean
+          is_rejected_warehouse: boolean
+          mobile_no: string | null
+          name: string
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          phone_no: string | null
+          pin: string | null
+          state: string | null
+          updated_at: string
+          updated_by: string | null
+          warehouse_name: string
+          warehouse_type_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
+          city?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          email_id?: string | null
+          id?: string
+          is_group?: boolean
+          is_rejected_warehouse?: boolean
+          mobile_no?: string | null
+          name: string
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          phone_no?: string | null
+          pin?: string | null
+          state?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          warehouse_name: string
+          warehouse_type_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          address_line_1?: string | null
+          address_line_2?: string | null
+          city?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          email_id?: string | null
+          id?: string
+          is_group?: boolean
+          is_rejected_warehouse?: boolean
+          mobile_no?: string | null
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          phone_no?: string | null
+          pin?: string | null
+          state?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          warehouse_name?: string
+          warehouse_type_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "warehouse_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "warehouse_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "warehouse_org_id_warehouse_type_id_fkey"
+            columns: ["org_id", "warehouse_type_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_type"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      warehouse_type: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_type_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
