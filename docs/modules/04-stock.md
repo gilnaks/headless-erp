@@ -129,8 +129,8 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 ### 2.4 Brand → `brand`
 
-- **Naming:** `field:brand`. **Perms:** Item Manager rwcd, Stock User r, Sales User r, Purchase User r, Accounts User r.
-- Fields: `brand` ✔ unique, `description`, `brand_defaults` (same company default columns as the item, used when the item default is empty).
+- **Naming:** `field:brand`. **Perms:** Item Manager rwcd; Stock User, Sales User, Purchase User and Accounts User read. System Manager also reads (the JSON omits that role and lists Website Manager select, which is not seeded).
+- Fields in this migration: `brand` ✔ unique, `description`. `brand_defaults` (the same company default columns as the item) waits for Item Default, once Account and Warehouse exist.
 
 ### 2.5 Warehouse → `warehouse`
 
@@ -388,7 +388,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 
 - [x] `uom`, `uom_category`, `uom_conversion_factor` + A19 — §2.3
 - [x] `item_group` + A5 — §2.1
-- [ ] `brand` — §2.4
+- [x] `brand` — §2.4
 - [ ] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
 - [ ] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
 - [ ] `price_list`, `item_price` + C1 — §2.6

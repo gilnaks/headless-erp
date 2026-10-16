@@ -562,6 +562,47 @@ export type Database = {
           },
         ]
       }
+      brand: {
+        Row: {
+          brand: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coa_template: {
         Row: {
           disabled: boolean
