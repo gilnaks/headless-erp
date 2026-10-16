@@ -122,9 +122,10 @@ Child of Customer and of Customer Group. One row per company on a parent ("Credi
 
 ### 2.4 Territory → `territory`
 
-- **Kind:** tree, org-level. **Naming:** `field:territory_name`. **Perms:** Sales Manager rwcd, Sales User r, Stock User r, Accounts User r.
-- Fields: `territory_name` ✔, `parent_id`, `is_group` default false, `territory_manager` → sales person, `path`.
-- **Seed (00-setup A7):** `All Territories` (group) → the company country (apostrophes removed), `Rest Of The World`.
+- **Kind:** tree, org-level. **Naming:** `field:territory_name`. **Perms:** Sales Manager rwcd; Sales User, Stock User, and Accounts User read. System Manager also reads (the JSON omits that role). Sales Manager holds the rwcd that the JSON gives Sales Master Manager, which is not seeded (§9).
+- **Migration:** `0205_selling_territory.sql`. Parent of a new non-root defaults to the root (`All Territories`).
+- Fields: `territory_name` ✔, `parent_id`, `is_group` default false, `territory_manager_id` → sales person, `path`.
+- **Seed (00-setup A7):** `All Territories` (group) → the organization country (apostrophes removed), `Rest Of The World`.
 - Target Detail rows and the territory target-variance reports are not built (§9).
 
 ### 2.5 Sales Person → `sales_person`
@@ -519,7 +520,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 ### P2 — masters
 
 - [x] `customer_group` tree + A8 seed — §2.3
-- [ ] `territory` tree + A7 seed — §2.4
+- [x] `territory` tree + A7 seed — §2.4
 - [x] `sales_person` tree + A10 seed — §2.5
 - [ ] `industry_type` — §2.7
 - [ ] `customer` + `customer_credit_limit` + `sales_team` + `party_account` rows — §2.1, §2.2, §2.6
