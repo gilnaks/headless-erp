@@ -673,7 +673,7 @@ Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language},
   - B1: a Fiscal Year from `fy_start_date` / `fy_end_date` (the end defaults to one year later; skipped without a start date, as in `install_company`).
   - B2: the company through `app.create_company`. The abbreviation defaults to the word initials (`app.company_abbr`), currency and country default to the organization's, `chart_of_accounts` defaults to `Standard`, `enable_perpetual_inventory = true` and `create_chart_of_accounts_based_on = 'Standard Template'`.
   - B8 (departments) and B11 (`org_currency`) run through the companies insert triggers.
-  - B3-B7, B9, B10 and B13 need the P2 account, cost center, warehouse, tax and mode-of-payment tables and are added by those migrations.
+  - B3, B4 and B9 run from the companies after-insert trigger in `0212_accounts_account.sql`. B5, B6, B7, B10 and B13 still need the cost center, warehouse, tax and mode-of-payment tables.
 - **Stage C:**
   - C3: `global_defaults` gets `default_company_id`, `default_currency` and `country`.
   - C5: one `app.create_invitation` per invite. After provisioning, the `provisionOrganization` Server Action emails each open invitation (§3.4). This is best effort: a failed send leaves the invitation open for Resend or Copy link on the Users page.
@@ -831,7 +831,7 @@ Template selection (`get_charts_for_country(country, with_standard)`): verified 
 - `app.coa_templates_for_country(country)` (RPC `public.coa_templates_for_country`): the country's charts by name, then Standard and Standard with Numbers; `is_default` marks the single country chart, else Standard.
 - `app.coa_template_preview(name)` (RPC `public.coa_template_preview`): `idx`, `account` (`"<number> - <name>"` when numbered), `parent_account`, `is_group` (`identify_is_group`), `root_type` (from the root), `account_type`, `account_number`, `depth`.
 - Company: `chart_of_accounts` has an FK to `coa_template` and `companies_validate_links` raises `coa_unknown: Could not find Chart Of Accounts Template: X`. The form's template Select uses the `ChartOfAccounts` source, narrowed to the company country plus the standard charts (`filterOptions`).
-- Accounts are not created from the templates yet (B3 waits for the P2 `account` table). pgTAP `20_coa_templates.test.sql`; converter tests `scripts/lib/coa.test.mjs`.
+- Accounts are created from the company insert trigger in `0212` (B3). pgTAP `20_coa_templates.test.sql`; converter tests `scripts/lib/coa.test.mjs`.
 
 ### 3.3 Company creation side-effects (second and later companies) → `app.create_company(jsonb)`
 
@@ -841,7 +841,7 @@ Same as Stage B (B2–B13) without the Fiscal Year (B1); `global_defaults.defaul
 - `app.create_company(p)` (`security invoker`, so RLS authorizes; public RPC `create_company`) inserts the company through `app.save_doc` and returns `{id, name}`.
 - The Company descriptor's `create: "create_company"` hook makes the Company form's "new" path call it (05-ui-ux).
 - Departments (B8) and the org currency (B11) come from the insert triggers. The default company is set only when the organization has none.
-- The P2 side effects (B3-B7, B9, B10, B13) and the parent-company chart copy are added to this function by the migrations that create their tables.
+- B3, B4, B9 and the parent-company chart copy run from the companies after-insert trigger in `0212`. B5, B6, B7, B10 and B13 are added by the migrations that create their tables.
 
 ### 3.4 Invite flow
 
