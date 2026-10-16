@@ -46,8 +46,7 @@ Module id `accounts`, label **Accounting** (main `src/config/navigation.ts`). Ro
 | Setup › Company | `setup/company` | (00-setup) | P1 | **exists** |
 | Setup › Fiscal Year | `accounts/fiscal-year` | (00-setup §2.23) | P1 | **exists** |
 | Setup › Chart of Cost Centers | `accounts/cost-center` | TreeView + DocForm | P2 | new |
-| Setup › Mode of Payment, Payment Terms Template, Currency Exchange | `accounts/<slug>` | doctypes | P2 | new |
-| *(not in nav)* Payment Term | `accounts/payment-term` | doctype (link target) | P2 | new |
+| Setup › Mode of Payment, Payment Term, Payment Terms Template, Currency Exchange | `accounts/<slug>` | doctypes | P2 | new |
 | Setup › Account Category | `accounts/account-category` | doctype | P2 | |
 | Setup › Financial Report Template | — | not built (§9) | — | deferred |
 | Setup › Accounts Settings | `accounts/settings` | single (DocForm) | P3 | new (row exists since A4) |
@@ -155,6 +154,7 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 - **Payment Terms Template** (naming `field:template_name`; perms System Manager / Accounts User / Accounts Manager rwcd, read for Purchase/Sales Manager/User, Manufacturing Manager): `template_name` ✔ unique, `allocate_payment_based_on_payment_terms` boolean default false, child `terms` ✔ (rows copy the term fields above + `payment_term_id`, `invoice_portion` ✔, `due_date_based_on` ✔, `credit_days` default 0, `credit_months` default 0).
 - Validations: "Combined invoice portion must equal 100%"; "Row {0}: Payment Term is mandatory" when `allocate_payment_based_on_payment_terms`; duplicate term rows rejected.
 - Links in: `customer.payment_terms_id`, `customer_group`, `supplier`, `supplier_group`, `companies.payment_terms_id` (FK added here), SO/PO/SI/PI `payment_terms_template_id`.
+- **Built (0221, 0222, 0223):** Payment Term and Payment Terms Template are organization masters. The name is the trimmed term or template name. A template save whose portions do not add to 100 raises `payment_terms_portion`. With allocate on, a row without a term raises `payment_term_required`. The same term twice raises `payment_term_duplicate`. System Manager, Accounts Manager, and Accounts User can create and delete both. Purchase, Sales, and Manufacturing managers can read a template. `companies.payment_terms_id` points at the template, and the company selling and buying terms point at Terms and Conditions. Deleting the target nulls that link and leaves `org_id` set. A term that a template row still uses cannot be deleted. Deleting the organization removes its templates first (`0223`), so those rows do not block the terms. Customer, supplier, and invoice links wait for those tables.
 
 ### 2.7 Payment Schedule → `payment_schedule` (child of SO, PO, SI, PI; Quotation/SQ in 02/03)
 
@@ -1108,7 +1108,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `account_category` (seeded from CoA template rows) — §2.2
 - [x] `cost_center` tree — §2.3
 - [x] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
-- [ ] `payment_term`, `payment_terms_template` + detail — §2.6
+- [x] `payment_term`, `payment_terms_template` + detail — §2.6
 - [ ] `payment_schedule` child table (shared by SO/PO/SI/PI) + `src/lib/calc/payment-schedule.ts` / `app.make_payment_schedule` — §2.7, §3.9
 - [ ] `currency_exchange` + `app.get_exchange_rate` — §2.8
 - [ ] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
