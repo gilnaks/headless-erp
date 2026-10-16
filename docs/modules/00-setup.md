@@ -668,12 +668,12 @@ Mirrors `setup_wizard.get_setup_stages()`: **Setting up the basics** (`install_f
 Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language}, company: {company_name, abbr, fy_start_date, fy_end_date, chart_of_accounts, domain}, invites: [{email, roles[], role_profile}] }`. The owner is the caller (`auth.uid()`); there is no `modules` key (the wizard's Modules step is dropped) and `bank_account` arrives with B13.
 
 **Built (0116, staged):** `app.provision_organization(p)` (`security definer`, one transaction; public RPC `provision_organization`) runs:
-- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, Print Settings (0119), the standard Print Formats (0120), the 31 designations, the `All Departments` root, and the `Transit` warehouse type (`0216_stock_warehouse_type.sql`). A1-A10, A16, A18 and A19 are done; A11-A15, A17 and A20-A22 wait for their tables.
+- **Stage A** through `app.create_organization` (validates the slug, inserts the organization including `language`, `app.sync_role_permissions`, owner membership). The organizations insert triggers seed System Settings, Global Defaults, Print Settings (0119), the standard Print Formats (0120), the 31 designations, the `All Departments` root, the `Transit` warehouse type (`0216_stock_warehouse_type.sql`), and the five modes of payment (`0218_accounts_mode_of_payment.sql`). A1-A11, A16, A18 and A19 are done; A12-A15, A17 and A20-A22 wait for their tables.
 - **Stage B:**
   - B1: a Fiscal Year from `fy_start_date` / `fy_end_date` (the end defaults to one year later; skipped without a start date, as in `install_company`).
   - B2: the company through `app.create_company`. The abbreviation defaults to the word initials (`app.company_abbr`), currency and country default to the organization's, `chart_of_accounts` defaults to `Standard`, `enable_perpetual_inventory = true` and `create_chart_of_accounts_based_on = 'Standard Template'`.
   - B8 (departments) and B11 (`org_currency`) run through the companies insert triggers.
-  - B3, B4 and B9 run from the companies after-insert trigger in `0212_accounts_account.sql`. B6 runs from the companies after-insert trigger in `0215_accounts_cost_center.sql`. B5 runs from the companies after-insert trigger in `0217_stock_warehouse.sql`. B7, B10 and B13 still need the tax and mode-of-payment tables.
+  - B3, B4 and B9 run from the companies after-insert trigger in `0212_accounts_account.sql`. B6 runs from the companies after-insert trigger in `0215_accounts_cost_center.sql`. B5 runs from the companies after-insert trigger in `0217_stock_warehouse.sql`. B10 runs from the companies after-insert trigger in `0218_accounts_mode_of_payment.sql`. B7 and B13 still need the tax tables and the optional wizard bank account.
 - **Stage C:**
   - C3: `global_defaults` gets `default_company_id`, `default_currency` and `country`.
   - C5: one `app.create_invitation` per invite. After provisioning, the `provisionOrganization` Server Action emails each open invitation (§3.4). This is best effort: a failed send leaves the invitation open for Resend or Copy link on the Users page.
@@ -841,7 +841,7 @@ Same as Stage B (B2–B13) without the Fiscal Year (B1); `global_defaults.defaul
 - `app.create_company(p)` (`security invoker`, so RLS authorizes; public RPC `create_company`) inserts the company through `app.save_doc` and returns `{id, name}`.
 - The Company descriptor's `create: "create_company"` hook makes the Company form's "new" path call it (05-ui-ux).
 - Departments (B8) and the org currency (B11) come from the insert triggers. The default company is set only when the organization has none.
-- B3, B4, B9 and the parent-company chart copy run from the companies after-insert trigger in `0212`. B6 runs from the companies after-insert trigger in `0215`. B5 runs from the companies after-insert trigger in `0217`. B7, B10 and B13 are added by the migrations that create their tables.
+- B3, B4, B9 and the parent-company chart copy run from the companies after-insert trigger in `0212`. B6 runs from the companies after-insert trigger in `0215`. B5 runs from the companies after-insert trigger in `0217`. B10 runs from the companies after-insert trigger in `0218`. B7 and B13 are added by the migrations that create their tables.
 
 ### 3.4 Invite flow
 

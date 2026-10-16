@@ -297,6 +297,7 @@ export type Database = {
       seed_departments: { Args: { p_company: string }; Returns: undefined }
       seed_designations: { Args: { p_org: string }; Returns: undefined }
       seed_item_groups: { Args: { p_org: string }; Returns: undefined }
+      seed_modes_of_payment: { Args: { p_org: string }; Returns: undefined }
       seed_onboarding: { Args: { p_org: string }; Returns: undefined }
       seed_print_formats: {
         Args: { p_doctype?: string; p_org: string }
@@ -312,6 +313,10 @@ export type Database = {
       set_default_accounts: { Args: { p_company: string }; Returns: undefined }
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
+        Returns: undefined
+      }
+      set_mode_of_payment_account: {
+        Args: { p_company: string }
         Returns: undefined
       }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
@@ -2718,6 +2723,102 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      mode_of_payment: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          mode_of_payment: string
+          name: string
+          org_id: string
+          type: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          mode_of_payment: string
+          name: string
+          org_id: string
+          type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          mode_of_payment?: string
+          name?: string
+          org_id?: string
+          type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mode_of_payment_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mode_of_payment_account: {
+        Row: {
+          company_id: string
+          default_account_id: string | null
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          company_id: string
+          default_account_id?: string | null
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          company_id?: string
+          default_account_id?: string | null
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mode_of_payment_account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "mode_of_payment_account_org_id_default_account_id_fkey"
+            columns: ["org_id", "default_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "mode_of_payment_account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "mode_of_payment"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

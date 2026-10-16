@@ -2,6 +2,7 @@ import { account } from "./accounts/account";
 import { accountCategory } from "./accounts/account-category";
 import { costCenter } from "./accounts/cost-center";
 import { fiscalYear } from "./accounts/fiscal-year";
+import { modeOfPayment } from "./accounts/mode-of-payment";
 import { supplierGroup } from "./buying/supplier-group";
 import type { Doctype } from "./define";
 import { customerGroup } from "./selling/customer-group";
@@ -53,6 +54,7 @@ export const DOCTYPES: readonly Doctype[] = [
     accountCategory,
     account,
     costCenter,
+    modeOfPayment,
     letterHead,
     printSettings,
     printFormat,
