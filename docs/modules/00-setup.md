@@ -653,7 +653,8 @@ Scheduled job `app.auto_create_fiscal_year()` (daily; ERPNext `daily_maintenance
 | buying | boolean | | **true** | |
 | copy_attachments_to_transaction | boolean | | false | kept, no-op until attachments land |
 
-- Validation: at least one of `selling`/`buying` unless `disabled` (ERPNext also reads a non-existent `hr` flag; dropped). `get_terms_and_conditions(template, doc)` renders Jinja → ours: same handlebars subset as Email Template (**Deviation**). Link fields `tc_name` on QTN/SO/DN/SI/SQ/PO/PR/PI pick templates filtered by `selling`/`buying`; `Company.default_selling_terms/default_buying_terms` pre-fill.
+- **Migration:** `0208_setup_terms_and_conditions.sql`.
+- Validation: at least one of `selling`/`buying` unless `disabled` (ERPNext also reads a non-existent `hr` flag; dropped). `get_terms_and_conditions(template, doc)` renders Jinja → ours: same handlebars subset as Email Template (**Deviation**). Link fields `tc_name` on QTN/SO/DN/SI/SQ/PO/PR/PI pick templates filtered by `selling`/`buying`. `companies.default_selling_terms_id` and `default_buying_terms_id` already exist as plain uuid columns; their foreign keys land with Payment Terms.
 - Permissions (JSON): System Manager, Accounts Manager, Sales Master Manager rwcd; Sales User, Purchase User, Stock User, Accounts User read. We seed System Manager + Accounts Manager + Sales Manager + Purchase Manager rwcd, the four users read.
 
 ---
@@ -1048,7 +1049,7 @@ Decisions (2026-10-14):
 - [x] Address + `address_link`: tables, naming, preferred/company-address triggers, `app.party_addresses()`, `app.company_address()`, `formatAddress()` TS — `0121_setup_address.sql` (§2.19), descriptor `address.ts`
 - [x] Contact + `contact_email` + `contact_phone` + `contact_link`: tables, naming, primary triggers, user match, `app.party_contacts()` — `0122_setup_contact.sql` (§2.20), descriptor `contact.ts`, Company `default_sales_contact_id` FK
 - [x] Fiscal Year + Fiscal Year Company: tables, validations, `app.auto_create_fiscal_year()` pg_cron daily — `0114_accounts_fiscal_year.sql` (§2.23), descriptor `fiscal-year.ts`, field triggers
-- [ ] **(moved to P2 Masters, as listed in PLAN §7)** Terms and Conditions: table, validation, renderer (will reuse `src/lib/email/render.ts`)
+- [x] **(moved to P2 Masters, as listed in PLAN §7)** Terms and Conditions: table, validation, renderer (will reuse `src/lib/email/render.ts`)
 - [x] Home page: onboarding checklist (`onboarding_progress`), number-card + P&L chart placeholders — `0126_setup_onboarding_progress.sql` (§7); the cards are wired to `app.home_number_cards()` / `app.report_profit_and_loss()` as P3–P6 land
 - [x] `doctype_meta` rows + `role_permissions` upserts for every table above; `supabase gen types`; descriptors in `src/doctypes/setup/*.ts` — enforced by `00_rls_coverage` (every tenant table is registered or explicitly exempt, every registered table exists, every tenant doctype grants System Manager read) and `src/doctypes/registry.test.ts` (every descriptor and child table matches a `doctype_meta` insert in the migrations)
 - [x] RLS pgTAP for every Setup table (cross-org isolation, owner cannot be demoted) — each doctype's test file covers isolation and role limits; `00_rls_coverage` asserts forced RLS, a policy on every table and that tenant policies filter on `org_id` (child tables on their parent); the owner rules are in `01_rls_tenancy` and `11_users`
