@@ -203,6 +203,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Payment Term", "accounts/payment-term", "P2"),
                     doctype("Payment Terms Template", "accounts/payment-terms-template", "P2"),
                     doctype("Currency Exchange", "accounts/currency-exchange", "P2"),
+                    doctype("Party Type", "accounts/party-type", "P2"),
                     doctype("Account Category", "accounts/account-category", "P2"),
                     doctype("Settings", "accounts/settings", "P3", "Accounts Settings"),
                 ],
@@ -521,6 +522,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Address", "setup/address", "P1"),
                     doctype("Contact", "setup/contact", "P1"),
                     doctype("Terms and Conditions", "setup/terms-and-conditions", "P2"),
+                    doctype("Print Heading", "setup/print-heading", "P2"),
                 ],
             },
             {

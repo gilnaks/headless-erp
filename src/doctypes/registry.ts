@@ -4,6 +4,7 @@ import { costCenter } from "./accounts/cost-center";
 import { currencyExchange } from "./accounts/currency-exchange";
 import { fiscalYear } from "./accounts/fiscal-year";
 import { modeOfPayment } from "./accounts/mode-of-payment";
+import { partyType } from "./accounts/party-type";
 import { paymentTerm } from "./accounts/payment-term";
 import { paymentTermsTemplate } from "./accounts/payment-terms-template";
 import { supplierGroup } from "./buying/supplier-group";
@@ -25,6 +26,7 @@ import { globalDefaults } from "./setup/global-defaults";
 import { holidayList } from "./setup/holiday-list";
 import { letterHead } from "./setup/letter-head";
 import { printFormat } from "./setup/print-format";
+import { printHeading } from "./setup/print-heading";
 import { printSettings } from "./setup/print-settings";
 import { role } from "./setup/role";
 import { roleProfile } from "./setup/role-profile";
@@ -61,12 +63,14 @@ export const DOCTYPES: readonly Doctype[] = [
     paymentTerm,
     paymentTermsTemplate,
     currencyExchange,
+    partyType,
     letterHead,
     printSettings,
     printFormat,
     address,
     contact,
     termsAndConditions,
+    printHeading,
     emailAccount,
     emailTemplate,
     uom,

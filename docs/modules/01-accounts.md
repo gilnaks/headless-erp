@@ -960,6 +960,8 @@ The Company-level accounting fields that v16 moved off Accounts Settings (`accou
 
 Provisioning steps this module implements (defined in 00-setup §3.1, values not repeated): **B3** account tree from the `0115` CoA template, **B4** receivable/payable defaults, **B6** cost center tree, **B7** country tax templates (`country_wise_tax.json`), **B9** company default accounts, **B10** `Cash` mode-of-payment account, **B13** optional wizard bank account. They are added to `app.provision_organization` / `app.create_company` by the P2 migrations that create `account`, `cost_center`, the tax templates and `mode_of_payment` (B5 warehouses belong to 04-stock). Fixtures **A11** (`mode_of_payment` rows), **A13** (`party_type`) and **A15** (`print_heading` Credit Note / Debit Note) are seeded by the same migrations.
 
+**Built (0225):** A13 and A15 are seeded by `organizations_seed_party_and_print` in `0225_setup_party_type_print_heading.sql`. See 00-setup.
+
 ---
 
 ## 7. Reports & dashboard
@@ -1116,7 +1118,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [ ] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
 - [ ] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12
 - [ ] `tax_category`, `tax_rule` + `app.get_tax_template` ranking — §2.13–2.14
-- [ ] `party_type` (A13) and `print_heading` (A15) fixtures
+- [x] `party_type` (A13) and `print_heading` (A15) fixtures — `0225_setup_party_type_print_heading.sql`
 - [ ] Provisioning: B3 account tree, B4 receivable/payable, B6 cost center tree, B7 country tax templates, B9 default accounts, B13 bank account → `app.provision_organization` / `app.create_company`; `validate_default_accounts`, `validate_advance_account_currency` on Company
 - [ ] `src/lib/calc/taxes-and-totals.ts` + `app.calc_taxes_and_totals` with shared JSON fixtures (Vitest ⇄ pgTAP parity) — §3.11
 - [ ] TreeView descriptors for Chart of Accounts / Chart of Cost Centers; DocForm descriptors for all P2 masters — §8
