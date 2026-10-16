@@ -353,6 +353,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Unit of Measure (UOM)", "stock/uom", "P2", "UOM"),
                     doctype("UOM Category", "stock/uom-category", "P2"),
                     doctype("UOM Conversion Factor", "stock/uom-conversion-factor", "P2"),
+                    doctype("Warehouse Type", "stock/warehouse-type", "P2"),
                     doctype("Stock Entry Type", "stock/stock-entry-type", "P2"),
                     doctype("Settings", "stock/settings", "P4", "Stock Settings"),
                 ],

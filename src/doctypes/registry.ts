@@ -33,6 +33,8 @@ import { stockEntryType } from "./stock/stock-entry-type";
 import { uom } from "./stock/uom";
 import { uomCategory } from "./stock/uom-category";
 import { uomConversionFactor } from "./stock/uom-conversion-factor";
+import { warehouse } from "./stock/warehouse";
+import { warehouseType } from "./stock/warehouse-type";
 
 /** Every doctype with a working list/form. Keep `doctype_meta` (migrations) in sync. */
 export const DOCTYPES: readonly Doctype[] = [
@@ -63,6 +65,8 @@ export const DOCTYPES: readonly Doctype[] = [
     uomCategory,
     uomConversionFactor,
     stockEntryType,
+    warehouseType,
+    warehouse,
     itemGroup,
     brand,
     customerGroup,

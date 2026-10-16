@@ -134,12 +134,12 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 ### 2.5 Warehouse → `warehouse`
 
-- **Kind:** tree, company-scoped. **Naming:** `"<warehouse_name> - <ABBR>"` (`warehouse.py`). **Perms:** Item Manager rwcd. Stock User, Stock Manager, Sales User, Purchase User, Accounts User and Manufacturing User have read. Delivery roles are not seeded; Stock User already has read.
-- **Migration:** `02nn_stock_warehouse.sql`.
+- **Kind:** tree, company-scoped. **Naming:** `"<warehouse_name> - <ABBR>"` (`warehouse.py`). **Perms:** Item Manager rwcd. Stock User, Stock Manager, Sales User, Purchase User, Accounts User and Manufacturing User have read. System Manager read (the coverage default; the JSON does not grant System Manager). Delivery roles are not seeded; Stock User already has read.
+- **Migration:** `0216_stock_warehouse_type.sql`, `0217_stock_warehouse.sql`.
 - Fields: `warehouse_name` ✔, `is_group` default false, `company_id` ✔, `parent_id`, `account_id` (stock ledger account; empty uses `companies.default_inventory_account_id`), `warehouse_type_id`, `is_rejected_warehouse` default false, `disabled` default false, address lines, `path`.
 - A group with children or with SLE rows cannot become a leaf. A warehouse with SLE cannot be deleted or moved to another company. The account, when set, must be a Stock-type ledger of the same company.
-- **Warehouse Type:** `warehouse_type` master, seeded with `Transit` (00-setup A16).
-- **Seed (00-setup B5):** `All Warehouses` (group) → `Stores`, `Work In Progress`, `Finished Goods`, `Goods In Transit` (`warehouse_type = Transit`). `companies.default_warehouse_id = Stores`. Goods In Transit is not the company's `default_in_transit_warehouse` (ERPNext leaves that null).
+- **Warehouse Type:** `warehouse_type` master. Perms: Item Manager rwcd, Stock User and Stock Manager read, System Manager read. Seeded with `Transit` (00-setup A16).
+- **Built (0216, 0217):** `app.seed_warehouse_types` runs from `organizations_seed_warehouse_types`, an after-insert trigger on `organizations` (A16), and once for organizations that already exist. It inserts `Transit`. `app.seed_warehouses` runs from `companies_seed_warehouses`, an after-insert trigger on `companies` (B5), and once for companies that already exist. A company that already has warehouses is left alone. The root is the group `All Warehouses`; `Stores`, `Work In Progress`, `Finished Goods`, and `Goods In Transit` (type Transit) are ledgers under it. `default_warehouse_id` points at Stores. `default_in_transit_warehouse_id` stays null. `default_warehouse_for_sales_return_id`, `default_warehouse_id`, `default_in_transit_warehouse_id`, `default_wip_warehouse_id`, `default_fg_warehouse_id`, `default_scrap_warehouse_id`, and `sample_retention_warehouse_id` reference `warehouse`, each with an index on `(org_id, column)`. Company change and group/ledger conversion wait until the stock ledger exists.
 
 ### 2.6 Price List and Item Price
 
@@ -391,7 +391,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `uom`, `uom_category`, `uom_conversion_factor` + A19 — §2.3
 - [x] `item_group` + A5 — §2.1
 - [x] `brand` — §2.4
-- [ ] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
+- [x] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
 - [ ] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
 - [ ] `price_list`, `item_price` + C1 — §2.6
 - [x] `stock_entry_type` + A6 — §2.7
