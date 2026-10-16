@@ -353,7 +353,7 @@ export function DocForm({
                                     ))}
                                 </Tabs.List>
                                 {tabs.map((t) => (
-                                    <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="[&[inert]]:hidden">
+                                    <Tabs.Panel key={t.label} id={t.label} shouldForceMount className="data-inert:hidden">
                                         {renderTab(t)}
                                     </Tabs.Panel>
                                 ))}
