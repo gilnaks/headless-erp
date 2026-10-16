@@ -33,6 +33,7 @@ const USERS = [
     { env: "E2E_UOM", local: "uom", first_name: "Uom", last_name: "Admin" },
     { env: "E2E_ITEM_GROUP", local: "item-group", first_name: "Item Group", last_name: "Admin" },
     { env: "E2E_BRAND", local: "brand", first_name: "Brand", last_name: "Admin" },
+    { env: "E2E_CUSTOMER_GROUP", local: "customer-group", first_name: "Customer Group", last_name: "Admin" },
     { env: "E2E_P2", local: "p2", first_name: "Masters", last_name: "Admin" },
     { env: "E2E_JE", local: "journal", first_name: "Journal", last_name: "Admin" },
     { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },

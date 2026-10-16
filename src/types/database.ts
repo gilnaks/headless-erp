@@ -261,6 +261,7 @@ export type Database = {
           label: string
         }[]
       }
+      seed_customer_groups: { Args: { p_org: string }; Returns: undefined }
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
       seed_designations: { Args: { p_org: string }; Returns: undefined }
@@ -1342,6 +1343,60 @@ export type Database = {
           symbol_on_right?: boolean
         }
         Relationships: []
+      }
+      customer_group: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_group_name: string
+          id: string
+          is_group: boolean
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_group_name: string
+          id?: string
+          is_group?: boolean
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_group_name?: string
+          id?: string
+          is_group?: boolean
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_group_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_group_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
       }
       department: {
         Row: {
