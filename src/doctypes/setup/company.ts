@@ -63,7 +63,10 @@ export const company = defineDoctype({
         email: { type: "Data", label: "Email" },
         website: { type: "Data", label: "Website" },
         default_sales_contact_id: { type: "Link", label: "Default Sales Contact", target: "Contact" },
+        default_selling_terms_id: { type: "Link", label: "Default Selling Terms", target: "Terms and Conditions" },
+        default_buying_terms_id: { type: "Link", label: "Default Buying Terms", target: "Terms and Conditions" },
         credit_limit: { type: "Currency", label: "Credit Limit", default: 0 },
+        payment_terms_id: { type: "Link", label: "Default Payment Terms Template", target: "Payment Terms Template" },
         reconciliation_takes_effect_on: {
             type: "Select",
             label: "Reconciliation Takes Effect On",
@@ -130,7 +133,7 @@ export const company = defineDoctype({
         {
             label: "Accounts",
             sections: [
-                { label: "Credit Limit", columns: [["credit_limit"], ["reconciliation_takes_effect_on"]] },
+                { label: "Credit Limit", columns: [["credit_limit", "payment_terms_id"], ["reconciliation_takes_effect_on"]] },
                 {
                     label: "Exchange Rate Revaluation Settings",
                     columns: [["auto_exchange_rate_revaluation", "auto_err_frequency", "submit_err_jv"]],
@@ -139,7 +142,7 @@ export const company = defineDoctype({
         },
         {
             label: "Buying and Selling",
-            sections: [{ columns: [["default_sales_contact_id"]] }],
+            sections: [{ columns: [["default_sales_contact_id", "default_selling_terms_id", "default_buying_terms_id"]] }],
         },
         {
             label: "Stock",

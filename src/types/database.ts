@@ -243,6 +243,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      payment_terms_template_refresh: {
+        Args: { p_template: string }
+        Returns: undefined
+      }
       print_format_clear_default: {
         Args: { p_doc_type: string; p_keep: string; p_org: string }
         Returns: undefined
@@ -1211,6 +1215,13 @@ export type Database = {
             referencedColumns: ["country_name"]
           },
           {
+            foreignKeyName: "companies_default_buying_terms_fk"
+            columns: ["org_id", "default_buying_terms_id"]
+            isOneToOne: false
+            referencedRelation: "terms_and_conditions"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_default_currency_fkey"
             columns: ["default_currency"]
             isOneToOne: false
@@ -1236,6 +1247,13 @@ export type Database = {
             columns: ["org_id", "default_sales_contact_id"]
             isOneToOne: false
             referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_default_selling_terms_fk"
+            columns: ["org_id", "default_selling_terms_id"]
+            isOneToOne: false
+            referencedRelation: "terms_and_conditions"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -1327,6 +1345,13 @@ export type Database = {
             columns: ["org_id", "default_payable_account_id"]
             isOneToOne: false
             referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_payment_terms_fk"
+            columns: ["org_id", "payment_terms_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms_template"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -3076,6 +3101,204 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currency"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      payment_term: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credit_days: number
+          credit_months: number
+          description: string | null
+          discount: number | null
+          discount_type: string
+          discount_validity: number | null
+          discount_validity_based_on: string
+          due_date_based_on: string | null
+          id: string
+          invoice_portion: number | null
+          mode_of_payment_id: string | null
+          name: string
+          org_id: string
+          payment_term_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credit_days?: number
+          credit_months?: number
+          description?: string | null
+          discount?: number | null
+          discount_type?: string
+          discount_validity?: number | null
+          discount_validity_based_on?: string
+          due_date_based_on?: string | null
+          id?: string
+          invoice_portion?: number | null
+          mode_of_payment_id?: string | null
+          name: string
+          org_id: string
+          payment_term_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credit_days?: number
+          credit_months?: number
+          description?: string | null
+          discount?: number | null
+          discount_type?: string
+          discount_validity?: number | null
+          discount_validity_based_on?: string
+          due_date_based_on?: string | null
+          id?: string
+          invoice_portion?: number | null
+          mode_of_payment_id?: string | null
+          name?: string
+          org_id?: string
+          payment_term_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_term_mode_fk"
+            columns: ["org_id", "mode_of_payment_id"]
+            isOneToOne: false
+            referencedRelation: "mode_of_payment"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_term_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_terms_template: {
+        Row: {
+          allocate_payment_based_on_payment_terms: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          template_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allocate_payment_based_on_payment_terms?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          template_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allocate_payment_based_on_payment_terms?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          template_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_terms_template_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_terms_template_detail: {
+        Row: {
+          credit_days: number
+          credit_months: number
+          description: string | null
+          discount: number | null
+          discount_type: string
+          discount_validity: number | null
+          discount_validity_based_on: string | null
+          due_date_based_on: string
+          id: string
+          idx: number
+          invoice_portion: number
+          mode_of_payment_id: string | null
+          org_id: string
+          parent_id: string
+          payment_term_id: string | null
+        }
+        Insert: {
+          credit_days?: number
+          credit_months?: number
+          description?: string | null
+          discount?: number | null
+          discount_type?: string
+          discount_validity?: number | null
+          discount_validity_based_on?: string | null
+          due_date_based_on?: string
+          id?: string
+          idx: number
+          invoice_portion: number
+          mode_of_payment_id?: string | null
+          org_id: string
+          parent_id: string
+          payment_term_id?: string | null
+        }
+        Update: {
+          credit_days?: number
+          credit_months?: number
+          description?: string | null
+          discount?: number | null
+          discount_type?: string
+          discount_validity?: number | null
+          discount_validity_based_on?: string | null
+          due_date_based_on?: string
+          id?: string
+          idx?: number
+          invoice_portion?: number
+          mode_of_payment_id?: string | null
+          org_id?: string
+          parent_id?: string
+          payment_term_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_terms_template_detail_mode_fk"
+            columns: ["org_id", "mode_of_payment_id"]
+            isOneToOne: false
+            referencedRelation: "mode_of_payment"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_terms_template_detail_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_terms_template_detail_term_fk"
+            columns: ["org_id", "payment_term_id"]
+            isOneToOne: false
+            referencedRelation: "payment_term"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

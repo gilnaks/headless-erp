@@ -3,6 +3,8 @@ import { accountCategory } from "./accounts/account-category";
 import { costCenter } from "./accounts/cost-center";
 import { fiscalYear } from "./accounts/fiscal-year";
 import { modeOfPayment } from "./accounts/mode-of-payment";
+import { paymentTerm } from "./accounts/payment-term";
+import { paymentTermsTemplate } from "./accounts/payment-terms-template";
 import { supplierGroup } from "./buying/supplier-group";
 import type { Doctype } from "./define";
 import { customerGroup } from "./selling/customer-group";
@@ -55,6 +57,8 @@ export const DOCTYPES: readonly Doctype[] = [
     account,
     costCenter,
     modeOfPayment,
+    paymentTerm,
+    paymentTermsTemplate,
     letterHead,
     printSettings,
     printFormat,

@@ -200,6 +200,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Fiscal Year", "accounts/fiscal-year", "P1"),
                     doctype("Chart of Cost Centers", "accounts/cost-center", "P2", "Cost Center"),
                     doctype("Mode of Payment", "accounts/mode-of-payment", "P2"),
+                    doctype("Payment Term", "accounts/payment-term", "P2"),
                     doctype("Payment Terms Template", "accounts/payment-terms-template", "P2"),
                     doctype("Currency Exchange", "accounts/currency-exchange", "P2"),
                     doctype("Account Category", "accounts/account-category", "P2"),
