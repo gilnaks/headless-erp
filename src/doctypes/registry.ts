@@ -22,6 +22,7 @@ import { printSettings } from "./setup/print-settings";
 import { role } from "./setup/role";
 import { roleProfile } from "./setup/role-profile";
 import { systemSettings } from "./setup/system-settings";
+import { termsAndConditions } from "./setup/terms-and-conditions";
 import { userPermission } from "./setup/user-permission";
 import { brand } from "./stock/brand";
 import { itemGroup } from "./stock/item-group";
@@ -48,6 +49,7 @@ export const DOCTYPES: readonly Doctype[] = [
     printFormat,
     address,
     contact,
+    termsAndConditions,
     emailAccount,
     emailTemplate,
     uom,

@@ -3143,6 +3143,59 @@ export type Database = {
           },
         ]
       }
+      terms_and_conditions: {
+        Row: {
+          buying: boolean
+          copy_attachments_to_transaction: boolean
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          org_id: string
+          selling: boolean
+          terms: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          buying?: boolean
+          copy_attachments_to_transaction?: boolean
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          org_id: string
+          selling?: boolean
+          terms?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          buying?: boolean
+          copy_attachments_to_transaction?: boolean
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          org_id?: string
+          selling?: boolean
+          terms?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terms_and_conditions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       territory: {
         Row: {
           created_at: string
