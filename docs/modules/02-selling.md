@@ -153,7 +153,8 @@ Child of Customer, Sales Order and Delivery Note.
 
 ### 2.7 Industry Type → `industry_type`
 
-- **Naming:** `field:industry`. **Perms:** Sales Manager rwc, Sales User r. Field: `industry` text ✔ unique.
+- **Naming:** `field:industry`. **Perms:** Sales Manager rwc (no delete, matching the JSON); Sales User read. System Manager also reads (the JSON omits that role).
+- **Migration:** `0206_selling_industry_type.sql`. Field: `industry` text ✔ unique per organization, ignoring case.
 - Not seeded (00-setup skipped fixtures). Users add rows from the Customer form.
 
 ### 2.8 Quotation Lost Reason → `quotation_lost_reason`
@@ -522,7 +523,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 - [x] `customer_group` tree + A8 seed — §2.3
 - [x] `territory` tree + A7 seed — §2.4
 - [x] `sales_person` tree + A10 seed — §2.5
-- [ ] `industry_type` — §2.7
+- [x] `industry_type` — §2.7
 - [ ] `customer` + `customer_credit_limit` + `sales_team` + `party_account` rows — §2.1, §2.2, §2.6
 - [ ] `product_bundle` + `product_bundle_item` — §2.9
 
