@@ -166,6 +166,7 @@ One shared child doctype, one table per parent per 02-db conventions (`sales_inv
 - Fields: `date` ✔ (default Today), `from_currency` ✔, `to_currency` ✔, `exchange_rate` numeric ✔, `for_buying` boolean default true, `for_selling` boolean default true.
 - Validations: "From Currency and To Currency cannot be same", exchange rate > 0, "Currency Exchange must be applicable for Buying or for Selling."
 - `app.get_exchange_rate(from, to, date, args)` (port of `erpnext.setup.utils.get_exchange_rate`, default path): same currency → 1; latest `currency_exchange` row with `date <= transaction_date` filtered by `for_selling`/`for_buying` per caller; if `accounts_settings.allow_stale = false`, only rows within `stale_days`; else **no network fallback** (ERPNext calls `frankfurter.dev`; we return 0 and the form asks for a rate, §9).
+- **Built (0224):** `app.currency_exchange_validate` names the row `<yyyy-MM-dd>-<FROM>-<TO>-Selling-Buying` (or `Selling`, or `Buying`). The same currency raises `currency_exchange_same`. A rate of 0 or less raises `currency_exchange_rate`. Neither side raises `currency_exchange_side`. `public.get_exchange_rate` returns 1 for the same currency, the latest stored row on or before the date, or 0. There is no network lookup. `allow_stale` and `stale_days` wait for Accounts Settings, so every stored row on or before the date is eligible. System Manager can read. Accounts Manager can create and delete. Accounts User, Sales User, and Purchase User can read.
 
 ### 2.9 Party Account (child of Customer, Customer Group, Supplier, Supplier Group) → `party_account`
 
@@ -1110,7 +1111,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
 - [x] `payment_term`, `payment_terms_template` + detail — §2.6
 - [ ] `payment_schedule` child table (shared by SO/PO/SI/PI) + `src/lib/calc/payment-schedule.ts` / `app.make_payment_schedule` — §2.7, §3.9
-- [ ] `currency_exchange` + `app.get_exchange_rate` — §2.8
+- [x] `currency_exchange` + `app.get_exchange_rate` — §2.8
 - [ ] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
 - [ ] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
 - [ ] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12

@@ -152,6 +152,16 @@ export type Database = {
         Args: { p_end: string; p_start: string }
         Returns: string
       }
+      get_exchange_rate: {
+        Args: {
+          p_date: string
+          p_from: string
+          p_org: string
+          p_side?: string
+          p_to: string
+        }
+        Returns: number
+      }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
         Returns: boolean
@@ -1782,6 +1792,76 @@ export type Database = {
           symbol_on_right?: boolean
         }
         Relationships: []
+      }
+      currency_exchange: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          exchange_rate: number
+          for_buying: boolean
+          for_selling: boolean
+          from_currency: string
+          id: string
+          name: string
+          org_id: string
+          to_currency: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          exchange_rate: number
+          for_buying?: boolean
+          for_selling?: boolean
+          from_currency: string
+          id?: string
+          name: string
+          org_id: string
+          to_currency: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          exchange_rate?: number
+          for_buying?: boolean
+          for_selling?: boolean
+          from_currency?: string
+          id?: string
+          name?: string
+          org_id?: string
+          to_currency?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "currency_exchange_from_currency_fkey"
+            columns: ["from_currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "currency_exchange_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "currency_exchange_to_currency_fkey"
+            columns: ["to_currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       customer_group: {
         Row: {
@@ -4572,6 +4652,16 @@ export type Database = {
           footer: string
           signature: string
         }[]
+      }
+      get_exchange_rate: {
+        Args: {
+          p_date: string
+          p_from: string
+          p_org: string
+          p_side?: string
+          p_to: string
+        }
+        Returns: number
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }

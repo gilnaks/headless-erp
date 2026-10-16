@@ -1,6 +1,7 @@
 import { account } from "./accounts/account";
 import { accountCategory } from "./accounts/account-category";
 import { costCenter } from "./accounts/cost-center";
+import { currencyExchange } from "./accounts/currency-exchange";
 import { fiscalYear } from "./accounts/fiscal-year";
 import { modeOfPayment } from "./accounts/mode-of-payment";
 import { paymentTerm } from "./accounts/payment-term";
@@ -59,6 +60,7 @@ export const DOCTYPES: readonly Doctype[] = [
     modeOfPayment,
     paymentTerm,
     paymentTermsTemplate,
+    currencyExchange,
     letterHead,
     printSettings,
     printFormat,
