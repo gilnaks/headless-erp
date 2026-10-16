@@ -282,7 +282,7 @@ export const MODULES: ModuleNav[] = [
                 icon: Package,
                 items: [
                     doctype("Item", "buying/item", "P2"),
-                    doctype("Item Group", "buying/item-group", "P2"),
+                    doctype("Item Group", "stock/item-group", "P2"),
                     doctype("Price List", "buying/price-list", "P2"),
                 ],
             },

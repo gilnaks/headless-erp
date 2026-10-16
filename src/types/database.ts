@@ -264,6 +264,7 @@ export type Database = {
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
       seed_designations: { Args: { p_org: string }; Returns: undefined }
+      seed_item_groups: { Args: { p_org: string }; Returns: undefined }
       seed_onboarding: { Args: { p_org: string }; Returns: undefined }
       seed_print_formats: {
         Args: { p_doctype?: string; p_org: string }
@@ -2040,6 +2041,60 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "role_profile"
             referencedColumns: ["org_id", "name"]
+          },
+        ]
+      }
+      item_group: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_group: boolean
+          item_group_name: string
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_group?: boolean
+          item_group_name: string
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_group?: boolean
+          item_group_name?: string
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_group_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_group_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item_group"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

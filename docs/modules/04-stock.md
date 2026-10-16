@@ -60,10 +60,10 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 ### 2.1 Item Group → `item_group`
 
-- **Kind:** tree, org-level. **Naming:** `field:item_group_name`. **Perms:** Item Manager rwcd, Stock User r, Stock Manager r, Sales User r, Purchase User r, Accounts User r.
-- **Migration:** `02nn_stock_item_group.sql`. Parent of a new non-root defaults to the root.
-- Fields: `item_group_name` ✔, `parent_id`, `is_group` default false, `item_group_defaults` (same columns as Item Default, §2.2), `taxes` (item tax rows: `item_tax_template_id`, `tax_category_id`, `valid_from`, `minimum_net_rate`, `maximum_net_rate`), `path`.
-- A group with children, or a group selected on an item, cannot become a leaf.
+- **Kind:** tree, org-level. **Naming:** `field:item_group_name`. **Perms:** Item Manager rwcd; Stock User, Stock Manager, Sales User, Purchase User and Accounts User read. System Manager also reads (the JSON omits that role and lists Desk User select, which is not seeded).
+- **Migration:** `0201_stock_item_group.sql`. Parent of a new non-root defaults to the root.
+- Fields in this migration: `item_group_name` ✔, `parent_id`, `is_group` default false, `path`. `item_group_defaults` and `taxes` wait for Account and Item Tax Template.
+- A group with children cannot become a leaf. A group selected on an item cannot become a leaf either; that check lands with Item.
 - **Seed (00-setup A5):** `All Item Groups` (group) → `Products`, `Raw Material`, `Services`, `Sub Assemblies`, `Consumable`.
 
 ### 2.2 Item → `item`
@@ -387,7 +387,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 ### P2 — masters
 
 - [x] `uom`, `uom_category`, `uom_conversion_factor` + A19 — §2.3
-- [ ] `item_group` + A5 — §2.1
+- [x] `item_group` + A5 — §2.1
 - [ ] `brand` — §2.4
 - [ ] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
 - [ ] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
