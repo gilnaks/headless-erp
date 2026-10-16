@@ -35,7 +35,7 @@ TanStack Table, nuqs (TanStack Router adapter), Biome, Vitest, pgTAP, Playwright
    Interactive pieces are just components.
 7. UI: Untitled UI tokens only (no raw hex), compact density, keyboard-first, tabular numerals, empty/loading/error
    states for every list/form. No new dependency without a note in `docs/PLAN.md §2`.
-8. Small commits (one doctype or one engine function). Conventional commits. Never commit secrets or tenant data.
+8. Small commits. One engine function per PR. Several masters may share a PR when none references a table that PR does not create and none adds an insert trigger on organizations or companies. Each doctype still has its own migration. Conventional commits. Never commit secrets or tenant data.
 
 ## Working style
 - Before coding a doctype: read its ERPNext `.json` + `.py` (+ `test_*.py` for expected ledger output), summarise the
@@ -49,7 +49,7 @@ TanStack Table, nuqs (TanStack Router adapter), Biome, Vitest, pgTAP, Playwright
   `db reset --linked` only when the project should be wiped; the local `supabase db reset` job runs in GitHub Actions.
 
 ## Workflow (every PR)
-Never commit to `main`. One doctype or one engine function per PR, in this order:
+Never commit to `main`. Branch from `origin/main` in a worktree and copy only this PR's files. One engine function per PR. Several masters may share a PR when none references a table that PR does not create and none adds an insert trigger on organizations or companies. Each doctype still gets its own migration. Then:
 1. Branch from `origin/main`.
 2. Read the ERPNext `.json`/`.py`/`test_*.py`; note ported fields and deviations in the module doc.
 3. Migration (RLS + `doctype_meta` + `role_permissions`), then `npx supabase db push --linked --include-all --yes`.
