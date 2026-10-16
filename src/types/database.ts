@@ -291,6 +291,7 @@ export type Database = {
         }[]
       }
       seed_account_categories: { Args: { p_org: string }; Returns: undefined }
+      seed_cost_centers: { Args: { p_company: string }; Returns: undefined }
       seed_customer_groups: { Args: { p_org: string }; Returns: undefined }
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
@@ -1182,6 +1183,13 @@ export type Database = {
             referencedColumns: ["name"]
           },
           {
+            foreignKeyName: "companies_cost_center_fk"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_country_fkey"
             columns: ["country"]
             isOneToOne: false
@@ -1221,6 +1229,13 @@ export type Database = {
             columns: ["org_id", "default_sales_contact_id"]
             isOneToOne: false
             referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_depreciation_cost_center_fk"
+            columns: ["org_id", "depreciation_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -1305,6 +1320,13 @@ export type Database = {
             columns: ["org_id", "round_off_account_id"]
             isOneToOne: false
             referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_round_off_cost_center_fk"
+            columns: ["org_id", "round_off_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
             referencedColumns: ["org_id", "id"]
           },
           {
@@ -1546,6 +1568,79 @@ export type Database = {
             columns: ["org_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      cost_center: {
+        Row: {
+          company_id: string
+          cost_center_name: string
+          cost_center_number: string | null
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          is_group: boolean
+          name: string
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          cost_center_name: string
+          cost_center_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_group?: boolean
+          name: string
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          cost_center_name?: string
+          cost_center_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_group?: boolean
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_center_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "cost_center_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cost_center_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
             referencedColumns: ["org_id", "id"]
           },
         ]

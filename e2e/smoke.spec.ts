@@ -43,7 +43,8 @@ test("sign in, create an organization and a company, see it in the list", async 
         await expect(palette).toBeVisible({ timeout: 1000 });
     }).toPass();
     await search.pressSequentially(`Smoke Company ${stamp}`);
-    await expect(palette.getByRole("menuitem", { name: new RegExp(companyName) })).toBeVisible();
+    // The company insert also seeds a cost center whose name starts with the company name.
+    await expect(palette.getByRole("menuitem", { name: `${companyName} Company`, exact: true })).toBeVisible();
 
     await search.fill("");
     await search.pressSequentially("Global Defaults");
