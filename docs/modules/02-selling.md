@@ -114,10 +114,10 @@ Child of Customer and of Customer Group. One row per company on a parent ("Credi
 
 ### 2.3 Customer Group → `customer_group`
 
-- **Kind:** tree, org-level. **Naming:** `field:customer_group_name` (unique). **Perms:** Sales Manager rwcd, Sales User r, Accounts User r.
-- **Migration:** `02nn_selling_customer_group.sql`. Parent of a new non-root defaults to the root (`get_root_of`).
-- Fields: `customer_group_name` ✔, `parent_id`, `is_group` default false, `default_price_list` (selling), `payment_terms`, `accounts` (`party_account`), `credit_limits`. `path` ltree.
-- A group that still has children cannot become a leaf. A leaf that is selected on a customer cannot become a group.
+- **Kind:** tree, org-level. **Naming:** `field:customer_group_name` (unique). **Perms:** Sales Manager rwcd; Sales User and Accounts User read. System Manager also reads (the JSON omits that role). Sales Manager holds the rwcd that the JSON gives Sales Master Manager, which is not seeded (§9).
+- **Migration:** `0203_selling_customer_group.sql`. Parent of a new non-root defaults to the root (`get_root_of`).
+- Fields in this migration: `customer_group_name` ✔, `parent_id`, `is_group` default false, `path`. `default_price_list`, `payment_terms`, `accounts` and `credit_limits` wait for Price List, Payment Terms, and Account.
+- A group that still has children cannot become a leaf. A leaf that is selected on a customer cannot become a group; that check lands with Customer.
 - **Seed (00-setup A8):** `All Customer Groups` (group) → `Individual`, `Commercial`, `Non Profit`, `Government`. `selling_settings.customer_group` is left null (ERPNext default); the customer form does not force a group.
 
 ### 2.4 Territory → `territory`
@@ -517,7 +517,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 
 ### P2 — masters
 
-- [ ] `customer_group` tree + A8 seed — §2.3
+- [x] `customer_group` tree + A8 seed — §2.3
 - [ ] `territory` tree + A7 seed — §2.4
 - [ ] `sales_person` tree + A10 seed — §2.5
 - [ ] `industry_type` — §2.7
