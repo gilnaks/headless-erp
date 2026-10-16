@@ -132,6 +132,7 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 - Header: `mode_of_payment` text ✔ unique; `enabled` boolean default true; `type` text check `Cash|Bank|General|Phone` (no default, not required — as ERPNext).
 - Child `accounts`: `company_id` ✔, `default_account_id` (Bank/Cash ledger of that company). Validations: "Account {0} does not match with Company {1} in Mode of Account: {2}", "Same Company is entered more than once".
 - **Fixtures (A11):** Cheque (`Check` when country = United States) Bank; Cash Cash; Credit Card Bank; Wire Transfer Bank; Bank Draft Bank. **B10:** `Cash` → `(company, default_cash_account)`.
+- **Built (0218):** `app.seed_modes_of_payment` runs from `organizations_seed_modes_of_payment`, an after-insert trigger on `organizations` (A11), and once for organizations that already exist. `app.set_mode_of_payment_account` runs from `companies_seed_mode_of_payment`, an after-insert trigger on `companies` (B10), and once for companies that already exist. Cash is linked to `default_cash_account_id` only when that company has no Cash row yet. Deleting that account removes the company row (`0219`, `0220`). System Manager can read. Accounts Manager can create and edit. A repeated company raises `mode_of_payment_company`. An account from another company raises `mode_of_payment_account`. POS profile checks are not built. The account picker is not limited to Bank, Cash, or Receivable.
 
 ### 2.6 Payment Term → `payment_term`; Payment Terms Template → `payment_terms_template` + child `payment_terms_template_detail`
 
@@ -1106,7 +1107,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [ ] `app.update_account_number`, `convert_group_to_ledger/ledger_to_group`, `merge_account`, balance-type and frozen validations — §2.1
 - [x] `account_category` (seeded from CoA template rows) — §2.2
 - [x] `cost_center` tree — §2.3
-- [ ] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
+- [x] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
 - [ ] `payment_term`, `payment_terms_template` + detail — §2.6
 - [ ] `payment_schedule` child table (shared by SO/PO/SI/PI) + `src/lib/calc/payment-schedule.ts` / `app.make_payment_schedule` — §2.7, §3.9
 - [ ] `currency_exchange` + `app.get_exchange_rate` — §2.8
