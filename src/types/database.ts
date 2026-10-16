@@ -272,6 +272,7 @@ export type Database = {
         Returns: undefined
       }
       seed_sales_persons: { Args: { p_org: string }; Returns: undefined }
+      seed_supplier_groups: { Args: { p_org: string }; Returns: undefined }
       seed_territories: { Args: { p_org: string }; Returns: undefined }
       seed_uoms: { Args: { p_org: string }; Returns: undefined }
       set_email_account_key: {
@@ -3019,6 +3020,60 @@ export type Database = {
             columns: ["org_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "sales_person"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      supplier_group: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_group: boolean
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          supplier_group_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_group?: boolean
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          supplier_group_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_group?: boolean
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          supplier_group_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_group_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_group_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_group"
             referencedColumns: ["org_id", "id"]
           },
         ]
