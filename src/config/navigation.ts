@@ -41,7 +41,7 @@ import type { FC } from "react";
 
 /**
  * Typed transcription of `erpnext/<module>/sidebar/<module>/<module>.json`, limited to in-scope items (PLAN §1).
- * Items dropped as out of scope: Accounting Dimension, Account Category, Financial Report Template, Pricing Rule, POS,
+ * Items dropped as out of scope: Accounting Dimension, Financial Report Template, Pricing Rule, POS,
  * Quality Inspection, Item Attribute (variants), Inventory Dimension, Subcontracting BOM/Inward Order, BOM Creator,
  * BOM Comparison Tool, Downtime Entry, Plant Floor, and Setup › Data / Integrations / out-of-scope Settings.
  */
@@ -202,6 +202,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Mode of Payment", "accounts/mode-of-payment", "P2"),
                     doctype("Payment Terms Template", "accounts/payment-terms-template", "P2"),
                     doctype("Currency Exchange", "accounts/currency-exchange", "P2"),
+                    doctype("Account Category", "accounts/account-category", "P2"),
                     doctype("Settings", "accounts/settings", "P3", "Accounts Settings"),
                 ],
             },
