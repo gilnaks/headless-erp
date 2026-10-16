@@ -155,7 +155,7 @@ headless-erp/
 
 ## 7. Delivery phases (each phase = mergeable, deployable increment)
 
-Work **one phase at a time**, and within a phase **one doctype at a time**: migration → RLS → seed → TS descriptor → client mutations → list/form UI → tests → docs updated. Every PR follows the **Workflow (every PR)** in `.cursorrules`; a phase closes only on its **Phase gate** there (module doc §10 ticked or re-homed, critical flows covered by Playwright, full `npm run e2e` against the hosted project and `npm run db:test:linked` green, row below marked Complete).
+Work **one phase at a time**. One engine function per PR. Several masters may share a PR when the Workflow rule in `.cursorrules` allows it. Each doctype still follows: migration → RLS → seed → TS descriptor → client mutations → list/form UI → tests → docs updated. Every PR follows the **Workflow (every PR)** in `.cursorrules`; a phase closes only on its **Phase gate** there (module doc §10 ticked or re-homed, critical flows covered by Playwright, full `npm run e2e` against the hosted project and `npm run db:test:linked` green, row below marked Complete).
 
 | Phase | Deliverable | Depends on |
 |---|---|---|
@@ -197,5 +197,5 @@ See `docs/erpnext-reference.md`. Short version: the doctype JSON (`erpnext/<modu
 - Financial math uses `numeric` in Postgres and `decimal.js`-free integer-safe helpers in TS (`src/lib/calc/number.ts`, precision from company currency + "float precision" setting, default 2/3/6 like ERPNext).
 - Postgres re-validates everything that matters; Zod and client previews are never the security boundary.
 - Modern, minimal UI: Untitled UI tokens, no custom colours outside `theme.css`, dense data tables, keyboard-first forms, consistent empty/loading/error states.
-- Commit small. One doctype or one engine function per PR.
+- Commit small. One engine function per PR. Several masters may share a PR when the Workflow rule in `.cursorrules` allows it.
 - Never commit to `main`. Every change lands through a PR with green CI and is squash-merged.

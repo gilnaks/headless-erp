@@ -1,6 +1,6 @@
 ## Summary
 
-<!-- What changed and why. One doctype or one engine function per PR where possible. -->
+<!-- What changed and why. One engine function per PR. Several masters may share a PR when the Workflow rule allows it. -->
 
 ## ERPNext source files consulted
 
