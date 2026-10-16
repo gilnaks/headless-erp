@@ -103,8 +103,8 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 
 ### 2.3 Cost Center → `cost_center`
 
-- **Kind:** tree master, company-scoped. `nsm_parent_field = parent_cost_center`. Root is the node whose `cost_center_name = company_name`. **Naming:** `get_autoname_with_number(cost_center_number, cost_center_name, company)`.
-- **Perms:** Accounts Manager rwcd, Auditor r, Accounts User r, Sales User r, Purchase User r.
+- **Kind:** tree master, company-scoped. `nsm_parent_field = parent_cost_center`. Root is the node whose `cost_center_name = company_name`. **Naming:** `get_autoname_with_number(cost_center_number, cost_center_name, company)`. Migration `0215_accounts_cost_center.sql`.
+- **Perms:** Accounts Manager rwcd, Auditor r, Accounts User r, Sales User r, Purchase User r. System Manager read (the coverage default; the JSON does not grant System Manager).
 
 | fieldname | column | req | default | notes |
 |---|---|---|---|---|
@@ -117,7 +117,7 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 | path | ltree | ✔ | trigger | |
 
 - Validations: `validate_mandatory` ("Please enter parent cost center" / "Root cannot have a parent cost center"), `validate_parent_cost_center`, `validate_changes`. Actions: convert group/ledger, update number (same RPC shape as Account).
-- **Provisioning (B6):** `<Company name>` (group, root) → `Main`; `companies.cost_center_id = round_off_cost_center_id = depreciation_cost_center_id = Main - ABBR` (FKs added here).
+- **Built (0215):** `app.seed_cost_centers` runs from `companies_seed_cost_centers`, an after-insert trigger on `companies` (B6), and once for companies that already exist. A company that already has cost centers is left alone. The root is a group named after the company; `Main` is the ledger under it. `cost_center_id`, `round_off_cost_center_id`, and `depreciation_cost_center_id` point at Main, each with an index on `(org_id, column)`. Group/ledger conversion and number rename wait.
 
 ### 2.4 Cost Center Allocation → `cost_center_allocation` + child `cost_center_allocation_percentage` (P7)
 
@@ -1105,7 +1105,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `account` tree, chart seed and default-account wiring (B3, B4, B9) — §2.1
 - [ ] `app.update_account_number`, `convert_group_to_ledger/ledger_to_group`, `merge_account`, balance-type and frozen validations — §2.1
 - [x] `account_category` (seeded from CoA template rows) — §2.2
-- [ ] `cost_center` tree — §2.3
+- [x] `cost_center` tree — §2.3
 - [ ] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
 - [ ] `payment_term`, `payment_terms_template` + detail — §2.6
 - [ ] `payment_schedule` child table (shared by SO/PO/SI/PI) + `src/lib/calc/payment-schedule.ts` / `app.make_payment_schedule` — §2.7, §3.9

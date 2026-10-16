@@ -42,6 +42,7 @@ const USERS = [
     { env: "E2E_STOCK_ENTRY_TYPE", local: "stock-entry-type", first_name: "Stock Entry Type", last_name: "Admin" },
     { env: "E2E_ACCOUNT_CATEGORY", local: "account-category", first_name: "Account Category", last_name: "Admin" },
     { env: "E2E_ACCOUNT", local: "account", first_name: "Account", last_name: "Admin" },
+    { env: "E2E_COST_CENTER", local: "cost-center", first_name: "Cost Center", last_name: "Admin" },
     { env: "E2E_P2", local: "p2", first_name: "Masters", last_name: "Admin" },
     { env: "E2E_JE", local: "journal", first_name: "Journal", last_name: "Admin" },
     { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },
