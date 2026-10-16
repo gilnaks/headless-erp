@@ -2800,17 +2800,17 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "mode_of_payment_account_account_fk"
+            columns: ["org_id", "default_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "mode_of_payment_account_org_id_company_id_fkey"
             columns: ["org_id", "company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["org_id", "id"]
-          },
-          {
-            foreignKeyName: "mode_of_payment_account_org_id_default_account_id_fkey"
-            columns: ["org_id", "default_account_id"]
-            isOneToOne: false
-            referencedRelation: "account"
             referencedColumns: ["org_id", "id"]
           },
           {
