@@ -21,8 +21,8 @@ test("sign in, create an organization and a company, see it in the list", async 
     const chart = page.getByRole("combobox", { name: label("Chart Of Accounts Template") });
     await chart.click();
     await chart.fill("");
-    // The country combobox can leave its listbox mounted, so "Philippines" is also a country option.
-    const chartList = page.locator("[role='listbox']:visible");
+    // The country combobox can leave its listbox open, so "Philippines" is also a country option.
+    const chartList = page.getByRole("listbox", { name: /Chart Of Accounts/ });
     await expect(chartList.getByRole("option", { name: "Philippines" })).toBeVisible();
     await expect(chartList.getByRole("option", { name: /^SKR04/ })).toHaveCount(0);
     await chartList.getByRole("option", { name: "Philippines" }).click();
