@@ -197,6 +197,8 @@ Full field list in §6. **Perms:** Accounts Manager rw; Sales User r, Purchase U
 
 Org-level; naming `field:title`; `title` ✔ unique, `disabled` false. Perms System Manager / Accounts Manager rwcd, Accounts User r (+ read for selling/buying/stock). Links in: Customer, Supplier, Address (`tax_category`), templates, Tax Rule, Item Tax rows. `get_address_tax_category` uses `accounts_settings.determine_address_tax_category_from` (`Billing Address`).
 
+**Built (0226):** `app.tax_category_validate` names the row from the trimmed title. A repeated title is rejected. An address may point at the category, and deleting the category clears that link. System Manager and Accounts Manager can create and delete. Accounts User, Sales User, Sales Manager, Purchase User, Purchase Manager, Stock User, and Stock Manager can read. `get_address_tax_category` waits for Accounts Settings.
+
 ### 2.14 Tax Rule → `tax_rule`
 
 - Company-scoped (company optional in ERPNext; required by us because templates are per company). **Naming:** `ACC-TAX-RULE-.YYYY.-.#####`. Perms: Accounts Manager rwcd.
@@ -1117,7 +1119,8 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [ ] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
 - [ ] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
 - [ ] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12
-- [ ] `tax_category`, `tax_rule` + `app.get_tax_template` ranking — §2.13–2.14
+- [x] `tax_category` — §2.13, `0226_accounts_tax_category.sql`
+- [ ] `tax_rule` + `app.get_tax_template` ranking — §2.14
 - [x] `party_type` (A13) and `print_heading` (A15) fixtures — `0225_setup_party_type_print_heading.sql`
 - [ ] Provisioning: B3 account tree, B4 receivable/payable, B6 cost center tree, B7 country tax templates, B9 default accounts, B13 bank account → `app.provision_organization` / `app.create_company`; `validate_default_accounts`, `validate_advance_account_currency` on Company
 - [ ] `src/lib/calc/taxes-and-totals.ts` + `app.calc_taxes_and_totals` with shared JSON fixtures (Vitest ⇄ pgTAP parity) — §3.11

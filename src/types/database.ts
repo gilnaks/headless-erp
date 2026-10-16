@@ -537,6 +537,7 @@ export type Database = {
           phone: string | null
           pincode: string | null
           state: string | null
+          tax_category_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -562,6 +563,7 @@ export type Database = {
           phone?: string | null
           pincode?: string | null
           state?: string | null
+          tax_category_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -587,6 +589,7 @@ export type Database = {
           phone?: string | null
           pincode?: string | null
           state?: string | null
+          tax_category_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -611,6 +614,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "address_tax_category_fk"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -4087,6 +4097,50 @@ export type Database = {
           },
         ]
       }
+      tax_category: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          name: string
+          org_id: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          name: string
+          org_id: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          name?: string
+          org_id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_category_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       terms_and_conditions: {
         Row: {
           buying: boolean
@@ -4702,6 +4756,7 @@ export type Database = {
           phone: string | null
           pincode: string | null
           state: string | null
+          tax_category_id: string | null
           updated_at: string
           updated_by: string | null
         }[]
@@ -4796,6 +4851,7 @@ export type Database = {
           phone: string | null
           pincode: string | null
           state: string | null
+          tax_category_id: string | null
           updated_at: string
           updated_by: string | null
         }[]

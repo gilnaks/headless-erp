@@ -178,6 +178,7 @@ export const MODULES: ModuleNav[] = [
                         "Purchase Taxes and Charges Template",
                     ),
                     doctype("Item Tax Template", "accounts/item-tax-template", "P2"),
+                    doctype("Tax Category", "accounts/tax-category", "P2"),
                     doctype("Tax Rule", "accounts/tax-rule", "P2"),
                     doctype("Tax Withholding Category", "accounts/tax-withholding-category", "P7"),
                 ],
