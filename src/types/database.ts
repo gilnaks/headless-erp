@@ -20,7 +20,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _account_by_name: {
+        Args: { p_company: string; p_name: string }
+        Returns: string
+      }
+      _account_by_type: {
+        Args: { p_company: string; p_root?: string; p_type: string }
+        Returns: string
+      }
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      account_display_name: {
+        Args: { p_abbr: string; p_name: string; p_number: string }
+        Returns: string
+      }
       address_refresh: { Args: { p_address: string }; Returns: undefined }
       allowed_records: {
         Args: { p_doctype: string; p_for?: string; p_org: string }
@@ -41,6 +53,21 @@ export type Database = {
       auto_create_fiscal_year: { Args: never; Returns: number }
       can_write_file: { Args: { p_name: string }; Returns: boolean }
       coa_account_categories: { Args: { p_tree: Json }; Returns: string[] }
+      coa_template_nodes: {
+        Args: { p_template: string }
+        Returns: {
+          account_category: string
+          account_name: string
+          account_number: string
+          account_type: string
+          idx: number
+          is_group: boolean
+          node_key: string
+          parent_key: string
+          root_type: string
+          tax_rate: number
+        }[]
+      }
       coa_template_preview: {
         Args: { p_template: string }
         Returns: {
@@ -78,6 +105,7 @@ export type Database = {
       }
       contact_refresh: { Args: { p_contact: string }; Returns: undefined }
       copy_uoms: { Args: { p_all: boolean; p_org: string }; Returns: undefined }
+      create_charts: { Args: { p_company: string }; Returns: undefined }
       create_company: { Args: { p: Json }; Returns: Json }
       create_invitation: {
         Args: {
@@ -278,6 +306,7 @@ export type Database = {
       seed_supplier_groups: { Args: { p_org: string }; Returns: undefined }
       seed_territories: { Args: { p_org: string }; Returns: undefined }
       seed_uoms: { Args: { p_org: string }; Returns: undefined }
+      set_default_accounts: { Args: { p_company: string }; Returns: undefined }
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
         Returns: undefined
@@ -310,6 +339,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      account: {
+        Row: {
+          account_category_id: string | null
+          account_currency: string
+          account_name: string
+          account_number: string | null
+          account_type: string | null
+          balance_must_be: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          freeze_account: string
+          id: string
+          include_in_gross: boolean
+          is_group: boolean
+          name: string
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          report_type: string
+          root_type: string
+          tax_rate: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_category_id?: string | null
+          account_currency: string
+          account_name: string
+          account_number?: string | null
+          account_type?: string | null
+          balance_must_be?: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          freeze_account?: string
+          id?: string
+          include_in_gross?: boolean
+          is_group?: boolean
+          name: string
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          report_type: string
+          root_type: string
+          tax_rate?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_category_id?: string | null
+          account_currency?: string
+          account_name?: string
+          account_number?: string | null
+          account_type?: string | null
+          balance_must_be?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          freeze_account?: string
+          id?: string
+          include_in_gross?: boolean
+          is_group?: boolean
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          report_type?: string
+          root_type?: string
+          tax_rate?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_org_id_account_category_id_fkey"
+            columns: ["org_id", "account_category_id"]
+            isOneToOne: false
+            referencedRelation: "account_category"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "account_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       account_category: {
         Row: {
           account_category_name: string
@@ -1025,6 +1161,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "companies_bank_account_fk"
+            columns: ["org_id", "default_bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_cash_account_fk"
+            columns: ["org_id", "default_cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_chart_of_accounts_fkey"
             columns: ["chart_of_accounts"]
             isOneToOne: false
@@ -1074,6 +1224,27 @@ export type Database = {
             referencedColumns: ["org_id", "id"]
           },
           {
+            foreignKeyName: "companies_expense_account_fk"
+            columns: ["org_id", "default_expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_income_account_fk"
+            columns: ["org_id", "default_income_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_inventory_account_fk"
+            columns: ["org_id", "default_inventory_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_org_id_exception_budget_approver_role_fkey"
             columns: ["org_id", "exception_budget_approver_role"]
             isOneToOne: false
@@ -1109,11 +1280,53 @@ export type Database = {
             referencedColumns: ["org_id", "name"]
           },
           {
+            foreignKeyName: "companies_payable_account_fk"
+            columns: ["org_id", "default_payable_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_receivable_account_fk"
+            columns: ["org_id", "default_receivable_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "companies_reporting_currency_fkey"
             columns: ["reporting_currency"]
             isOneToOne: false
             referencedRelation: "currency"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "companies_round_off_account_fk"
+            columns: ["org_id", "round_off_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_srbnb_fk"
+            columns: ["org_id", "stock_received_but_not_billed_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_stock_adjustment_fk"
+            columns: ["org_id", "stock_adjustment_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "companies_write_off_account_fk"
+            columns: ["org_id", "write_off_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

@@ -127,6 +127,8 @@ select ok(
   'path cannot be written directly'
 );
 
+-- Chart seeding fills the SDBNB account, so the guard only trips after it is cleared.
+update public.companies set stock_delivered_but_not_billed_id = null where id = '20000000-0000-0000-0000-000000000002';
 select throws_ok(
   $$update public.companies set enable_stock_delivered_but_not_billed = true where id = '20000000-0000-0000-0000-000000000002'$$,
   'P0001', 'sdbnb_account_required: Please select Stock Delivered But Not Billed Account', 'SDBNB needs an account once enabled'

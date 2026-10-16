@@ -63,9 +63,9 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 
 ### 2.1 Account → `account`
 
-- **Kind:** tree master, company-scoped. `nsm_parent_field = parent_account`, `search_fields = account_number`. Migration `02nn_accounts_account.sql` (P2 block).
+- **Kind:** tree master, company-scoped. `nsm_parent_field = parent_account`, `search_fields = account_number`. Migration `0212_accounts_account.sql`.
 - **Naming:** `get_autoname_with_number(account_number, account_name, company)` → `"<account_number> - <account_name> - <ABBR>"` or `"<account_name> - <ABBR>"` (`erpnext/accounts/utils.py`). Renames via `update_account_number` keep this format.
-- **Perms:** Accounts User rwcd, Accounts Manager rwcd, Auditor r, Sales User r, Purchase User r.
+- **Perms:** Accounts User rwcd, Accounts Manager rwcd, Auditor r, Sales User r, Purchase User r. System Manager read (the coverage default; the JSON does not grant System Manager).
 
 | fieldname | column | req | default | notes |
 |---|---|---|---|---|
@@ -92,14 +92,14 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 - **Whitelisted actions → RPCs:** `app.convert_account_group_ledger(id, to_group bool)`, `app.update_account_number(id, account_name, account_number)` (renames the row and recomputes descendants' display names; ERPNext's `_ensure_idle_system` guard is not needed), `app.merge_account(old_id, new_id)` (requires equal `is_group`, `root_type`, `company`, `account_currency`; repoints `gl_entry`/`payment_ledger_entry`/child links in one transaction, then deletes the old row). `on_trash`: "Account with existing transaction can not be deleted" (any `gl_entry`); children block deletion.
 - **Child-company sync:** ERPNext creates the same account in child companies when created on a parent (`allow_account_creation_against_child_company`). Kept: `companies.allow_account_creation_against_child_company` exists (0100); P2 implements the parent→child propagation only for the insert path.
 - **Tree UI:** TreeView with columns name, account_type, balance (when `accounts_settings.show_balance_in_coa`), `Dr/Cr` suffix; filters company, root_type, disabled. Connections: General Ledger report (`account` filter), Budget.
-- **Provisioning (B3, B4, B9, B13):** `app.create_charts(company_id)` expands `coa_template` (00-setup §3.2) or copies the existing company's tree (`Existing Company`), then `app.set_default_accounts(company_id)` fills the 00-setup §2.1 Accounts-tab columns exactly as listed there, then the optional wizard bank account under `Bank Accounts`. These are added to `app.provision_organization` / `app.create_company` by this migration (staged plan in 00-setup §3.1). The existing plain-uuid default columns on `companies` get their FKs to `account` here.
+- **Built (0212, display-name grant 0213):** `app.create_charts` and `app.set_default_accounts` run from `companies_seed_accounts`, an after-insert trigger on `companies` (B3, B4, B9), and once for companies that already exist. `app.account_display_name` is executable by signed-in users because the row trigger calls it (0213). An empty balance rule or freeze value is stored as the column default (0214). A company that already has accounts is left alone. Eleven company foreign keys point at `account` (receivable, payable, cash, bank, expense, income, round off, write off, inventory, stock adjustment, and stock received but not billed), each with an index on `(org_id, column)`. `account (org_id, account_category_id)` is indexed too. The other default-account columns are filled and stay plain uuid. `update_account_number`, group/ledger conversion, `merge_account`, frozen-account and balance-must-be checks, and the ledger guards wait for the ledger. The optional wizard bank account (B13) still waits.
 
 ### 2.2 Account Category → `account_category`
 
 - **Migration:** `0210_accounts_account_category.sql`.
 - **Kind:** org-level master (not company-scoped). **Naming:** `field:account_category_name`. **Perms:** Accounts User rwcd, Accounts Manager rwcd, Auditor r. System Manager read (the coverage default; the JSON does not grant System Manager).
 - Fields: `account_category_name` text ✔ unique; `description` text; `root_type` text check (same five) — informational, used by Financial Report Templates in ERPNext.
-- Seeded with every distinct `account_category` in the vendored charts (00-setup §3.2: Trade Receivables, Cash and Cash Equivalents, Other Receivables, … Reserves and Surplus), not only the organization's chart. The seed stores the name only, so `root_type` stays null. Needed because the standard chart assigns one to almost every account. No transactional effect in our scope. The account foreign key waits for Account.
+- Seeded with every distinct `account_category` in the vendored charts (00-setup §3.2: Trade Receivables, Cash and Cash Equivalents, Other Receivables, … Reserves and Surplus), not only the organization's chart. The seed stores the name only, so `root_type` stays null. Needed because the standard chart assigns one to almost every account. No transactional effect in our scope. The account foreign key is `account.account_category_id` (0212).
 
 ### 2.3 Cost Center → `cost_center`
 
@@ -1102,7 +1102,8 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 
 ### P2 — masters
 
-- [ ] `account` tree (+ `app.update_account_number`, `convert_group_to_ledger/ledger_to_group`, `merge_account`, balance-type and frozen validations) — §2.1
+- [x] `account` tree, chart seed and default-account wiring (B3, B4, B9) — §2.1
+- [ ] `app.update_account_number`, `convert_group_to_ledger/ledger_to_group`, `merge_account`, balance-type and frozen validations — §2.1
 - [x] `account_category` (seeded from CoA template rows) — §2.2
 - [ ] `cost_center` tree — §2.3
 - [ ] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
