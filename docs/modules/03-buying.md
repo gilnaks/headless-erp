@@ -100,10 +100,10 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 ### 2.2 Supplier Group → `supplier_group`
 
-- **Kind:** tree, org-level. **Naming:** `field:supplier_group_name`. **Perms:** Purchase Manager rwcd, Purchase User r, Accounts User r.
-- **Migration:** `02nn_buying_supplier_group.sql`.
-- Fields: `supplier_group_name` ✔, `parent_id`, `is_group` default false, `payment_terms`, `accounts` (`party_account`), `path`.
-- A group with children cannot become a leaf. A leaf selected on a supplier cannot become a group.
+- **Kind:** tree, org-level. **Naming:** `field:supplier_group_name`. **Perms:** Purchase Manager rwcd; Purchase User and Accounts User read. System Manager also reads (the JSON omits that role). Purchase Manager holds the rwcd that the JSON gives Purchase Master Manager, which is not seeded (§9).
+- **Migration:** `0207_buying_supplier_group.sql`. Parent of a new non-root defaults to the root (`All Supplier Groups`).
+- Fields in this migration: `supplier_group_name` ✔, `parent_id`, `is_group` default false, `path`. `payment_terms` and `accounts` wait for Payment Terms and Account.
+- A group with children cannot become a leaf. A leaf selected on a supplier cannot become a group; that check lands with Supplier.
 - **Seed (00-setup A9):** `All Supplier Groups` (group) → `Services`, `Local`, `Raw Material`, `Electrical`, `Hardware`, `Pharmaceutical`, `Distributor`.
 
 ### 2.3 Request for Quotation → `request_for_quotation`
@@ -427,7 +427,7 @@ Migration numbers: P2 `02nn_buying_*`, P4 material request with 04-stock, P6 `06
 
 ### P2 — masters
 
-- [ ] `supplier_group` tree + A9 seed — §2.2
+- [x] `supplier_group` tree + A9 seed — §2.2
 - [ ] `supplier` + `party_account` rows — §2.1
 
 ### P4 — with stock
