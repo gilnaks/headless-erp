@@ -47,6 +47,7 @@ const USERS = [
     { env: "E2E_MODE_OF_PAYMENT", local: "mode-of-payment", first_name: "Mode", last_name: "Admin" },
     { env: "E2E_PAYMENT_TERMS", local: "payment-terms", first_name: "Payment Terms", last_name: "Admin" },
     { env: "E2E_CURRENCY_EXCHANGE", local: "currency-exchange", first_name: "Currency", last_name: "Admin" },
+    { env: "E2E_PARTY_TYPE", local: "party-type", first_name: "Party", last_name: "Admin" },
     { env: "E2E_P2", local: "p2", first_name: "Masters", last_name: "Admin" },
     { env: "E2E_JE", local: "journal", first_name: "Journal", last_name: "Admin" },
     { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },

@@ -313,10 +313,12 @@ export type Database = {
       seed_item_groups: { Args: { p_org: string }; Returns: undefined }
       seed_modes_of_payment: { Args: { p_org: string }; Returns: undefined }
       seed_onboarding: { Args: { p_org: string }; Returns: undefined }
+      seed_party_types: { Args: { p_org: string }; Returns: undefined }
       seed_print_formats: {
         Args: { p_doctype?: string; p_org: string }
         Returns: undefined
       }
+      seed_print_headings: { Args: { p_org: string }; Returns: undefined }
       seed_sales_persons: { Args: { p_org: string }; Returns: undefined }
       seed_stock_entry_types: { Args: { p_org: string }; Returns: undefined }
       seed_supplier_groups: { Args: { p_org: string }; Returns: undefined }
@@ -3184,6 +3186,47 @@ export type Database = {
           },
         ]
       }
+      party_type: {
+        Row: {
+          account_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_type: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_type_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_term: {
         Row: {
           created_at: string
@@ -3438,6 +3481,50 @@ export type Database = {
           },
           {
             foreignKeyName: "print_format_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_heading: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          org_id: string
+          print_heading: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          org_id: string
+          print_heading: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          print_heading?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_heading_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
