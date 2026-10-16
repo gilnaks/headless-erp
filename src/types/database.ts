@@ -40,6 +40,7 @@ export type Database = {
       }
       auto_create_fiscal_year: { Args: never; Returns: number }
       can_write_file: { Args: { p_name: string }; Returns: boolean }
+      coa_account_categories: { Args: { p_tree: Json }; Returns: string[] }
       coa_template_preview: {
         Args: { p_template: string }
         Returns: {
@@ -261,6 +262,7 @@ export type Database = {
           label: string
         }[]
       }
+      seed_account_categories: { Args: { p_org: string }; Returns: undefined }
       seed_customer_groups: { Args: { p_org: string }; Returns: undefined }
       seed_department_root: { Args: { p_org: string }; Returns: string }
       seed_departments: { Args: { p_company: string }; Returns: undefined }
@@ -308,6 +310,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_category: {
+        Row: {
+          account_category_name: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          org_id: string
+          root_type: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_category_name: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          org_id: string
+          root_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_category_name?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          org_id?: string
+          root_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_category_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       address: {
         Row: {
           address_line1: string

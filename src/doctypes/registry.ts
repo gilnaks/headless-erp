@@ -1,3 +1,4 @@
+import { accountCategory } from "./accounts/account-category";
 import { fiscalYear } from "./accounts/fiscal-year";
 import { supplierGroup } from "./buying/supplier-group";
 import type { Doctype } from "./define";
@@ -45,6 +46,7 @@ export const DOCTYPES: readonly Doctype[] = [
     department,
     holidayList,
     fiscalYear,
+    accountCategory,
     letterHead,
     printSettings,
     printFormat,

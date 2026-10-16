@@ -48,7 +48,7 @@ Module id `accounts`, label **Accounting** (main `src/config/navigation.ts`). Ro
 | Setup › Chart of Cost Centers | `accounts/cost-center` | TreeView + DocForm | P2 | new |
 | Setup › Mode of Payment, Payment Terms Template, Currency Exchange | `accounts/<slug>` | doctypes | P2 | new |
 | *(not in nav)* Payment Term | `accounts/payment-term` | doctype (link target) | P2 | new |
-| Setup › Account Category | `accounts/account-category` | doctype | P2 | new (nav currently drops it, see §9) |
+| Setup › Account Category | `accounts/account-category` | doctype | P2 | |
 | Setup › Financial Report Template | — | not built (§9) | — | deferred |
 | Setup › Accounts Settings | `accounts/settings` | single (DocForm) | P3 | new (row exists since A4) |
 | *(tool, not in nav)* Payment Reconciliation | `accounts/payment-reconciliation` | page | P3 basic | new |
@@ -96,9 +96,10 @@ Conventions for every table below (from 02-database-conventions, not repeated pe
 
 ### 2.2 Account Category → `account_category`
 
-- **Kind:** org-level master (not company-scoped). **Naming:** `field:account_category_name`. **Perms:** Accounts User rwcd, Accounts Manager rwcd, Auditor r.
+- **Migration:** `0210_accounts_account_category.sql`.
+- **Kind:** org-level master (not company-scoped). **Naming:** `field:account_category_name`. **Perms:** Accounts User rwcd, Accounts Manager rwcd, Auditor r. System Manager read (the coverage default; the JSON does not grant System Manager).
 - Fields: `account_category_name` text ✔ unique; `description` text; `root_type` text check (same five) — informational, used by Financial Report Templates in ERPNext.
-- Seeded with the categories referenced by the vendored charts (00-setup §3.2: Trade Receivables, Cash and Cash Equivalents, Other Receivables, … Reserves and Surplus) before B3 runs. Needed because the standard chart assigns one to almost every account. No transactional effect in our scope.
+- Seeded with every distinct `account_category` in the vendored charts (00-setup §3.2: Trade Receivables, Cash and Cash Equivalents, Other Receivables, … Reserves and Surplus), not only the organization's chart. The seed stores the name only, so `root_type` stays null. Needed because the standard chart assigns one to almost every account. No transactional effect in our scope. The account foreign key waits for Account.
 
 ### 2.3 Cost Center → `cost_center`
 
@@ -1102,7 +1103,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 ### P2 — masters
 
 - [ ] `account` tree (+ `app.update_account_number`, `convert_group_to_ledger/ledger_to_group`, `merge_account`, balance-type and frozen validations) — §2.1
-- [ ] `account_category` (seeded from CoA template rows) — §2.2
+- [x] `account_category` (seeded from CoA template rows) — §2.2
 - [ ] `cost_center` tree — §2.3
 - [ ] `mode_of_payment` + `mode_of_payment_account` (+ A11 fixture, B10) — §2.5
 - [ ] `payment_term`, `payment_terms_template` + detail — §2.6
