@@ -272,6 +272,7 @@ export type Database = {
         Returns: undefined
       }
       seed_sales_persons: { Args: { p_org: string }; Returns: undefined }
+      seed_stock_entry_types: { Args: { p_org: string }; Returns: undefined }
       seed_supplier_groups: { Args: { p_org: string }; Returns: undefined }
       seed_territories: { Args: { p_org: string }; Returns: undefined }
       seed_uoms: { Args: { p_org: string }; Returns: undefined }
@@ -3021,6 +3022,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales_person"
             referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      stock_entry_type: {
+        Row: {
+          add_to_transit: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          is_standard: boolean
+          name: string
+          org_id: string
+          purpose: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          add_to_transit?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_standard?: boolean
+          name: string
+          org_id: string
+          purpose: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          add_to_transit?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_standard?: boolean
+          name?: string
+          org_id?: string
+          purpose?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_entry_type_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }

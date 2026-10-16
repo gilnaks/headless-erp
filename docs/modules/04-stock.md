@@ -45,10 +45,10 @@ Module id `stock`, label **Stock**. `src/config/navigation.ts` already lists thi
 | Tools › Packing Slip | `stock/packing-slip` | submittable | P5 |
 | Tools › Quality Inspection | — | not built (§9) | — |
 | Serial & Batch › Serial No, Batch, Serial and Batch Bundle | `stock/serial-no`, `stock/batch`, `stock/serial-and-batch-bundle` | doctypes | P4 |
-| Setup › Item Group, Brand, UOM | `stock/item-group`, `stock/brand`, `stock/uom` | doctypes | P2 |
+| Setup › Item Group, Brand, UOM, Stock Entry Type | `stock/item-group`, `stock/brand`, `stock/uom`, `stock/stock-entry-type` | doctypes | P2 |
 | Setup › Price List, Item Price | `stock/price-list`, `stock/item-price` | doctypes (not in the stock sidebar; Selling and Buying link Price List) | P2 |
 | Setup › Settings | `stock/settings` | single | P4 (row seeded in A4/C4) |
-| *(not in nav)* Stock Entry Type, Warehouse Type, Item Barcode, UOM Conversion Detail, Item Reorder, Item Supplier | children / small masters | with their parent | P2/P4 |
+| *(not in nav)* Warehouse Type, Item Barcode, UOM Conversion Detail, Item Reorder, Item Supplier | children / small masters | with their parent | P2/P4 |
 
 Out of scope: item variants and Item Attribute, Inventory Dimension, batch-wise and serial-wise valuation, stock reservation (`enable_stock_reservation` defaults to 0), Putaway Rule, Quality Inspection, repost-as-a-background-job (repost runs in the same transaction, 03-posting-engine).
 
@@ -150,8 +150,10 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 ### 2.7 Stock Entry Type → `stock_entry_type`
 
-- **Naming:** the purpose name, set by the seed. Fields: `name`, `purpose` (same as the name), `is_standard`, `add_to_transit` default false.
+- **Migration:** `0209_stock_stock_entry_type.sql`.
+- **Naming:** the purpose name, set by the seed. Fields: `name`, `purpose` (same as the name), `is_standard`, `add_to_transit` default false. Purpose is the name, not ERPNext's purpose Select. A second type cannot reuse purpose Material Transfer, so `add_to_transit` stays editable on the standard Material Transfer row. ERPNext's throw that blocks Add to Transit on a standard type is not ported. A standard row cannot be renamed or deleted.
 - **Seed (00-setup A6):** Material Issue, Material Receipt, Material Transfer, Manufacture, Repack, Material Transfer for Manufacture, Material Consumption for Manufacture, Send to Subcontractor. ERPNext's extra types (Disassemble, Receive from Customer, Return Raw Material to Customer, Subcontracting Delivery, Subcontracting Return, Batch Split) stay out, as A6 already says.
+- **Perms:** System Manager, Stock Manager, and Manufacturing Manager rwcd; Stock User read.
 
 ### 2.8 Stock Settings → `stock_settings`
 
@@ -392,7 +394,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [ ] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
 - [ ] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
 - [ ] `price_list`, `item_price` + C1 — §2.6
-- [ ] `stock_entry_type` + A6 — §2.7
+- [x] `stock_entry_type` + A6 — §2.7
 
 ### P4 — ledger
 
