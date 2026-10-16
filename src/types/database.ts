@@ -271,6 +271,7 @@ export type Database = {
         Args: { p_doctype?: string; p_org: string }
         Returns: undefined
       }
+      seed_sales_persons: { Args: { p_org: string }; Returns: undefined }
       seed_uoms: { Args: { p_org: string }; Returns: undefined }
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
@@ -2920,6 +2921,66 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_person: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          is_group: boolean
+          org_id: string
+          parent_id: string | null
+          path: unknown
+          sales_person_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          is_group?: boolean
+          org_id: string
+          parent_id?: string | null
+          path: unknown
+          sales_person_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          is_group?: boolean
+          org_id?: string
+          parent_id?: string | null
+          path?: unknown
+          sales_person_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_person_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_person_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "sales_person"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

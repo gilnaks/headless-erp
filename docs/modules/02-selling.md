@@ -129,9 +129,10 @@ Child of Customer and of Customer Group. One row per company on a parent ("Credi
 
 ### 2.5 Sales Person → `sales_person`
 
-- **Kind:** tree, org-level. **Naming:** `field:sales_person_name`. **Perms:** Sales Manager rwcd, Sales User r.
-- Fields: `sales_person_name` ✔, `parent_id`, `is_group` ✔ default false, `enabled` default true, `commission_rate` percent. `employee` is not built (HR).
-- A disabled sales person cannot be added to a sales team ("Sales Person {0} is disabled.").
+- **Kind:** tree, org-level. **Naming:** `field:sales_person_name`. **Perms:** Sales Manager rwcd, Sales User read. System Manager also reads (the JSON omits that role). Sales Manager holds the rwcd that the JSON gives Sales Master Manager, which is not seeded (§9).
+- **Migration:** `0204_selling_sales_person.sql`. Parent of a new non-root defaults to the root (`Sales Team`).
+- Fields: `sales_person_name` ✔, `parent_id`, `is_group` ✔ default false, `enabled` default true, `commission_rate` percent, `path`. `employee` is not built (HR).
+- A disabled sales person cannot be added to a sales team ("Sales Person {0} is disabled."); that check lands with Sales Team.
 - **Seed (00-setup A10):** `Sales Team` (group) only.
 - Target rows are not built (§9).
 
@@ -519,7 +520,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 
 - [x] `customer_group` tree + A8 seed — §2.3
 - [ ] `territory` tree + A7 seed — §2.4
-- [ ] `sales_person` tree + A10 seed — §2.5
+- [x] `sales_person` tree + A10 seed — §2.5
 - [ ] `industry_type` — §2.7
 - [ ] `customer` + `customer_credit_limit` + `sales_team` + `party_account` rows — §2.1, §2.2, §2.6
 - [ ] `product_bundle` + `product_bundle_item` — §2.9
