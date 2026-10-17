@@ -62,8 +62,9 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 - **Kind:** tree, org-level. **Naming:** `field:item_group_name`. **Perms:** Item Manager rwcd; Stock User, Stock Manager, Sales User, Purchase User and Accounts User read. System Manager also reads (the JSON omits that role and lists Desk User select, which is not seeded).
 - **Migration:** `0201_stock_item_group.sql`. Parent of a new non-root defaults to the root.
-- Fields in this migration: `item_group_name` ✔, `parent_id`, `is_group` default false, `path`. `item_group_defaults` and `taxes` wait for Account and Item Tax Template.
-- A group with children cannot become a leaf. A group selected on an item cannot become a leaf either; that check lands with Item.
+- Fields in this migration: `item_group_name` ✔, `parent_id`, `is_group` default false, `path`.
+- A group with children cannot become a leaf. A leaf selected on an item cannot become a group.
+- **Built (0238):** an empty item copies the group's defaults and taxes.
 - **Seed (00-setup A5):** `All Item Groups` (group) → `Products`, `Raw Material`, `Services`, `Sub Assemblies`, `Consumable`.
 
 ### 2.2 Item → `item`
@@ -118,7 +119,8 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 `item_default` columns we keep, per company: `default_warehouse`, `default_price_list`, `income_account`, `expense_account`, `buying_cost_center`, `selling_cost_center`, `default_supplier`. Empty means the company default (inventory account, COGS, expense, cost center, Stores). Deferred-revenue accounts, provisional accounts and variance accounts are omitted.
 
 - **Validate:** leaf item group; stock UOM enabled; conversion factor 1 for the stock UOM; a stock item needs a valuation method resolvable to FIFO or Moving Average; serial and batch cannot both be turned off after stock exists; `end_of_life` is not before today on a new item. Variant fields (`has_variants`, `variant_of`, attributes) are hidden and a save with `has_variants` throws (§9).
-- **Delete:** blocked when any SLE, serial or batch points at the item.
+- **Delete:** blocked when any SLE, serial or batch points at the item. Those checks wait until the stock ledger, serial, and batch tables exist.
+- **Built (0238):** A saved item is named from the trimmed item code, and a blank item name becomes that code. A duplicate code is rejected. A group item group, a disabled stock UOM, and `has_variants` are rejected. A blank end of life becomes 2099-12-31, and a date before today is rejected. The stock UOM conversion row is factor 1. A warehouse, account, or cost center from another company is rejected. A barcode is unique per organization. `app.copy_item_group_details` copies the group's defaults and taxes when the item's own rows are empty. System Manager can read. Item Manager can create and delete. Stock, Sales, Purchase, Accounts, and Manufacturing roles can read. Naming Series, opening stock, and the stock-ledger change checks wait.
 
 ### 2.3 UOM → `uom`
 
@@ -130,7 +132,8 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 ### 2.4 Brand → `brand`
 
 - **Naming:** `field:brand`. **Perms:** Item Manager rwcd; Stock User, Sales User, Purchase User and Accounts User read. System Manager also reads (the JSON omits that role and lists Website Manager select, which is not seeded).
-- Fields in this migration: `brand` ✔ unique, `description`. `brand_defaults` (the same company default columns as the item) waits for Item Default, once Account and Warehouse exist.
+- Fields in this migration: `brand` ✔ unique, `description`.
+- **Built (0238):** `brand_defaults` stores the same company default columns as an item default.
 
 ### 2.5 Warehouse → `warehouse`
 
@@ -393,7 +396,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `item_group` + A5 — §2.1
 - [x] `brand` — §2.4
 - [x] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
-- [ ] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
+- [x] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
 - [ ] `price_list`, `item_price` + C1 — §2.6
 - [x] `stock_entry_type` + A6 — §2.7
 

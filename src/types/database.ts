@@ -104,6 +104,7 @@ export type Database = {
         Returns: boolean
       }
       contact_refresh: { Args: { p_contact: string }; Returns: undefined }
+      copy_item_group_details: { Args: { p_item: string }; Returns: undefined }
       copy_uoms: { Args: { p_all: boolean; p_org: string }; Returns: undefined }
       create_charts: { Args: { p_company: string }; Returns: undefined }
       create_company: { Args: { p: Json }; Returns: Json }
@@ -861,6 +862,122 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_default: {
+        Row: {
+          buying_cost_center_id: string | null
+          company_id: string
+          default_price_list_id: string | null
+          default_supplier_id: string | null
+          default_warehouse_id: string | null
+          expense_account_id: string | null
+          id: string
+          idx: number
+          income_account_id: string | null
+          org_id: string
+          parent_id: string
+          selling_cost_center_id: string | null
+        }
+        Insert: {
+          buying_cost_center_id?: string | null
+          company_id: string
+          default_price_list_id?: string | null
+          default_supplier_id?: string | null
+          default_warehouse_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx: number
+          income_account_id?: string | null
+          org_id: string
+          parent_id: string
+          selling_cost_center_id?: string | null
+        }
+        Update: {
+          buying_cost_center_id?: string | null
+          company_id?: string
+          default_price_list_id?: string | null
+          default_supplier_id?: string | null
+          default_warehouse_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx?: number
+          income_account_id?: string | null
+          org_id?: string
+          parent_id?: string
+          selling_cost_center_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_default_org_id_buying_cost_center_id_fkey"
+            columns: ["org_id", "buying_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_default_price_list_id_fkey"
+            columns: ["org_id", "default_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_default_supplier_id_fkey"
+            columns: ["org_id", "default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_default_warehouse_id_fkey"
+            columns: ["org_id", "default_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_expense_account_id_fkey"
+            columns: ["org_id", "expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_income_account_id_fkey"
+            columns: ["org_id", "income_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "brand"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "brand_default_org_id_selling_cost_center_id_fkey"
+            columns: ["org_id", "selling_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -3227,6 +3344,338 @@ export type Database = {
           },
         ]
       }
+      item: {
+        Row: {
+          allow_negative_stock: boolean
+          batch_number_series: string | null
+          brand_id: string | null
+          create_new_batch: boolean
+          created_at: string
+          created_by: string | null
+          default_material_request_type: string
+          delivered_by_supplier: boolean
+          description: string | null
+          disabled: boolean
+          end_of_life: string
+          grant_commission: boolean
+          has_batch_no: boolean
+          has_expiry_date: boolean
+          has_serial_no: boolean
+          has_variants: boolean
+          id: string
+          include_item_in_manufacturing: boolean
+          is_fixed_asset: boolean
+          is_purchase_item: boolean
+          is_sales_item: boolean
+          is_stock_item: boolean
+          item_code: string
+          item_group_id: string
+          item_name: string
+          last_purchase_rate: number | null
+          lead_time_days: number | null
+          max_discount: number | null
+          min_order_qty: number
+          name: string
+          org_id: string
+          over_billing_allowance: number | null
+          over_delivery_receipt_allowance: number | null
+          safety_stock: number | null
+          serial_no_series: string | null
+          shelf_life_in_days: number | null
+          standard_rate: number | null
+          stock_uom_id: string
+          updated_at: string
+          updated_by: string | null
+          valuation_method: string | null
+          valuation_rate: number | null
+          weight_per_unit: number | null
+          weight_uom_id: string | null
+        }
+        Insert: {
+          allow_negative_stock?: boolean
+          batch_number_series?: string | null
+          brand_id?: string | null
+          create_new_batch?: boolean
+          created_at?: string
+          created_by?: string | null
+          default_material_request_type?: string
+          delivered_by_supplier?: boolean
+          description?: string | null
+          disabled?: boolean
+          end_of_life?: string
+          grant_commission?: boolean
+          has_batch_no?: boolean
+          has_expiry_date?: boolean
+          has_serial_no?: boolean
+          has_variants?: boolean
+          id?: string
+          include_item_in_manufacturing?: boolean
+          is_fixed_asset?: boolean
+          is_purchase_item?: boolean
+          is_sales_item?: boolean
+          is_stock_item?: boolean
+          item_code: string
+          item_group_id: string
+          item_name: string
+          last_purchase_rate?: number | null
+          lead_time_days?: number | null
+          max_discount?: number | null
+          min_order_qty?: number
+          name: string
+          org_id: string
+          over_billing_allowance?: number | null
+          over_delivery_receipt_allowance?: number | null
+          safety_stock?: number | null
+          serial_no_series?: string | null
+          shelf_life_in_days?: number | null
+          standard_rate?: number | null
+          stock_uom_id: string
+          updated_at?: string
+          updated_by?: string | null
+          valuation_method?: string | null
+          valuation_rate?: number | null
+          weight_per_unit?: number | null
+          weight_uom_id?: string | null
+        }
+        Update: {
+          allow_negative_stock?: boolean
+          batch_number_series?: string | null
+          brand_id?: string | null
+          create_new_batch?: boolean
+          created_at?: string
+          created_by?: string | null
+          default_material_request_type?: string
+          delivered_by_supplier?: boolean
+          description?: string | null
+          disabled?: boolean
+          end_of_life?: string
+          grant_commission?: boolean
+          has_batch_no?: boolean
+          has_expiry_date?: boolean
+          has_serial_no?: boolean
+          has_variants?: boolean
+          id?: string
+          include_item_in_manufacturing?: boolean
+          is_fixed_asset?: boolean
+          is_purchase_item?: boolean
+          is_sales_item?: boolean
+          is_stock_item?: boolean
+          item_code?: string
+          item_group_id?: string
+          item_name?: string
+          last_purchase_rate?: number | null
+          lead_time_days?: number | null
+          max_discount?: number | null
+          min_order_qty?: number
+          name?: string
+          org_id?: string
+          over_billing_allowance?: number | null
+          over_delivery_receipt_allowance?: number | null
+          safety_stock?: number | null
+          serial_no_series?: string | null
+          shelf_life_in_days?: number | null
+          standard_rate?: number | null
+          stock_uom_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valuation_method?: string | null
+          valuation_rate?: number | null
+          weight_per_unit?: number | null
+          weight_uom_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_org_id_brand_id_fkey"
+            columns: ["org_id", "brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_org_id_item_group_id_fkey"
+            columns: ["org_id", "item_group_id"]
+            isOneToOne: false
+            referencedRelation: "item_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_org_id_weight_uom_id_fkey"
+            columns: ["org_id", "weight_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_barcode: {
+        Row: {
+          barcode: string
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          barcode: string
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          barcode?: string
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_barcode_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_barcode_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_default: {
+        Row: {
+          buying_cost_center_id: string | null
+          company_id: string
+          default_price_list_id: string | null
+          default_supplier_id: string | null
+          default_warehouse_id: string | null
+          expense_account_id: string | null
+          id: string
+          idx: number
+          income_account_id: string | null
+          org_id: string
+          parent_id: string
+          selling_cost_center_id: string | null
+        }
+        Insert: {
+          buying_cost_center_id?: string | null
+          company_id: string
+          default_price_list_id?: string | null
+          default_supplier_id?: string | null
+          default_warehouse_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx: number
+          income_account_id?: string | null
+          org_id: string
+          parent_id: string
+          selling_cost_center_id?: string | null
+        }
+        Update: {
+          buying_cost_center_id?: string | null
+          company_id?: string
+          default_price_list_id?: string | null
+          default_supplier_id?: string | null
+          default_warehouse_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx?: number
+          income_account_id?: string | null
+          org_id?: string
+          parent_id?: string
+          selling_cost_center_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_default_org_id_buying_cost_center_id_fkey"
+            columns: ["org_id", "buying_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_default_price_list_id_fkey"
+            columns: ["org_id", "default_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_default_supplier_id_fkey"
+            columns: ["org_id", "default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_default_warehouse_id_fkey"
+            columns: ["org_id", "default_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_expense_account_id_fkey"
+            columns: ["org_id", "expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_income_account_id_fkey"
+            columns: ["org_id", "income_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_default_org_id_selling_cost_center_id_fkey"
+            columns: ["org_id", "selling_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       item_group: {
         Row: {
           created_at: string
@@ -3277,6 +3726,366 @@ export type Database = {
             columns: ["org_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "item_group"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_group_default: {
+        Row: {
+          buying_cost_center_id: string | null
+          company_id: string
+          default_price_list_id: string | null
+          default_supplier_id: string | null
+          default_warehouse_id: string | null
+          expense_account_id: string | null
+          id: string
+          idx: number
+          income_account_id: string | null
+          org_id: string
+          parent_id: string
+          selling_cost_center_id: string | null
+        }
+        Insert: {
+          buying_cost_center_id?: string | null
+          company_id: string
+          default_price_list_id?: string | null
+          default_supplier_id?: string | null
+          default_warehouse_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx: number
+          income_account_id?: string | null
+          org_id: string
+          parent_id: string
+          selling_cost_center_id?: string | null
+        }
+        Update: {
+          buying_cost_center_id?: string | null
+          company_id?: string
+          default_price_list_id?: string | null
+          default_supplier_id?: string | null
+          default_warehouse_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx?: number
+          income_account_id?: string | null
+          org_id?: string
+          parent_id?: string
+          selling_cost_center_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_group_default_org_id_buying_cost_center_id_fkey"
+            columns: ["org_id", "buying_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_default_price_list_id_fkey"
+            columns: ["org_id", "default_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_default_supplier_id_fkey"
+            columns: ["org_id", "default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_default_warehouse_id_fkey"
+            columns: ["org_id", "default_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_expense_account_id_fkey"
+            columns: ["org_id", "expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_income_account_id_fkey"
+            columns: ["org_id", "income_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_default_org_id_selling_cost_center_id_fkey"
+            columns: ["org_id", "selling_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_group_tax: {
+        Row: {
+          id: string
+          idx: number
+          item_tax_template_id: string | null
+          maximum_net_rate: number | null
+          minimum_net_rate: number | null
+          org_id: string
+          parent_id: string
+          tax_category_id: string | null
+          valid_from: string | null
+        }
+        Insert: {
+          id?: string
+          idx: number
+          item_tax_template_id?: string | null
+          maximum_net_rate?: number | null
+          minimum_net_rate?: number | null
+          org_id: string
+          parent_id: string
+          tax_category_id?: string | null
+          valid_from?: string | null
+        }
+        Update: {
+          id?: string
+          idx?: number
+          item_tax_template_id?: string | null
+          maximum_net_rate?: number | null
+          minimum_net_rate?: number | null
+          org_id?: string
+          parent_id?: string
+          tax_category_id?: string | null
+          valid_from?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_group_tax_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_group_tax_org_id_item_tax_template_id_fkey"
+            columns: ["org_id", "item_tax_template_id"]
+            isOneToOne: false
+            referencedRelation: "item_tax_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_tax_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_group_tax_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_reorder: {
+        Row: {
+          id: string
+          idx: number
+          material_request_type: string
+          org_id: string
+          parent_id: string
+          warehouse_group_id: string | null
+          warehouse_id: string | null
+          warehouse_reorder_level: number
+          warehouse_reorder_qty: number
+        }
+        Insert: {
+          id?: string
+          idx: number
+          material_request_type?: string
+          org_id: string
+          parent_id: string
+          warehouse_group_id?: string | null
+          warehouse_id?: string | null
+          warehouse_reorder_level?: number
+          warehouse_reorder_qty?: number
+        }
+        Update: {
+          id?: string
+          idx?: number
+          material_request_type?: string
+          org_id?: string
+          parent_id?: string
+          warehouse_group_id?: string | null
+          warehouse_id?: string | null
+          warehouse_reorder_level?: number
+          warehouse_reorder_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_reorder_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_reorder_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_reorder_org_id_warehouse_group_id_fkey"
+            columns: ["org_id", "warehouse_group_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_reorder_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_supplier: {
+        Row: {
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+          supplier_id: string
+          supplier_part_no: string | null
+        }
+        Insert: {
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+          supplier_id: string
+          supplier_part_no?: string | null
+        }
+        Update: {
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+          supplier_id?: string
+          supplier_part_no?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_supplier_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_supplier_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_supplier_org_id_supplier_id_fkey"
+            columns: ["org_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_tax: {
+        Row: {
+          id: string
+          idx: number
+          item_tax_template_id: string | null
+          maximum_net_rate: number | null
+          minimum_net_rate: number | null
+          org_id: string
+          parent_id: string
+          tax_category_id: string | null
+          valid_from: string | null
+        }
+        Insert: {
+          id?: string
+          idx: number
+          item_tax_template_id?: string | null
+          maximum_net_rate?: number | null
+          minimum_net_rate?: number | null
+          org_id: string
+          parent_id: string
+          tax_category_id?: string | null
+          valid_from?: string | null
+        }
+        Update: {
+          id?: string
+          idx?: number
+          item_tax_template_id?: string | null
+          maximum_net_rate?: number | null
+          minimum_net_rate?: number | null
+          org_id?: string
+          parent_id?: string
+          tax_category_id?: string | null
+          valid_from?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_tax_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_tax_org_id_item_tax_template_id_fkey"
+            columns: ["org_id", "item_tax_template_id"]
+            isOneToOne: false
+            referencedRelation: "item_tax_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_tax_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_tax_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -3379,6 +4188,55 @@ export type Database = {
             columns: ["org_id", "tax_type_id"]
             isOneToOne: false
             referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      item_uom: {
+        Row: {
+          conversion_factor: number
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+          uom_id: string
+        }
+        Insert: {
+          conversion_factor: number
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+          uom_id: string
+        }
+        Update: {
+          conversion_factor?: number
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+          uom_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_uom_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_uom_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_uom_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -6036,6 +6894,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      copy_item_group_details: { Args: { p_item: string }; Returns: undefined }
       create_company: { Args: { p: Json }; Returns: Json }
       create_default_tax_templates: {
         Args: { p_company: string }
