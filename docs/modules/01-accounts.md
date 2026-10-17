@@ -195,6 +195,8 @@ Full field list in §6. **Perms:** Accounts Manager rw; Sales User r, Purchase U
 - Validations: "Item Tax Row {0}: Account must belong to Company - {1}"; account type must be one of Tax, Chargeable, Income Account, Expense Account, Expenses Included In Valuation ("Item Tax Row {0} must have account of type Tax or Income or Expense or Chargeable"); "{0} entered twice in Item Tax".
 - Used through `item_tax` child rows on Item / Item Group (04-stock owns the tables: `item_tax_template_id`, `tax_category_id`, `valid_from`, `minimum_net_rate`, `maximum_net_rate`). `get_item_tax_map(doc, template)` = `{account_head: rate}` from the document's tax rows (not set by template) overlaid with the template's rows for the doc company.
 
+**Built (0230).** `app.tax_template_name` names a template `<trimmed title> - <company abbr>`. The header trigger runs as the owner. `not_applicable` stores rate 0, and a negative rate is allowed. An account from another company raises `item_tax_company`. A disallowed account type raises `item_tax_type`. The same account twice raises `item_tax_duplicate`. A template with no tax row raises `item_tax_rows`. `app.get_item_tax_map` keeps document tax rows that were not set by a template, overlays the template rows for that company, and stores `N/A` for a not-applicable row. System Manager and Accounts Manager can create and delete. Accounts User, Sales User, Sales Manager, Purchase User, Purchase Manager, Stock User, Stock Manager, and Item Manager can read. Item and Item Group tax rows, Tax Rule, and the country tax seed stay for later pull requests.
+
 ### 2.13 Tax Category → `tax_category`
 
 Org-level; naming `field:title`; `title` ✔ unique, `disabled` false. Perms System Manager / Accounts Manager rwcd, Accounts User r (+ read for selling/buying/stock). Links in: Customer, Supplier, Address (`tax_category`), templates, Tax Rule, Item Tax rows. `get_address_tax_category` uses `accounts_settings.determine_address_tax_category_from` (`Billing Address`).
@@ -1120,7 +1122,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `currency_exchange` + `app.get_exchange_rate` — §2.8
 - [ ] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
 - [x] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
-- [ ] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12
+- [x] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12
 - [x] `tax_category` — §2.13, `0226_accounts_tax_category.sql`
 - [ ] `tax_rule` + `app.get_tax_template` ranking — §2.14
 - [x] `party_type` (A13) and `print_heading` (A15) fixtures — `0225_setup_party_type_print_heading.sql`

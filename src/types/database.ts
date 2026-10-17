@@ -162,6 +162,10 @@ export type Database = {
         }
         Returns: number
       }
+      get_item_tax_map: {
+        Args: { p_company: string; p_taxes: Json; p_template: string }
+        Returns: Json
+      }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
         Returns: boolean
@@ -193,6 +197,10 @@ export type Database = {
       }
       is_member: { Args: { p_org: string }; Returns: boolean }
       is_printable: { Args: { p_doctype: string }; Returns: boolean }
+      item_tax_require_rows: {
+        Args: { p_template: string }
+        Returns: undefined
+      }
       jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
       locked_permission_doctypes: { Args: never; Returns: string[] }
       next_name: {
@@ -2767,6 +2775,108 @@ export type Database = {
           },
         ]
       }
+      item_tax_template: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          name: string
+          org_id: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          name: string
+          org_id: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          name?: string
+          org_id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_tax_template_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_tax_template_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_tax_template_detail: {
+        Row: {
+          created_at: string
+          id: string
+          idx: number
+          not_applicable: boolean
+          org_id: string
+          parent_id: string
+          tax_rate: number | null
+          tax_type_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idx: number
+          not_applicable?: boolean
+          org_id: string
+          parent_id: string
+          tax_rate?: number | null
+          tax_type_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idx?: number
+          not_applicable?: boolean
+          org_id?: string
+          parent_id?: string
+          tax_rate?: number | null
+          tax_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_tax_template_detail_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "item_tax_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_tax_template_detail_org_id_tax_type_id_fkey"
+            columns: ["org_id", "tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       letter_head: {
         Row: {
           align: string
@@ -5097,6 +5207,10 @@ export type Database = {
           p_to: string
         }
         Returns: number
+      }
+      get_item_tax_map: {
+        Args: { p_company: string; p_taxes?: Json; p_template: string }
+        Returns: Json
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
