@@ -40,6 +40,7 @@ import { systemSettings } from "./setup/system-settings";
 import { termsAndConditions } from "./setup/terms-and-conditions";
 import { userPermission } from "./setup/user-permission";
 import { brand } from "./stock/brand";
+import { item } from "./stock/item";
 import { itemGroup } from "./stock/item-group";
 import { priceList } from "./stock/price-list";
 import { stockEntryType } from "./stock/stock-entry-type";
@@ -90,6 +91,7 @@ export const DOCTYPES: readonly Doctype[] = [
     stockEntryType,
     warehouseType,
     warehouse,
+    item,
     itemGroup,
     brand,
     priceList,
