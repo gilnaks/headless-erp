@@ -99,6 +99,7 @@ Conventions match 01-accounts §2: `id`, `org_id`, `name` unique per org, audit 
 - **Action:** `app.get_customer_group_details(customer_id)` copies the group's `accounts`, `credit_limits`, `payment_terms` and `default_price_list` onto the customer and saves.
 - **Delete:** blocked while submitted quotations, orders, delivery notes or invoices point at it (Frappe link check).
 - **Connections:** Quotation, Sales Order, Delivery Note, Sales Invoice, Payment Entry, addresses and contacts (00-setup).
+- **Built (0235):** A saved customer is named from the trimmed customer name, and a taken name uses the next `"name - N"`. A group customer group, a buying price list, a non-receivable account, a sales team that does not total 100, and a disabled sales person are rejected. `app.get_party_account` walks the customer, then the customer group, then the company receivable. `app.get_customer_group_details` copies the group's price list, payment terms, accounts, and credit limits. System Manager can read. Sales User can create. Sales Manager can delete. Stock and Accounts roles can read. Supplier waits. Naming Series waits for Selling Settings.
 
 ### 2.2 Customer Credit Limit → `customer_credit_limit`
 
@@ -524,7 +525,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 - [x] `territory` tree + A7 seed — §2.4
 - [x] `sales_person` tree + A10 seed — §2.5
 - [x] `industry_type` — §2.7
-- [ ] `customer` + `customer_credit_limit` + `sales_team` + `party_account` rows — §2.1, §2.2, §2.6
+- [x] `customer` + `customer_credit_limit` + `sales_team` + `party_account` rows — §2.1, §2.2, §2.6
 - [ ] `product_bundle` + `product_bundle_item` — §2.9
 
 ### P5 — transactions
