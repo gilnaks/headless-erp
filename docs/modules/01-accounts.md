@@ -186,6 +186,8 @@ Full field list in §6. **Perms:** Accounts Manager rw; Sales User r, Purchase U
 - Validations (`valdiate_taxes_and_charges_template` — ERPNext typo): setting `is_default` clears other defaults of the company; "Disabled template must not be default template"; one enabled template per `tax_category` per company ("A template with tax category {0} already exists. Only one template is allowed with each tax category"); per row `validate_taxes_and_charges` ("Can refer row only if the charge type is 'On Previous Row Amount' or 'Previous Row Total'", "Cannot select charge type as 'On Previous Row Amount' or 'On Previous Row Total' for first row", "Please specify a valid Row ID for row {0} in table {1}", "Cannot refer row number greater than or equal to current row number for this Charge type"; `Actual` rows get `rate = null`), `validate_account_head` (ledger of the company), `validate_cost_center`, `validate_inclusive_tax` ("Charge of type 'Actual' in row {0} cannot be included in Item Rate or Paid Amount", "To include tax in row {0} in Item rate, taxes in rows {1} must also be included").
 - **Provisioning (B7):** `app.create_default_tax_templates(company_id)` from `country_wise_tax.json` as specified in 00-setup Stage B7.
 
+**Built (0227, 0228, 0229).** `app.tax_template_name` names a template `<trimmed title> - <company abbr>`. The helper is not granted to API roles; the header triggers run as the owner so they can call it. A disabled default raises `tax_template_default`. A second enabled template with the same tax category in the company raises `tax_template_category`. Setting `is_default` clears the other default for that company. A charge row requires a non-group account of the same company (`tax_account_head`). `Actual` clears `rate`. An Actual row included in the print rate or the paid amount raises `tax_inclusive_actual` on both templates. A previous-row charge on row 1, or a row id that is missing or not before the current row, raises `tax_row_id`. A cost center from another company raises `tax_cost_center`. Deleting the tax category or the cost center nulls that link. Sales: System Manager read, Accounts Manager and Sales Manager create and delete, Sales User, Accounts User, Stock User, and Purchase User read. Purchase: System Manager read, Accounts Manager create and delete, Purchase Manager, Purchase User, and Accounts User read. The "previous rows must also be included" check, Item Tax Template, Tax Rule, and the country tax seed stay for later pull requests.
+
 ### 2.12 Item Tax Template → `item_tax_template` + child `item_tax_template_detail`
 
 - Company-scoped; naming `"<title> - <ABBR>"`. Perms: System Manager rwcd, Accounts Manager rwcd, Accounts User r (+ read for selling/buying/stock roles).
@@ -1117,7 +1119,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [ ] `payment_schedule` child table (shared by SO/PO/SI/PI) + `src/lib/calc/payment-schedule.ts` / `app.make_payment_schedule` — §2.7, §3.9
 - [x] `currency_exchange` + `app.get_exchange_rate` — §2.8
 - [ ] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
-- [ ] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
+- [x] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
 - [ ] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12
 - [x] `tax_category` — §2.13, `0226_accounts_tax_category.sql`
 - [ ] `tax_rule` + `app.get_tax_template` ranking — §2.14
