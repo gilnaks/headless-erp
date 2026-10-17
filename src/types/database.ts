@@ -3911,6 +3911,128 @@ export type Database = {
           },
         ]
       }
+      item_price: {
+        Row: {
+          buying: boolean
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          id: string
+          item_id: string
+          item_name: string
+          lead_time_days: number | null
+          name: string
+          org_id: string
+          packing_unit: number
+          price_list_id: string
+          price_list_rate: number
+          selling: boolean
+          supplier_id: string | null
+          uom_id: string
+          updated_at: string
+          updated_by: string | null
+          valid_from: string
+          valid_upto: string | null
+        }
+        Insert: {
+          buying?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          customer_id?: string | null
+          id?: string
+          item_id: string
+          item_name: string
+          lead_time_days?: number | null
+          name: string
+          org_id: string
+          packing_unit?: number
+          price_list_id: string
+          price_list_rate: number
+          selling?: boolean
+          supplier_id?: string | null
+          uom_id: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string
+          valid_upto?: string | null
+        }
+        Update: {
+          buying?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          item_id?: string
+          item_name?: string
+          lead_time_days?: number | null
+          name?: string
+          org_id?: string
+          packing_unit?: number
+          price_list_id?: string
+          price_list_rate?: number
+          selling?: boolean
+          supplier_id?: string | null
+          uom_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_from?: string
+          valid_upto?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_price_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "item_price_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_price_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_price_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_price_org_id_price_list_id_fkey"
+            columns: ["org_id", "price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_price_org_id_supplier_id_fkey"
+            columns: ["org_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "item_price_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       item_reorder: {
         Row: {
           id: string

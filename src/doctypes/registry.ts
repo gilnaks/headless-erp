@@ -42,6 +42,7 @@ import { userPermission } from "./setup/user-permission";
 import { brand } from "./stock/brand";
 import { item } from "./stock/item";
 import { itemGroup } from "./stock/item-group";
+import { itemPrice } from "./stock/item-price";
 import { priceList } from "./stock/price-list";
 import { stockEntryType } from "./stock/stock-entry-type";
 import { uom } from "./stock/uom";
@@ -95,6 +96,7 @@ export const DOCTYPES: readonly Doctype[] = [
     itemGroup,
     brand,
     priceList,
+    itemPrice,
     customer,
     customerGroup,
     salesPerson,

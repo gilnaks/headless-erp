@@ -148,8 +148,9 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 
 - **`price_list`:** naming `field:price_list_name`. Fields: `price_list_name` ✔, `currency` ✔, `enabled` default true, `buying` default false, `selling` default false, `price_not_uom_dependent` default false. At least one of buying or selling. **Perms:** Sales Manager rwcd and Purchase Manager rwcd (JSON says Sales Master Manager and Purchase Master Manager — folded). Sales User and Purchase User read.
 - **Seed (00-setup C1):** `Standard Selling` (selling, company currency), `Standard Buying` (buying, company currency).
-- **Built (0234):** `companies_seed_price_lists` runs on company insert. The first company in an organization gets Standard Selling and Standard Buying in the organization currency. A later company does not add another pair. System Manager, Sales User, and Purchase User can read. Sales Manager and Purchase Manager can create and delete. Item Price waits for Item.
-- **`item_price`:** `item_code` ✔, `uom` ✔ (item stock UOM), `price_list` ✔, `price_list_rate` ✔, `valid_from` default today, `valid_upto`, `customer_id` or `supplier_id` (a party-specific price beats the list price), `batch_id`, `packing_unit` default 0, `lead_time_days`. Currency is the price list's. Unique on `(item, price_list, uom, customer, supplier, valid_from, batch)` per org. **Perms:** Sales Manager and Purchase Manager rwcd.
+- **Built (0234):** `companies_seed_price_lists` runs on company insert. The first company in an organization gets Standard Selling and Standard Buying in the organization currency. A later company does not add another pair. System Manager, Sales User, and Purchase User can read. Sales Manager and Purchase Manager can create and delete.
+- **`item_price`:** `item_code` ✔, `uom` (blank becomes the item stock UOM), `price_list` ✔, `price_list_rate` ✔, `valid_from` default today, `valid_upto`, `customer_id` or `supplier_id` (a party-specific price beats the list price), `packing_unit` default 0, `lead_time_days`. Currency, buying, and selling are copied from the price list. Unique on `(item, price_list, uom, customer, supplier, valid_from, packing_unit)` per org, with null parties counting as the same value. `batch_id` waits for Batch. **Perms:** Sales Manager and Purchase Manager rwcd.
+- **Built (0240):** A saved item price is named with a random id, and its item name is copied from the item. A blank UOM becomes the item's stock UOM. A blank valid-from date becomes today, and a null packing unit becomes 0. A UOM that is not on the item, a disabled price list, and a valid-upto before valid-from are rejected. The same item, price list, UOM, customer, supplier, valid-from, and packing unit cannot be saved twice. A selling-only list clears the supplier, and a buying-only list clears the customer. System Manager can read. Sales Manager and Purchase Manager can create and delete. Batch and `get_item_details` wait.
 - `app.get_item_details` (§3.1) reads these rows. When `auto_insert_price_list_rate_if_missing` is on (C4 sets it), saving a selling or buying document inserts an Item Price at the row rate if none exists (`update_price_list_based_on = Rate`).
 
 ### 2.7 Stock Entry Type → `stock_entry_type`
@@ -397,7 +398,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `brand` — §2.4
 - [x] `warehouse`, `warehouse_type` + A16 + B5 — §2.5
 - [x] `item` + defaults, taxes, reorder, suppliers, barcodes, UOM conversions — §2.2
-- [ ] `price_list`, `item_price` + C1 — §2.6
+- [x] `price_list`, `item_price` + C1 — §2.6
 - [x] `stock_entry_type` + A6 — §2.7
 
 ### P4 — ledger
