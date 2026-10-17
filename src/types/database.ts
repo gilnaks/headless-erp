@@ -336,6 +336,10 @@ export type Database = {
         Returns: undefined
       }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
+      tax_template_name: {
+        Args: { p_company: string; p_title: string }
+        Returns: string
+      }
       tree_label: { Args: { p_id: string }; Returns: unknown }
       uom_names_curated: { Args: never; Returns: string[] }
       user_org_ids: { Args: never; Returns: string[] }
@@ -3638,6 +3642,155 @@ export type Database = {
           },
         ]
       }
+      purchase_taxes_and_charges: {
+        Row: {
+          account_currency: string | null
+          account_head_id: string
+          add_deduct_tax: string
+          allocate_full_amount_to_stock_items: boolean
+          category: string
+          charge_type: string
+          cost_center_id: string | null
+          created_at: string
+          description: string
+          id: string
+          idx: number
+          included_in_paid_amount: boolean
+          included_in_print_rate: boolean
+          org_id: string
+          parent_id: string
+          rate: number | null
+          row_id: string | null
+        }
+        Insert: {
+          account_currency?: string | null
+          account_head_id: string
+          add_deduct_tax?: string
+          allocate_full_amount_to_stock_items?: boolean
+          category?: string
+          charge_type?: string
+          cost_center_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          idx: number
+          included_in_paid_amount?: boolean
+          included_in_print_rate?: boolean
+          org_id: string
+          parent_id: string
+          rate?: number | null
+          row_id?: string | null
+        }
+        Update: {
+          account_currency?: string | null
+          account_head_id?: string
+          add_deduct_tax?: string
+          allocate_full_amount_to_stock_items?: boolean
+          category?: string
+          charge_type?: string
+          cost_center_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          idx?: number
+          included_in_paid_amount?: boolean
+          included_in_print_rate?: boolean
+          org_id?: string
+          parent_id?: string
+          rate?: number | null
+          row_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_taxes_and_charges_org_id_account_head_id_fkey"
+            columns: ["org_id", "account_head_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "purchase_taxes_and_charges_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "purchase_taxes_and_charges_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_taxes_and_charges_template"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      purchase_taxes_and_charges_template: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          is_default: boolean
+          name: string
+          org_id: string
+          tax_category_id: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_default?: boolean
+          name: string
+          org_id: string
+          tax_category_id?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_default?: boolean
+          name?: string
+          org_id?: string
+          tax_category_id?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_taxes_and_charges_template_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "purchase_taxes_and_charges_template_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_taxes_and_charges_template_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       role_permission_template: {
         Row: {
           can_amend: boolean
@@ -3927,6 +4080,146 @@ export type Database = {
             columns: ["org_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "sales_person"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      sales_taxes_and_charges: {
+        Row: {
+          account_currency: string | null
+          account_head_id: string
+          charge_type: string
+          cost_center_id: string | null
+          created_at: string
+          description: string
+          id: string
+          idx: number
+          included_in_paid_amount: boolean
+          included_in_print_rate: boolean
+          org_id: string
+          parent_id: string
+          rate: number | null
+          row_id: string | null
+        }
+        Insert: {
+          account_currency?: string | null
+          account_head_id: string
+          charge_type: string
+          cost_center_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          idx: number
+          included_in_paid_amount?: boolean
+          included_in_print_rate?: boolean
+          org_id: string
+          parent_id: string
+          rate?: number | null
+          row_id?: string | null
+        }
+        Update: {
+          account_currency?: string | null
+          account_head_id?: string
+          charge_type?: string
+          cost_center_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          idx?: number
+          included_in_paid_amount?: boolean
+          included_in_print_rate?: boolean
+          org_id?: string
+          parent_id?: string
+          rate?: number | null
+          row_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_taxes_and_charges_org_id_account_head_id_fkey"
+            columns: ["org_id", "account_head_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_taxes_and_charges_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_taxes_and_charges_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "sales_taxes_and_charges_template"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      sales_taxes_and_charges_template: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          id: string
+          is_default: boolean
+          name: string
+          org_id: string
+          tax_category_id: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_default?: boolean
+          name: string
+          org_id: string
+          tax_category_id?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          id?: string
+          is_default?: boolean
+          name?: string
+          org_id?: string
+          tax_category_id?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_taxes_and_charges_template_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_taxes_and_charges_template_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_taxes_and_charges_template_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
             referencedColumns: ["org_id", "id"]
           },
         ]

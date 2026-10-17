@@ -7,6 +7,8 @@ import { modeOfPayment } from "./accounts/mode-of-payment";
 import { partyType } from "./accounts/party-type";
 import { paymentTerm } from "./accounts/payment-term";
 import { paymentTermsTemplate } from "./accounts/payment-terms-template";
+import { purchaseTaxesAndChargesTemplate } from "./accounts/purchase-taxes-and-charges-template";
+import { salesTaxesAndChargesTemplate } from "./accounts/sales-taxes-and-charges-template";
 import { taxCategory } from "./accounts/tax-category";
 import { supplierGroup } from "./buying/supplier-group";
 import type { Doctype } from "./define";
@@ -63,6 +65,8 @@ export const DOCTYPES: readonly Doctype[] = [
     modeOfPayment,
     paymentTerm,
     paymentTermsTemplate,
+    purchaseTaxesAndChargesTemplate,
+    salesTaxesAndChargesTemplate,
     currencyExchange,
     partyType,
     taxCategory,
