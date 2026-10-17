@@ -326,6 +326,10 @@ export type Database = {
       seed_modes_of_payment: { Args: { p_org: string }; Returns: undefined }
       seed_onboarding: { Args: { p_org: string }; Returns: undefined }
       seed_party_types: { Args: { p_org: string }; Returns: undefined }
+      seed_price_lists: {
+        Args: { p_currency: string; p_org: string }
+        Returns: undefined
+      }
       seed_print_formats: {
         Args: { p_doctype?: string; p_org: string }
         Returns: undefined
@@ -3584,6 +3588,69 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "payment_term"
             referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      price_list: {
+        Row: {
+          buying: boolean
+          created_at: string
+          created_by: string | null
+          currency: string
+          enabled: boolean
+          id: string
+          name: string
+          org_id: string
+          price_list_name: string
+          price_not_uom_dependent: boolean
+          selling: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          buying?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          enabled?: boolean
+          id?: string
+          name: string
+          org_id: string
+          price_list_name: string
+          price_not_uom_dependent?: boolean
+          selling?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          buying?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          org_id?: string
+          price_list_name?: string
+          price_not_uom_dependent?: boolean
+          selling?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_list_currency_fkey"
+            columns: ["currency"]
+            isOneToOne: false
+            referencedRelation: "currency"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "price_list_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -680,7 +680,8 @@ Input `p`: `{ org: {name, slug, country, default_currency, time_zone, language},
   - C3: `global_defaults` gets `default_company_id`, `default_currency` and `country`.
   - C5: one `app.create_invitation` per invite. After provisioning, the `provisionOrganization` Server Action emails each open invitation (§3.4). This is best effort: a failed send leaves the invitation open for Resend or Copy link on the Users page.
   - C6: `provisioned_at = now()`.
-  - C1, C2 and C4 wait for their tables.
+  - C1 runs from the companies after-insert trigger in `0234_stock_price_list.sql`. C2 and C4 still wait for their tables.
+  - **Built (0234):** `companies_seed_price_lists` runs on company insert. The first company in an organization gets Standard Selling and Standard Buying in the organization currency. A later company does not add another pair.
 - **Idempotency:** re-running for a slug the caller owns that is already provisioned returns `{id, slug, company_id}` unchanged; any other existing slug fails with `slug_taken`.
 - **Atomicity:** any error, such as an invalid invite or an unknown chart, rolls back the whole organization.
 - **Existing organizations:** those created before 0116 had `provisioned_at` backfilled to `created_at`.

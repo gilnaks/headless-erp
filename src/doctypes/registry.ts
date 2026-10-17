@@ -39,6 +39,7 @@ import { termsAndConditions } from "./setup/terms-and-conditions";
 import { userPermission } from "./setup/user-permission";
 import { brand } from "./stock/brand";
 import { itemGroup } from "./stock/item-group";
+import { priceList } from "./stock/price-list";
 import { stockEntryType } from "./stock/stock-entry-type";
 import { uom } from "./stock/uom";
 import { uomCategory } from "./stock/uom-category";
@@ -89,6 +90,7 @@ export const DOCTYPES: readonly Doctype[] = [
     warehouse,
     itemGroup,
     brand,
+    priceList,
     customerGroup,
     salesPerson,
     territory,

@@ -239,7 +239,7 @@ export const MODULES: ModuleNav[] = [
             {
                 label: "Items",
                 icon: Package,
-                items: [doctype("Item", "selling/item", "P2"), doctype("Price List", "selling/price-list", "P2")],
+                items: [doctype("Item", "selling/item", "P2"), doctype("Price List", "stock/price-list", "P2")],
             },
             {
                 label: "Setup",
@@ -288,7 +288,7 @@ export const MODULES: ModuleNav[] = [
                 items: [
                     doctype("Item", "buying/item", "P2"),
                     doctype("Item Group", "stock/item-group", "P2"),
-                    doctype("Price List", "buying/price-list", "P2"),
+                    doctype("Price List", "stock/price-list", "P2"),
                 ],
             },
             {
