@@ -13,6 +13,7 @@ import { salesTaxesAndChargesTemplate } from "./accounts/sales-taxes-and-charges
 import { taxCategory } from "./accounts/tax-category";
 import { supplierGroup } from "./buying/supplier-group";
 import type { Doctype } from "./define";
+import { customer } from "./selling/customer";
 import { customerGroup } from "./selling/customer-group";
 import { industryType } from "./selling/industry-type";
 import { salesPerson } from "./selling/sales-person";
@@ -91,6 +92,7 @@ export const DOCTYPES: readonly Doctype[] = [
     itemGroup,
     brand,
     priceList,
+    customer,
     customerGroup,
     salesPerson,
     territory,

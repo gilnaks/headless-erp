@@ -1,7 +1,28 @@
-import { defineDoctype } from "../define";
+import { defineChildDoctype, defineDoctype } from "../define";
 
-/** ERPNext Customer Group. Price list, payment terms, accounts and credit limits wait for those tables. */
-export const customerGroup = defineDoctype({
+export const customerGroupAccount = defineChildDoctype({
+    doctype: "Customer Group Account",
+    table: "customer_group_party_account",
+    fields: {
+        company_id: { type: "Link", label: "Company", target: "Company", required: true },
+        account_id: { type: "Link", label: "Account", target: "Account" },
+    },
+    columns: ["company_id", "account_id"],
+});
+
+export const customerGroupCreditLimit = defineChildDoctype({
+    doctype: "Customer Group Credit Limit",
+    table: "customer_group_credit_limit",
+    fields: {
+        company_id: { type: "Link", label: "Company", target: "Company", required: true },
+        credit_limit: { type: "Currency", label: "Credit Limit", default: 0 },
+        bypass_credit_limit_check: { type: "Check", label: "Bypass Credit Limit Check" },
+    },
+    columns: ["company_id", "credit_limit", "bypass_credit_limit_check"],
+});
+
+/** ERPNext Customer Group. A group selected on a customer cannot become a group. */
+export const customerGroup = defineDoctype<"customer_group", "accounts" | "credit_limits">({
     doctype: "Customer Group",
     table: "customer_group",
     module: "selling",
@@ -16,11 +37,24 @@ export const customerGroup = defineDoctype({
             description: "Leave empty to place the group under All Customer Groups.",
         },
         is_group: { type: "Check", label: "Is Group" },
+        default_price_list_id: { type: "Link", label: "Default Price List", target: "Price List" },
+        payment_terms_id: { type: "Link", label: "Default Payment Terms Template", target: "Payment Terms Template" },
+        accounts: { type: "Table", label: "Accounts", target: "Customer Group Account" },
+        credit_limits: { type: "Table", label: "Credit Limits", target: "Customer Group Credit Limit" },
     },
+    children: { accounts: customerGroupAccount, credit_limits: customerGroupCreditLimit },
     tabs: [
         {
             label: "Details",
-            sections: [{ columns: [["customer_group_name", "parent_id", "is_group"]] }],
+            sections: [
+                {
+                    columns: [
+                        ["customer_group_name", "parent_id", "is_group"],
+                        ["default_price_list_id", "payment_terms_id"],
+                    ],
+                },
+                { columns: [["credit_limits"], ["accounts"]] },
+            ],
         },
     ],
     listView: {
@@ -34,5 +68,8 @@ export const customerGroup = defineDoctype({
         customer_group_root: "customer_group_name",
         invalid_parent: "parent_id",
         has_children: "is_group",
+        customer_group_in_use: "is_group",
+        customer_price_list: "default_price_list_id",
+        party_account_type: "accounts",
     },
 });

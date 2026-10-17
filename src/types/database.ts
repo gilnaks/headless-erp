@@ -122,6 +122,10 @@ export type Database = {
       }
       create_organization: { Args: { p: Json }; Returns: Json }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      customer_sales_team_refresh: {
+        Args: { p_customer: string }
+        Returns: undefined
+      }
       delete_doc: {
         Args: { p_doctype: string; p_id: string }
         Returns: undefined
@@ -156,6 +160,10 @@ export type Database = {
         Args: { p_end: string; p_start: string }
         Returns: string
       }
+      get_customer_group_details: {
+        Args: { p_customer: string }
+        Returns: undefined
+      }
       get_exchange_rate: {
         Args: {
           p_date: string
@@ -169,6 +177,10 @@ export type Database = {
       get_item_tax_map: {
         Args: { p_company: string; p_taxes: Json; p_template: string }
         Returns: Json
+      }
+      get_party_account: {
+        Args: { p_company: string; p_party: string; p_party_type: string }
+        Returns: string
       }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
@@ -1929,16 +1941,230 @@ export type Database = {
           },
         ]
       }
+      customer: {
+        Row: {
+          alias: string | null
+          created_at: string
+          created_by: string | null
+          customer_details: string | null
+          customer_group_id: string | null
+          customer_name: string
+          customer_primary_address: string | null
+          customer_primary_contact: string | null
+          customer_type: string
+          default_currency: string | null
+          default_price_list_id: string | null
+          disabled: boolean
+          dn_required: boolean
+          id: string
+          industry_id: string | null
+          is_frozen: boolean
+          language: string | null
+          name: string
+          on_hold: boolean
+          org_id: string
+          payment_terms_id: string | null
+          release_date: string | null
+          so_required: boolean
+          tax_category_id: string | null
+          tax_id: string | null
+          territory_id: string | null
+          updated_at: string
+          updated_by: string | null
+          website: string | null
+        }
+        Insert: {
+          alias?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_details?: string | null
+          customer_group_id?: string | null
+          customer_name: string
+          customer_primary_address?: string | null
+          customer_primary_contact?: string | null
+          customer_type?: string
+          default_currency?: string | null
+          default_price_list_id?: string | null
+          disabled?: boolean
+          dn_required?: boolean
+          id?: string
+          industry_id?: string | null
+          is_frozen?: boolean
+          language?: string | null
+          name: string
+          on_hold?: boolean
+          org_id: string
+          payment_terms_id?: string | null
+          release_date?: string | null
+          so_required?: boolean
+          tax_category_id?: string | null
+          tax_id?: string | null
+          territory_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          website?: string | null
+        }
+        Update: {
+          alias?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_details?: string | null
+          customer_group_id?: string | null
+          customer_name?: string
+          customer_primary_address?: string | null
+          customer_primary_contact?: string | null
+          customer_type?: string
+          default_currency?: string | null
+          default_price_list_id?: string | null
+          disabled?: boolean
+          dn_required?: boolean
+          id?: string
+          industry_id?: string | null
+          is_frozen?: boolean
+          language?: string | null
+          name?: string
+          on_hold?: boolean
+          org_id?: string
+          payment_terms_id?: string | null
+          release_date?: string | null
+          so_required?: boolean
+          tax_category_id?: string | null
+          tax_id?: string | null
+          territory_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_org_id_customer_group_id_fkey"
+            columns: ["org_id", "customer_group_id"]
+            isOneToOne: false
+            referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_customer_primary_address_fkey"
+            columns: ["org_id", "customer_primary_address"]
+            isOneToOne: false
+            referencedRelation: "address"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_customer_primary_contact_fkey"
+            columns: ["org_id", "customer_primary_contact"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_default_price_list_id_fkey"
+            columns: ["org_id", "default_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_industry_id_fkey"
+            columns: ["org_id", "industry_id"]
+            isOneToOne: false
+            referencedRelation: "industry_type"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_payment_terms_id_fkey"
+            columns: ["org_id", "payment_terms_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_org_id_territory_id_fkey"
+            columns: ["org_id", "territory_id"]
+            isOneToOne: false
+            referencedRelation: "territory"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      customer_credit_limit: {
+        Row: {
+          bypass_credit_limit_check: boolean
+          company_id: string
+          credit_limit: number
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          bypass_credit_limit_check?: boolean
+          company_id: string
+          credit_limit?: number
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          bypass_credit_limit_check?: boolean
+          company_id?: string
+          credit_limit?: number
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_credit_limit_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_credit_limit_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_credit_limit_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       customer_group: {
         Row: {
           created_at: string
           created_by: string | null
           customer_group_name: string
+          default_price_list_id: string | null
           id: string
           is_group: boolean
           org_id: string
           parent_id: string | null
           path: unknown
+          payment_terms_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1946,11 +2172,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_group_name: string
+          default_price_list_id?: string | null
           id?: string
           is_group?: boolean
           org_id: string
           parent_id?: string | null
           path: unknown
+          payment_terms_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1958,11 +2186,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_group_name?: string
+          default_price_list_id?: string | null
           id?: string
           is_group?: boolean
           org_id?: string
           parent_id?: string | null
           path?: unknown
+          payment_terms_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1979,6 +2209,236 @@ export type Database = {
             columns: ["org_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_group_payment_terms_fk"
+            columns: ["org_id", "payment_terms_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_group_price_list_fk"
+            columns: ["org_id", "default_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      customer_group_credit_limit: {
+        Row: {
+          bypass_credit_limit_check: boolean
+          company_id: string
+          credit_limit: number
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          bypass_credit_limit_check?: boolean
+          company_id: string
+          credit_limit?: number
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          bypass_credit_limit_check?: boolean
+          company_id?: string
+          credit_limit?: number
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_group_credit_limit_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_group_credit_limit_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_group_credit_limit_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      customer_group_party_account: {
+        Row: {
+          account_id: string | null
+          company_id: string
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          company_id: string
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          account_id?: string | null
+          company_id?: string
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_group_party_account_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_group_party_account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_group_party_account_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_group_party_account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      customer_party_account: {
+        Row: {
+          account_id: string | null
+          company_id: string
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          company_id: string
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          account_id?: string | null
+          company_id?: string
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_party_account_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_party_account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_party_account_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_party_account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      customer_sales_team: {
+        Row: {
+          allocated_percentage: number
+          commission_rate: number | null
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+          sales_person_id: string
+        }
+        Insert: {
+          allocated_percentage?: number
+          commission_rate?: number | null
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+          sales_person_id: string
+        }
+        Update: {
+          allocated_percentage?: number
+          commission_rate?: number | null
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+          sales_person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_sales_team_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_sales_team_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "customer_sales_team_org_id_sales_person_id_fkey"
+            columns: ["org_id", "sales_person_id"]
+            isOneToOne: false
+            referencedRelation: "sales_person"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -5307,6 +5767,10 @@ export type Database = {
           signature: string
         }[]
       }
+      get_customer_group_details: {
+        Args: { p_customer: string }
+        Returns: undefined
+      }
       get_exchange_rate: {
         Args: {
           p_date: string
@@ -5320,6 +5784,10 @@ export type Database = {
       get_item_tax_map: {
         Args: { p_company: string; p_taxes?: Json; p_template: string }
         Returns: Json
+      }
+      get_party_account: {
+        Args: { p_company: string; p_party: string; p_party_type: string }
+        Returns: string
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
