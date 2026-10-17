@@ -52,6 +52,7 @@ const USERS = [
     { env: "E2E_TAX_TEMPLATES", local: "tax-templates", first_name: "Tax Templates", last_name: "Admin" },
     { env: "E2E_ITEM_TAX", local: "item-tax", first_name: "Item Tax", last_name: "Admin" },
     { env: "E2E_COUNTRY_TAX", local: "country-tax", first_name: "Country Tax", last_name: "Admin" },
+    { env: "E2E_PRICE_LIST", local: "price-list", first_name: "Price List", last_name: "Admin" },
     { env: "E2E_P2", local: "p2", first_name: "Masters", last_name: "Admin" },
     { env: "E2E_JE", local: "journal", first_name: "Journal", last_name: "Admin" },
     { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },
