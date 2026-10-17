@@ -182,6 +182,10 @@ export type Database = {
         Args: { p_company: string; p_party: string; p_party_type: string }
         Returns: string
       }
+      get_supplier_group_details: {
+        Args: { p_supplier: string }
+        Returns: undefined
+      }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
         Returns: boolean
@@ -4946,6 +4950,181 @@ export type Database = {
           },
         ]
       }
+      supplier: {
+        Row: {
+          alias: string | null
+          allow_purchase_invoice_creation_without_purchase_order: boolean
+          allow_purchase_invoice_creation_without_purchase_receipt: boolean
+          country: string | null
+          created_at: string
+          created_by: string | null
+          default_currency: string | null
+          default_price_list_id: string | null
+          disabled: boolean
+          hold_type: string | null
+          id: string
+          is_frozen: boolean
+          is_transporter: boolean
+          language: string | null
+          name: string
+          on_hold: boolean
+          org_id: string
+          payment_terms_id: string | null
+          prevent_pos: boolean
+          prevent_rfqs: boolean
+          release_date: string | null
+          supplier_details: string | null
+          supplier_group_id: string | null
+          supplier_name: string
+          supplier_primary_address: string | null
+          supplier_primary_contact: string | null
+          supplier_type: string
+          tax_category_id: string | null
+          tax_id: string | null
+          updated_at: string
+          updated_by: string | null
+          warn_pos: boolean
+          warn_rfqs: boolean
+          website: string | null
+        }
+        Insert: {
+          alias?: string | null
+          allow_purchase_invoice_creation_without_purchase_order?: boolean
+          allow_purchase_invoice_creation_without_purchase_receipt?: boolean
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_currency?: string | null
+          default_price_list_id?: string | null
+          disabled?: boolean
+          hold_type?: string | null
+          id?: string
+          is_frozen?: boolean
+          is_transporter?: boolean
+          language?: string | null
+          name: string
+          on_hold?: boolean
+          org_id: string
+          payment_terms_id?: string | null
+          prevent_pos?: boolean
+          prevent_rfqs?: boolean
+          release_date?: string | null
+          supplier_details?: string | null
+          supplier_group_id?: string | null
+          supplier_name: string
+          supplier_primary_address?: string | null
+          supplier_primary_contact?: string | null
+          supplier_type?: string
+          tax_category_id?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          warn_pos?: boolean
+          warn_rfqs?: boolean
+          website?: string | null
+        }
+        Update: {
+          alias?: string | null
+          allow_purchase_invoice_creation_without_purchase_order?: boolean
+          allow_purchase_invoice_creation_without_purchase_receipt?: boolean
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_currency?: string | null
+          default_price_list_id?: string | null
+          disabled?: boolean
+          hold_type?: string | null
+          id?: string
+          is_frozen?: boolean
+          is_transporter?: boolean
+          language?: string | null
+          name?: string
+          on_hold?: boolean
+          org_id?: string
+          payment_terms_id?: string | null
+          prevent_pos?: boolean
+          prevent_rfqs?: boolean
+          release_date?: string | null
+          supplier_details?: string | null
+          supplier_group_id?: string | null
+          supplier_name?: string
+          supplier_primary_address?: string | null
+          supplier_primary_contact?: string | null
+          supplier_type?: string
+          tax_category_id?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          warn_pos?: boolean
+          warn_rfqs?: boolean
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "supplier_country_fkey"
+            columns: ["country"]
+            isOneToOne: false
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_default_price_list_id_fkey"
+            columns: ["org_id", "default_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_payment_terms_id_fkey"
+            columns: ["org_id", "payment_terms_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_supplier_group_id_fkey"
+            columns: ["org_id", "supplier_group_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_supplier_primary_address_fkey"
+            columns: ["org_id", "supplier_primary_address"]
+            isOneToOne: false
+            referencedRelation: "address"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_supplier_primary_contact_fkey"
+            columns: ["org_id", "supplier_primary_contact"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       supplier_group: {
         Row: {
           created_at: string
@@ -4955,6 +5134,7 @@ export type Database = {
           org_id: string
           parent_id: string | null
           path: unknown
+          payment_terms_id: string | null
           supplier_group_name: string
           updated_at: string
           updated_by: string | null
@@ -4967,6 +5147,7 @@ export type Database = {
           org_id: string
           parent_id?: string | null
           path: unknown
+          payment_terms_id?: string | null
           supplier_group_name: string
           updated_at?: string
           updated_by?: string | null
@@ -4979,6 +5160,7 @@ export type Database = {
           org_id?: string
           parent_id?: string | null
           path?: unknown
+          payment_terms_id?: string | null
           supplier_group_name?: string
           updated_at?: string
           updated_by?: string | null
@@ -4996,6 +5178,125 @@ export type Database = {
             columns: ["org_id", "parent_id"]
             isOneToOne: false
             referencedRelation: "supplier_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_group_payment_terms_fk"
+            columns: ["org_id", "payment_terms_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms_template"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      supplier_group_party_account: {
+        Row: {
+          account_id: string | null
+          company_id: string
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          company_id: string
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          account_id?: string | null
+          company_id?: string
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_group_party_account_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_group_party_account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_group_party_account_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_group_party_account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_group"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      supplier_party_account: {
+        Row: {
+          account_id: string | null
+          company_id: string
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          company_id: string
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          account_id?: string | null
+          company_id?: string
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_party_account_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_party_account_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "supplier_party_account_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_party_account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -5788,6 +6089,10 @@ export type Database = {
       get_party_account: {
         Args: { p_company: string; p_party: string; p_party_type: string }
         Returns: string
+      }
+      get_supplier_group_details: {
+        Args: { p_supplier: string }
+        Returns: undefined
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }

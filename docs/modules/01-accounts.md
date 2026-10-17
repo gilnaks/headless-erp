@@ -172,7 +172,9 @@ One shared child doctype, one table per parent per 02-db conventions (`sales_inv
 
 Owned by 02-selling/03-buying for the parent tables; behaviour here. Fields: `company_id` ✔, `account_id` (Receivable for customers, Payable for suppliers), `advance_account_id` (hidden; separate-advance-account mode is off, §9). Validations (`party.validate_party_accounts`): "There can only be 1 Account per Company in {0} {1}", "Row {0}: Account {1} must be a {2} account", party currency vs existing GL (`validate_party_gle_currency`).
 
-**Built (0235):** A saved customer is named from the trimmed customer name, and a taken name uses the next `"name - N"`. A group customer group, a buying price list, a non-receivable account, a sales team that does not total 100, and a disabled sales person are rejected. `app.get_party_account` walks the customer, then the customer group, then the company receivable. `app.get_customer_group_details` copies the group's price list, payment terms, accounts, and credit limits. System Manager can read. Sales User can create. Sales Manager can delete. Stock and Accounts roles can read. Supplier and Supplier Group wait. Naming Series waits for Selling Settings. The GL-currency override waits for the ledger.
+**Built (0235):** A saved customer is named from the trimmed customer name, and a taken name uses the next `"name - N"`. A group customer group, a buying price list, a non-receivable account, a sales team that does not total 100, and a disabled sales person are rejected. `app.get_party_account` walks the customer, then the customer group, then the company receivable. `app.get_customer_group_details` copies the group's price list, payment terms, accounts, and credit limits. System Manager can read. Sales User can create. Sales Manager can delete. Stock and Accounts roles can read. Naming Series waits for Selling Settings. The GL-currency override waits for the ledger.
+
+**Built (0237):** A saved supplier is named from the trimmed supplier name, and a duplicate name is rejected. `app.get_party_account` walks the supplier, then the supplier group, then the company payable. `app.get_supplier_group_details` copies the group's payment terms and accounts. System Manager and Purchase User can read. Purchase Manager can create and delete.
 
 ### 2.10 Accounts Settings → `accounts_settings` (single, one row per org; seeded A4)
 
@@ -1122,7 +1124,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `payment_term`, `payment_terms_template` + detail — §2.6
 - [ ] `payment_schedule` child table (shared by SO/PO/SI/PI) + `src/lib/calc/payment-schedule.ts` / `app.make_payment_schedule` — §2.7, §3.9
 - [x] `currency_exchange` + `app.get_exchange_rate` — §2.8
-- [ ] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
+- [x] `party_account` child (Customer/Supplier/groups) + `app.get_party_account` — §2.9, §3.5
 - [x] `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + child rows — §2.11
 - [x] `item_tax_template` + detail; `app.get_item_tax_map` — §2.12
 - [x] `tax_category` — §2.13, `0226_accounts_tax_category.sql`

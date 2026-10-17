@@ -101,8 +101,8 @@ select throws_ok(
 );
 select throws_ok(
   $$select pg_temp.save('Address', jsonb_build_object('org_id', current_setting('test.org'), 'address_title', 'T', 'address_line1', 'X 1', 'city', 'Bonn',
-      'links', jsonb_build_array(jsonb_build_object('link_doctype', 'Supplier', 'link_id', '00000000-0000-0000-0000-0000000025c1'))))$$,
-  'P0001', 'link_invalid: Supplier is not a document type', 'link doctypes are limited to the parties in scope'
+      'links', jsonb_build_array(jsonb_build_object('link_doctype', 'Lead', 'link_id', '00000000-0000-0000-0000-0000000025c1'))))$$,
+  'P0001', 'link_invalid: Lead is not a document type', 'link doctypes are limited to the parties in scope'
 );
 select throws_ok(
   $$select pg_temp.save('Address', jsonb_build_object('org_id', current_setting('test.org'), 'address_title', 'T', 'address_line1', 'X 1', 'city', 'Bonn',

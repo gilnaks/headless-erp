@@ -97,6 +97,7 @@ Conventions match 01-accounts §2. Perms are ERPNext JSON `permlevel 0` after th
 - **Validate:** `validate_party_accounts`; buying price list; primary contact and address must have a Dynamic Link to this supplier ("{0} {1} is not linked to Supplier {2}"). Internal supplier, portal users and customer-number rows are not ported.
 - **Hold:** `All` blocks purchase orders, receipts and invoices. `Invoices` blocks purchase invoices. `Payments` blocks payment entries. The block lifts on `release_date`.
 - **Connections:** Request for Quotation, Supplier Quotation, Purchase Order, Purchase Receipt, Purchase Invoice, Payment Entry, addresses and contacts.
+- **Built (0237):** A saved supplier is named from the trimmed supplier name, and a duplicate name is rejected. A group supplier group, a selling price list, and a non-payable account are rejected. A primary contact or address that is not linked to the supplier is rejected. Turning hold off clears the release date, and turning hold on with no type sets `All`. `app.get_party_account` walks the supplier, then the supplier group, then the company payable. `app.get_supplier_group_details` copies the group's payment terms and accounts. System Manager and Purchase User can read. Purchase Manager can create and delete. Stock and Accounts roles can read. Naming Series waits for Buying Settings.
 
 ### 2.2 Supplier Group → `supplier_group`
 
@@ -428,7 +429,7 @@ Migration numbers: P2 `02nn_buying_*`, P4 material request with 04-stock, P6 `06
 ### P2 — masters
 
 - [x] `supplier_group` tree + A9 seed — §2.2
-- [ ] `supplier` + `party_account` rows — §2.1
+- [x] `supplier` + `party_account` rows — §2.1
 
 ### P4 — with stock
 
