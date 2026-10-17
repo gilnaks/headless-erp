@@ -228,8 +228,13 @@ export type Database = {
         Args: { p_template: string }
         Returns: undefined
       }
+      journal_entry_gl_map: { Args: { p_id: string }; Returns: Json }
       jsonb_pick: { Args: { p: Json; p_keys: string[] }; Returns: Json }
       locked_permission_doctypes: { Args: never; Returns: string[] }
+      make_gl_entries: {
+        Args: { p_entries: Json; p_opts?: Json }
+        Returns: undefined
+      }
       next_name: {
         Args: {
           p_company: string
@@ -240,6 +245,7 @@ export type Database = {
         Returns: string
       }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
+      on_submit__journal_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       onboarding_complete: {
         Args: { p_org: string; p_step: string }
@@ -308,12 +314,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_outstanding: {
+        Args: { p_voucher_id: string; p_voucher_type: string }
+        Returns: undefined
+      }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reserved_slugs: { Args: never; Returns: string[] }
       reset_role_permissions: {
         Args: { p_doctype: string; p_org: string }
         Returns: number
       }
+      reverse_gl_entries: {
+        Args: { p_voucher_id: string; p_voucher_type: string }
+        Returns: undefined
+      }
+      round: { Args: { p_precision: number; p_value: number }; Returns: number }
       sanitize_doc_payload: {
         Args: { p_doctype: string; p_payload: Json }
         Returns: Json
@@ -3038,6 +3053,159 @@ export type Database = {
           },
         ]
       }
+      gl_entry: {
+        Row: {
+          account_currency: string | null
+          account_id: string
+          advance_voucher_id: string | null
+          advance_voucher_type: string | null
+          against: string | null
+          against_voucher_id: string | null
+          against_voucher_type: string | null
+          company_id: string
+          cost_center_id: string | null
+          created_at: string
+          credit: number
+          credit_in_account_currency: number
+          credit_in_transaction_currency: number
+          debit: number
+          debit_in_account_currency: number
+          debit_in_transaction_currency: number
+          due_date: string | null
+          fiscal_year_id: string | null
+          id: string
+          is_advance: boolean
+          is_cancelled: boolean
+          is_opening: boolean
+          is_system_generated: boolean
+          org_id: string
+          party_id: string | null
+          party_type: string | null
+          posting_date: string
+          project_id: string | null
+          remarks: string | null
+          transaction_currency: string | null
+          transaction_exchange_rate: number
+          voucher_detail_id: string | null
+          voucher_id: string
+          voucher_no: string
+          voucher_subtype: string | null
+          voucher_type: string
+        }
+        Insert: {
+          account_currency?: string | null
+          account_id: string
+          advance_voucher_id?: string | null
+          advance_voucher_type?: string | null
+          against?: string | null
+          against_voucher_id?: string | null
+          against_voucher_type?: string | null
+          company_id: string
+          cost_center_id?: string | null
+          created_at?: string
+          credit?: number
+          credit_in_account_currency?: number
+          credit_in_transaction_currency?: number
+          debit?: number
+          debit_in_account_currency?: number
+          debit_in_transaction_currency?: number
+          due_date?: string | null
+          fiscal_year_id?: string | null
+          id?: string
+          is_advance?: boolean
+          is_cancelled?: boolean
+          is_opening?: boolean
+          is_system_generated?: boolean
+          org_id: string
+          party_id?: string | null
+          party_type?: string | null
+          posting_date: string
+          project_id?: string | null
+          remarks?: string | null
+          transaction_currency?: string | null
+          transaction_exchange_rate?: number
+          voucher_detail_id?: string | null
+          voucher_id: string
+          voucher_no: string
+          voucher_subtype?: string | null
+          voucher_type: string
+        }
+        Update: {
+          account_currency?: string | null
+          account_id?: string
+          advance_voucher_id?: string | null
+          advance_voucher_type?: string | null
+          against?: string | null
+          against_voucher_id?: string | null
+          against_voucher_type?: string | null
+          company_id?: string
+          cost_center_id?: string | null
+          created_at?: string
+          credit?: number
+          credit_in_account_currency?: number
+          credit_in_transaction_currency?: number
+          debit?: number
+          debit_in_account_currency?: number
+          debit_in_transaction_currency?: number
+          due_date?: string | null
+          fiscal_year_id?: string | null
+          id?: string
+          is_advance?: boolean
+          is_cancelled?: boolean
+          is_opening?: boolean
+          is_system_generated?: boolean
+          org_id?: string
+          party_id?: string | null
+          party_type?: string | null
+          posting_date?: string
+          project_id?: string | null
+          remarks?: string | null
+          transaction_currency?: string | null
+          transaction_exchange_rate?: number
+          voucher_detail_id?: string | null
+          voucher_id?: string
+          voucher_no?: string
+          voucher_subtype?: string | null
+          voucher_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_entry_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "gl_entry_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "gl_entry_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "gl_entry_org_id_fiscal_year_id_fkey"
+            columns: ["org_id", "fiscal_year_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_year"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "gl_entry_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       global_defaults: {
         Row: {
           country: string | null
@@ -4372,6 +4540,270 @@ export type Database = {
           },
         ]
       }
+      journal_entry: {
+        Row: {
+          amended_from: string | null
+          bill_date: string | null
+          bill_no: string | null
+          cheque_date: string | null
+          cheque_no: string | null
+          clearance_date: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          custom_remark: boolean
+          difference: number
+          docstatus: number
+          due_date: string | null
+          id: string
+          is_opening: string
+          letter_head_id: string | null
+          mode_of_payment_id: string | null
+          multi_currency: boolean
+          name: string
+          naming_series: string
+          org_id: string
+          pay_to_recd_from: string | null
+          posting_date: string
+          print_heading_id: string | null
+          reversal_of: string | null
+          stock_entry_id: string | null
+          title: string | null
+          total_credit: number
+          total_debit: number
+          updated_at: string
+          updated_by: string | null
+          user_remark: string | null
+          voucher_type: string
+          write_off_amount: number
+          write_off_based_on: string
+        }
+        Insert: {
+          amended_from?: string | null
+          bill_date?: string | null
+          bill_no?: string | null
+          cheque_date?: string | null
+          cheque_no?: string | null
+          clearance_date?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          custom_remark?: boolean
+          difference?: number
+          docstatus?: number
+          due_date?: string | null
+          id?: string
+          is_opening?: string
+          letter_head_id?: string | null
+          mode_of_payment_id?: string | null
+          multi_currency?: boolean
+          name: string
+          naming_series?: string
+          org_id: string
+          pay_to_recd_from?: string | null
+          posting_date?: string
+          print_heading_id?: string | null
+          reversal_of?: string | null
+          stock_entry_id?: string | null
+          title?: string | null
+          total_credit?: number
+          total_debit?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_remark?: string | null
+          voucher_type?: string
+          write_off_amount?: number
+          write_off_based_on?: string
+        }
+        Update: {
+          amended_from?: string | null
+          bill_date?: string | null
+          bill_no?: string | null
+          cheque_date?: string | null
+          cheque_no?: string | null
+          clearance_date?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          custom_remark?: boolean
+          difference?: number
+          docstatus?: number
+          due_date?: string | null
+          id?: string
+          is_opening?: string
+          letter_head_id?: string | null
+          mode_of_payment_id?: string | null
+          multi_currency?: boolean
+          name?: string
+          naming_series?: string
+          org_id?: string
+          pay_to_recd_from?: string | null
+          posting_date?: string
+          print_heading_id?: string | null
+          reversal_of?: string | null
+          stock_entry_id?: string | null
+          title?: string | null
+          total_credit?: number
+          total_debit?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_remark?: string | null
+          voucher_type?: string
+          write_off_amount?: number
+          write_off_based_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entry_org_id_letter_head_id_fkey"
+            columns: ["org_id", "letter_head_id"]
+            isOneToOne: false
+            referencedRelation: "letter_head"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_org_id_mode_of_payment_id_fkey"
+            columns: ["org_id", "mode_of_payment_id"]
+            isOneToOne: false
+            referencedRelation: "mode_of_payment"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_org_id_print_heading_id_fkey"
+            columns: ["org_id", "print_heading_id"]
+            isOneToOne: false
+            referencedRelation: "print_heading"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_org_id_reversal_of_fkey"
+            columns: ["org_id", "reversal_of"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      journal_entry_account: {
+        Row: {
+          account_currency: string | null
+          account_id: string
+          account_type: string | null
+          advance_voucher_id: string | null
+          advance_voucher_type: string | null
+          against_account: string | null
+          cost_center_id: string | null
+          credit: number
+          credit_in_account_currency: number
+          debit: number
+          debit_in_account_currency: number
+          exchange_rate: number
+          id: string
+          idx: number
+          is_advance: string
+          org_id: string
+          parent_id: string
+          party_id: string | null
+          party_type: string | null
+          reference_due_date: string | null
+          reference_id: string | null
+          reference_type: string | null
+          user_remark: string | null
+        }
+        Insert: {
+          account_currency?: string | null
+          account_id: string
+          account_type?: string | null
+          advance_voucher_id?: string | null
+          advance_voucher_type?: string | null
+          against_account?: string | null
+          cost_center_id?: string | null
+          credit?: number
+          credit_in_account_currency?: number
+          debit?: number
+          debit_in_account_currency?: number
+          exchange_rate?: number
+          id?: string
+          idx: number
+          is_advance?: string
+          org_id: string
+          parent_id: string
+          party_id?: string | null
+          party_type?: string | null
+          reference_due_date?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          user_remark?: string | null
+        }
+        Update: {
+          account_currency?: string | null
+          account_id?: string
+          account_type?: string | null
+          advance_voucher_id?: string | null
+          advance_voucher_type?: string | null
+          against_account?: string | null
+          cost_center_id?: string | null
+          credit?: number
+          credit_in_account_currency?: number
+          debit?: number
+          debit_in_account_currency?: number
+          exchange_rate?: number
+          id?: string
+          idx?: number
+          is_advance?: string
+          org_id?: string
+          parent_id?: string
+          party_id?: string | null
+          party_type?: string | null
+          reference_due_date?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          user_remark?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_account_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_account_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "journal_entry_account_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entry"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       letter_head: {
         Row: {
           align: string
@@ -4839,6 +5271,122 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "party_type_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_ledger_entry: {
+        Row: {
+          account_currency: string | null
+          account_id: string
+          account_type: string
+          advance_voucher_id: string | null
+          advance_voucher_type: string | null
+          against_voucher_id: string | null
+          against_voucher_no: string | null
+          against_voucher_type: string | null
+          amount: number
+          amount_in_account_currency: number
+          company_id: string
+          cost_center_id: string | null
+          created_at: string
+          delinked: boolean
+          due_date: string | null
+          id: string
+          org_id: string
+          party_id: string
+          party_type: string
+          posting_date: string
+          project_id: string | null
+          remarks: string | null
+          voucher_detail_id: string | null
+          voucher_id: string
+          voucher_no: string | null
+          voucher_type: string
+        }
+        Insert: {
+          account_currency?: string | null
+          account_id: string
+          account_type: string
+          advance_voucher_id?: string | null
+          advance_voucher_type?: string | null
+          against_voucher_id?: string | null
+          against_voucher_no?: string | null
+          against_voucher_type?: string | null
+          amount: number
+          amount_in_account_currency: number
+          company_id: string
+          cost_center_id?: string | null
+          created_at?: string
+          delinked?: boolean
+          due_date?: string | null
+          id?: string
+          org_id: string
+          party_id: string
+          party_type: string
+          posting_date: string
+          project_id?: string | null
+          remarks?: string | null
+          voucher_detail_id?: string | null
+          voucher_id: string
+          voucher_no?: string | null
+          voucher_type: string
+        }
+        Update: {
+          account_currency?: string | null
+          account_id?: string
+          account_type?: string
+          advance_voucher_id?: string | null
+          advance_voucher_type?: string | null
+          against_voucher_id?: string | null
+          against_voucher_no?: string | null
+          against_voucher_type?: string | null
+          amount?: number
+          amount_in_account_currency?: number
+          company_id?: string
+          cost_center_id?: string | null
+          created_at?: string
+          delinked?: boolean
+          due_date?: string | null
+          id?: string
+          org_id?: string
+          party_id?: string
+          party_type?: string
+          posting_date?: string
+          project_id?: string | null
+          remarks?: string | null
+          voucher_detail_id?: string | null
+          voucher_id?: string
+          voucher_no?: string | null
+          voucher_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_ledger_entry_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_ledger_entry_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_ledger_entry_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_ledger_entry_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"

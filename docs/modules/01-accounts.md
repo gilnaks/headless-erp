@@ -255,6 +255,8 @@ Org-level; naming `field:title`; `title` ✔ unique, `disabled` false. Perms Sys
 
 Validations: see §3.6.
 
+**Built (0300, 0301, 0303, 0306).** A draft journal is named `DRAFT-<id>`. Submit issues `ACC-JV-.YYYY.-` and posts one general-ledger row per amount line. A balanced journal posts two open rows whose debits equal credits. An unequal journal is rejected before posting. Cancel flags the original rows, inserts the mirrored rows, and marks every row cancelled. A cancelled journal cannot be saved again. Members cannot delete ledger rows. `app.refresh_outstanding` is called and does nothing until invoices exist. The reverse mapper, `get_balance`, and invoice references wait. System Manager and Auditor can read. Accounts Manager and Accounts User can create, submit, cancel, and amend.
+
 ### 2.17 Payment Entry → `payment_entry` + `payment_entry_reference` + `payment_entry_deduction` + `advance_taxes_and_charges` (P3)
 
 - **Kind:** submittable. **Naming series:** `ACC-PAY-.YYYY.-`. Title `title` (= party_name, or paid_from→paid_to for Internal Transfer). **Perms:** Accounts User rwcsxd, Accounts Manager rwcsxd. Status `Draft|Submitted|Cancelled`.
@@ -1138,11 +1140,11 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 
 ### P3 — ledger engine, JE, PE, core reports
 
-- [ ] Ledger tables `gl_entry`, `payment_ledger_entry` with the §2.24 extra columns (`transaction_currency`, `advance_voucher_*`, `is_system_generated`, PLE `voucher_no`) — 03-posting-engine
-- [ ] `app.make_gl_entries` (merge, toggle, PLE, debit/credit difference + round-off, frozen date, GL validations) — §4.0
-- [ ] `app.reverse_gl_entries` (+ PLE delink) — §4.0
-- [ ] `app.refresh_outstanding` + `app.set_invoice_status` — §4.0, §5
-- [ ] `journal_entry` + `journal_entry_account`; `app.on_submit__journal_entry`, `app.journal_entry_gl_map`, reference validator, `make_reverse_journal_entry`, `get_balance` — §2.16, §3.6, §4.1
+- [x] Ledger tables `gl_entry`, `payment_ledger_entry` with the §2.24 extra columns (`transaction_currency`, `advance_voucher_*`, `is_system_generated`, PLE `voucher_no`) — 03-posting-engine, `0300_accounts_ledger.sql`
+- [x] `app.make_gl_entries` (merge, toggle, PLE, debit/credit difference + round-off, frozen date, GL validations) — §4.0, `0301_accounts_gl_engine.sql`
+- [x] `app.reverse_gl_entries` (+ PLE delink) — §4.0
+- [ ] `app.refresh_outstanding` + `app.set_invoice_status` — §4.0, §5 (`refresh_outstanding` exists and no-ops until invoices; status is not built)
+- [x] `journal_entry` + `journal_entry_account`; `app.on_submit__journal_entry`, `app.journal_entry_gl_map` — §2.16, §4.1, `0303_accounts_journal_entry.sql` (reference validator, reverse mapper and `get_balance` wait until invoices)
 - [ ] `payment_entry` + reference / deduction / taxes children; `app.get_payment_entry` mapper, `get_outstanding_reference_documents`, set amounts/difference, `app.payment_entry_gl_map`, payment schedule update — §2.17, §3.3, §3.7, §4.2
 - [ ] Advances: `app.get_advance_entries`, `app.reconcile_against_document`, unlink on cancel (`unlink_payment_on_cancellation_of_invoice`) — §3.8, §4.6
 - [ ] Payment Reconciliation page (+ `reconcile_dr_cr_note` system JE) — §2.25, §3.8

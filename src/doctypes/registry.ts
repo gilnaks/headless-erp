@@ -4,6 +4,7 @@ import { costCenter } from "./accounts/cost-center";
 import { currencyExchange } from "./accounts/currency-exchange";
 import { fiscalYear } from "./accounts/fiscal-year";
 import { itemTaxTemplate } from "./accounts/item-tax-template";
+import { journalEntry } from "./accounts/journal-entry";
 import { modeOfPayment } from "./accounts/mode-of-payment";
 import { partyType } from "./accounts/party-type";
 import { paymentTerm } from "./accounts/payment-term";
@@ -76,6 +77,7 @@ export const DOCTYPES: readonly Doctype[] = [
     purchaseTaxesAndChargesTemplate,
     salesTaxesAndChargesTemplate,
     itemTaxTemplate,
+    journalEntry,
     currencyExchange,
     partyType,
     taxCategory,
