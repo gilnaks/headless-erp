@@ -107,6 +107,10 @@ export type Database = {
       copy_uoms: { Args: { p_all: boolean; p_org: string }; Returns: undefined }
       create_charts: { Args: { p_company: string }; Returns: undefined }
       create_company: { Args: { p: Json }; Returns: Json }
+      create_default_tax_templates: {
+        Args: { p_company: string }
+        Returns: undefined
+      }
       create_invitation: {
         Args: {
           p_email: string
@@ -344,6 +348,10 @@ export type Database = {
         Returns: undefined
       }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
+      tax_account_for: {
+        Args: { p_account: Json; p_company: string }
+        Returns: string
+      }
       tax_template_name: {
         Args: { p_company: string; p_title: string }
         Returns: string
@@ -1783,6 +1791,36 @@ export type Database = {
           time_zones?: string[]
         }
         Relationships: []
+      }
+      country_wise_tax: {
+        Row: {
+          country: string
+          data: Json
+        }
+        Insert: {
+          country: string
+          data: Json
+        }
+        Update: {
+          country?: string
+          data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_wise_tax_country_fkey"
+            columns: ["country"]
+            isOneToOne: true
+            referencedRelation: "coa_template_country"
+            referencedColumns: ["country_name"]
+          },
+          {
+            foreignKeyName: "country_wise_tax_country_fkey"
+            columns: ["country"]
+            isOneToOne: true
+            referencedRelation: "country"
+            referencedColumns: ["country_name"]
+          },
+        ]
       }
       currency: {
         Row: {
@@ -5171,6 +5209,10 @@ export type Database = {
         }
       }
       create_company: { Args: { p: Json }; Returns: Json }
+      create_default_tax_templates: {
+        Args: { p_company: string }
+        Returns: undefined
+      }
       create_invitation: {
         Args: {
           p_email: string
