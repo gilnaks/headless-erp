@@ -167,7 +167,9 @@ Child of Customer, Sales Order and Delivery Note.
 
 - **Kind:** submittable, not company-scoped. **Naming:** `PB-<item>-001`, next index among non-amended names for that parent item (`product_bundle.py: autoname`). **Perms:** Stock Manager rwcsxd, Sales User rwcsxd, Stock User r.
 - **Migration:** `02nn_selling_product_bundle.sql`.
-- Fields: `new_item_code` → item ✔, `description`, `is_active` default true, `disabled` default false, `amended_from`. Child `product_bundle_item`: `item_code` ✔, `qty` ✔ (non-zero), `uom` fetched from the item's stock UOM, `description`.
+- Fields: `new_item_code` → item ✔, `description`, `is_active` default true, `disabled` default false, `amended_from`. Child `product_bundle_item`: `item_code` ✔, `qty` ✔ (greater than zero), `uom` fetched from the item's stock UOM, `description`.
+
+**Built (0243).** A saved bundle is named `PB-<item code>-001`. A stock parent, a fixed-asset parent, a quantity that is not greater than zero, a fractional quantity on a whole-number UOM, and a child that is itself an active bundle are rejected. A blank component UOM becomes the item's stock UOM. Submit marks this version active and clears the active flag on every other submitted bundle of the same parent. Cancel clears the active flag. An amendment is the next `PB-` version. `app.submit_doc` submits it. System Manager can read. Stock Manager and Sales User can create, submit, cancel, and amend. Stock User can read. Packing-list rebuild and the linked-document delete check wait.
 - Submit marks this version active and clears `is_active` on every other submitted bundle of the same parent item. Cancel sets `is_active = 0`. Only `is_active` and `disabled` are editable after submit. Delete is blocked when a submitted stock or selling document uses the parent item.
 - `app.make_packing_list(doc)` (called on save of Quotation, Sales Order, Delivery Note, Sales Invoice) rebuilds `packed_item` from the active, non-disabled bundle of each item: one packed row per bundle component, `qty = bundle qty × parent qty`, warehouse copied from the parent row. A bundle item is not itself delivered; its packed rows are. Non-stock parents with a bundle that contains a stock item still require a warehouse and a delivery (§3.6).
 
@@ -526,7 +528,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 - [x] `sales_person` tree + A10 seed — §2.5
 - [x] `industry_type` — §2.7
 - [x] `customer` + `customer_credit_limit` + `sales_team` + `party_account` rows — §2.1, §2.2, §2.6
-- [ ] `product_bundle` + `product_bundle_item` — §2.9
+- [x] `product_bundle` + `product_bundle_item` — §2.9, `0243_selling_product_bundle.sql`
 
 ### P5 — transactions
 

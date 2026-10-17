@@ -38,6 +38,7 @@ export type Database = {
         Args: { p_doctype: string; p_for?: string; p_org: string }
         Returns: string[]
       }
+      amend_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       authorization_check_level: {
         Args: {
           p_company: string
@@ -52,6 +53,7 @@ export type Database = {
       }
       auto_create_fiscal_year: { Args: never; Returns: number }
       can_write_file: { Args: { p_name: string }; Returns: boolean }
+      cancel_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       coa_account_categories: { Args: { p_tree: Json }; Returns: string[] }
       coa_template_nodes: {
         Args: { p_template: string }
@@ -237,6 +239,8 @@ export type Database = {
         }
         Returns: string
       }
+      on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
+      on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       onboarding_complete: {
         Args: { p_org: string; p_step: string }
         Returns: undefined
@@ -372,6 +376,7 @@ export type Database = {
         Args: { p_company: string }
         Returns: undefined
       }
+      submit_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
       tax_account_for: {
         Args: { p_account: Json; p_company: string }
@@ -5305,6 +5310,131 @@ export type Database = {
           },
         ]
       }
+      product_bundle: {
+        Row: {
+          amended_from: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          disabled: boolean
+          docstatus: number
+          id: string
+          is_active: boolean
+          name: string
+          new_item_id: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          disabled?: boolean
+          docstatus?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          new_item_id: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          disabled?: boolean
+          docstatus?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          new_item_id?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_bundle_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "product_bundle"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "product_bundle_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_bundle_org_id_new_item_id_fkey"
+            columns: ["org_id", "new_item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      product_bundle_item: {
+        Row: {
+          description: string | null
+          id: string
+          idx: number
+          item_id: string
+          org_id: string
+          parent_id: string
+          qty: number
+          uom_id: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          idx: number
+          item_id: string
+          org_id: string
+          parent_id: string
+          qty: number
+          uom_id?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          idx?: number
+          item_id?: string
+          org_id?: string
+          parent_id?: string
+          qty?: number
+          uom_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_bundle_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "product_bundle_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "product_bundle"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "product_bundle_item_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       purchase_taxes_and_charges: {
         Row: {
           account_currency: string | null
@@ -7148,6 +7278,8 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string }
+      amend_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      cancel_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       coa_template_preview: {
         Args: { p_template: string }
         Returns: {
@@ -7393,6 +7525,7 @@ export type Database = {
         Args: { p_id: string; p_secret: string }
         Returns: undefined
       }
+      submit_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
