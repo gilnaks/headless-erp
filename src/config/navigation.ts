@@ -239,7 +239,11 @@ export const MODULES: ModuleNav[] = [
             {
                 label: "Items",
                 icon: Package,
-                items: [doctype("Item", "selling/item", "P2"), doctype("Price List", "stock/price-list", "P2")],
+                items: [
+                    doctype("Item", "selling/item", "P2"),
+                    doctype("Price List", "stock/price-list", "P2"),
+                    doctype("Item Price", "stock/item-price", "P2"),
+                ],
             },
             {
                 label: "Setup",
