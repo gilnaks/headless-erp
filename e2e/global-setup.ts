@@ -57,6 +57,7 @@ const USERS = [
     { env: "E2E_SUPPLIER", local: "supplier", first_name: "Supplier", last_name: "Admin" },
     { env: "E2E_ITEM", local: "item", first_name: "Item", last_name: "Admin" },
     { env: "E2E_ITEM_PRICE", local: "item-price", first_name: "Item Price", last_name: "Admin" },
+    { env: "E2E_TAX_RULE", local: "tax-rule", first_name: "Tax Rule", last_name: "Admin" },
     { env: "E2E_P2", local: "p2", first_name: "Masters", last_name: "Admin" },
     { env: "E2E_JE", local: "journal", first_name: "Journal", last_name: "Admin" },
     { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },

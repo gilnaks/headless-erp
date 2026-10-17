@@ -187,6 +187,10 @@ export type Database = {
         Args: { p_supplier: string }
         Returns: undefined
       }
+      get_tax_template: {
+        Args: { p_args: Json; p_date: string }
+        Returns: string
+      }
       has_perm: {
         Args: { p_action: string; p_doctype: string; p_org: string }
         Returns: boolean
@@ -6390,6 +6394,189 @@ export type Database = {
           },
         ]
       }
+      tax_rule: {
+        Row: {
+          billing_city: string | null
+          billing_country: string | null
+          billing_county: string | null
+          billing_state: string | null
+          billing_zipcode: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_group_id: string | null
+          customer_id: string | null
+          from_date: string | null
+          id: string
+          item_group_id: string | null
+          item_id: string | null
+          name: string
+          org_id: string
+          priority: number
+          purchase_tax_template_id: string | null
+          sales_tax_template_id: string | null
+          shipping_city: string | null
+          shipping_country: string | null
+          shipping_county: string | null
+          shipping_state: string | null
+          shipping_zipcode: string | null
+          supplier_group_id: string | null
+          supplier_id: string | null
+          tax_category_id: string | null
+          tax_type: string
+          to_date: string | null
+          updated_at: string
+          updated_by: string | null
+          use_for_shopping_cart: boolean
+        }
+        Insert: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_county?: string | null
+          billing_state?: string | null
+          billing_zipcode?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_group_id?: string | null
+          customer_id?: string | null
+          from_date?: string | null
+          id?: string
+          item_group_id?: string | null
+          item_id?: string | null
+          name: string
+          org_id: string
+          priority?: number
+          purchase_tax_template_id?: string | null
+          sales_tax_template_id?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_county?: string | null
+          shipping_state?: string | null
+          shipping_zipcode?: string | null
+          supplier_group_id?: string | null
+          supplier_id?: string | null
+          tax_category_id?: string | null
+          tax_type?: string
+          to_date?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          use_for_shopping_cart?: boolean
+        }
+        Update: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_county?: string | null
+          billing_state?: string | null
+          billing_zipcode?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_group_id?: string | null
+          customer_id?: string | null
+          from_date?: string | null
+          id?: string
+          item_group_id?: string | null
+          item_id?: string | null
+          name?: string
+          org_id?: string
+          priority?: number
+          purchase_tax_template_id?: string | null
+          sales_tax_template_id?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_county?: string | null
+          shipping_state?: string | null
+          shipping_zipcode?: string | null
+          supplier_group_id?: string | null
+          supplier_id?: string | null
+          tax_category_id?: string | null
+          tax_type?: string
+          to_date?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          use_for_shopping_cart?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_rule_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_customer_group_id_fkey"
+            columns: ["org_id", "customer_group_id"]
+            isOneToOne: false
+            referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_item_group_id_fkey"
+            columns: ["org_id", "item_group_id"]
+            isOneToOne: false
+            referencedRelation: "item_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_purchase_tax_template_id_fkey"
+            columns: ["org_id", "purchase_tax_template_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_taxes_and_charges_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_sales_tax_template_id_fkey"
+            columns: ["org_id", "sales_tax_template_id"]
+            isOneToOne: false
+            referencedRelation: "sales_taxes_and_charges_template"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_supplier_group_id_fkey"
+            columns: ["org_id", "supplier_group_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_supplier_id_fkey"
+            columns: ["org_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "tax_rule_org_id_tax_category_id_fkey"
+            columns: ["org_id", "tax_category_id"]
+            isOneToOne: false
+            referencedRelation: "tax_category"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       terms_and_conditions: {
         Row: {
           buying: boolean
@@ -7074,6 +7261,10 @@ export type Database = {
       get_supplier_group_details: {
         Args: { p_supplier: string }
         Returns: undefined
+      }
+      get_tax_template: {
+        Args: { p_args: Json; p_date: string }
+        Returns: string
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }

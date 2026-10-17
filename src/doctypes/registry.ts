@@ -11,6 +11,7 @@ import { paymentTermsTemplate } from "./accounts/payment-terms-template";
 import { purchaseTaxesAndChargesTemplate } from "./accounts/purchase-taxes-and-charges-template";
 import { salesTaxesAndChargesTemplate } from "./accounts/sales-taxes-and-charges-template";
 import { taxCategory } from "./accounts/tax-category";
+import { taxRule } from "./accounts/tax-rule";
 import { supplier } from "./buying/supplier";
 import { supplierGroup } from "./buying/supplier-group";
 import type { Doctype } from "./define";
@@ -77,6 +78,7 @@ export const DOCTYPES: readonly Doctype[] = [
     currencyExchange,
     partyType,
     taxCategory,
+    taxRule,
     letterHead,
     printSettings,
     printFormat,
