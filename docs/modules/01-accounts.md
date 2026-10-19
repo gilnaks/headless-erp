@@ -707,6 +707,8 @@ Opening Invoice Creation Tool is out of scope (03-posting-engine matrix). Openin
 - Rounding differences on opening vouchers use `companies.round_off_for_opening_id` (ERPNext `round_off_for_opening`, account type `Round Off for Opening`), not `round_off_account` (§4.0).
 - Reports: Trial Balance shows `is_opening = Yes` rows in the Opening columns regardless of date (`accounts_settings.ignore_is_opening_check_for_reporting = 0`).
 
+**Built (0310).** An Opening Entry that uses a Profit and Loss account is rejected. A balanced opening of 100 posts open general-ledger rows with `is_opening`. A difference inside the allowance posts to `companies.round_off_for_opening_id`. A blank Round Off for Opening account rejects that difference and does not use the normal Round Off account. The Company form shows the link. Advances, reconciliation, and reports wait.
+
 ---
 
 ## 4. Posting rules
@@ -1153,7 +1155,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [ ] Advances: `app.get_advance_entries`, `app.reconcile_against_document`, unlink on cancel (`unlink_payment_on_cancellation_of_invoice`) — §3.8, §4.6
 - [ ] Payment Reconciliation page (+ `reconcile_dr_cr_note` system JE) — §2.25, §3.8
 - [x] `accounts_settings` form (exposed fields of §6.1) — §2.10, §6.1, `0309_accounts_settings.sql` (advances, reconciliation, opening-entry checks, and reports wait)
-- [ ] Opening Entry JE validations (P&L block, round-off for opening) — §3.13
+- [x] Opening Entry JE validations (P&L block, round-off for opening) — §3.13, §4.0, `0310_accounts_opening_entry.sql`
 - [ ] `app.report_general_ledger` — §7.2
 - [ ] `app.report_trial_balance` — §7.2
 - [ ] `app.report_trial_balance_for_party` — §7.2 (nav P3; PLAN P3 lists GL/TB/BS/P&L only)

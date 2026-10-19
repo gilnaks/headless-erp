@@ -165,6 +165,8 @@ export const journalEntry = defineDoctype<"journal_entry", "accounts">({
         je_stock: "accounts",
         je_account: "accounts",
         gl_unbalanced: "difference",
+        gl_opening_pl: "accounts",
+        gl_round_off_opening: "accounts",
         gl_frozen: "posting_date",
         fiscal_year: "posting_date",
         update_after_submit: "user_remark",

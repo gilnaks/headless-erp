@@ -85,6 +85,7 @@ export const company = defineDoctype({
             label: "Submit ERR Journals?",
             dependsOn: (v) => v.auto_exchange_rate_revaluation === true,
         },
+        round_off_for_opening_id: { type: "Link", label: "Round Off for Opening", target: "Account" },
         enable_perpetual_inventory: { type: "Check", label: "Enable Perpetual Inventory", default: true },
         valuation_method: {
             type: "Select",
@@ -134,6 +135,10 @@ export const company = defineDoctype({
             label: "Accounts",
             sections: [
                 { label: "Credit Limit", columns: [["credit_limit", "payment_terms_id"], ["reconciliation_takes_effect_on"]] },
+                {
+                    label: "Default Accounts",
+                    columns: [["round_off_for_opening_id"]],
+                },
                 {
                     label: "Exchange Rate Revaluation Settings",
                     columns: [["auto_exchange_rate_revaluation", "auto_err_frequency", "submit_err_jv"]],
