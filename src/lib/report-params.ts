@@ -8,3 +8,14 @@ export const generalLedgerParsers = {
     account: parseAsString.withDefault(""),
     opening: parseAsBoolean.withDefault(false),
 };
+
+/** Trial Balance URL state. A blank year and blank dates are filled from the fiscal year that contains today. */
+export const trialBalanceParsers = {
+    company: parseAsString.withDefault(""),
+    fiscal_year: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    zero: parseAsBoolean.withDefault(false),
+    groups: parseAsBoolean.withDefault(true),
+    net: parseAsBoolean.withDefault(true),
+};

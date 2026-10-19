@@ -331,6 +331,7 @@ export type Database = {
         Returns: undefined
       }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
+      report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reserved_slugs: { Args: never; Returns: string[] }
       reset_role_permissions: {
@@ -8616,6 +8617,7 @@ export type Database = {
       }
       provision_organization: { Args: { p: Json }; Returns: Json }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
+      report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reset_role_permissions: {
         Args: { p_doctype: string; p_org: string }
