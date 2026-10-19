@@ -295,6 +295,8 @@ Validations: see §3.6.
 
 `payment_entry_reference`: `reference_doctype` ✔ (`Sales Invoice|Purchase Invoice|Journal Entry|Sales Order|Purchase Order|Payment Entry` — Dunning/Employee Advance dropped), `reference_name` ✔ (`reference_id`), `due_date`, `bill_no`, `payment_term_id`, `payment_term_outstanding`, `account_type`, `payment_type`, `total_amount` ro, `outstanding_amount` ro, `allocated_amount`, `exchange_rate` (1), `exchange_gain_loss` (0), `account_id`, `advance_voucher_type`. `payment_entry_deduction`: `account_id` ✔, `cost_center_id` ✔, `amount` ✔ (company currency; negative = credit), `is_exchange_gain_loss` boolean (always false for us), `description`.
 
+**Built (0307).** A draft payment is named `DRAFT-<id>`. Submit issues `ACC-PAY-.YYYY.-`. An internal transfer of 100 posts two open general-ledger rows whose debits equal credits. A non-zero difference is rejected before posting. Cancel flags the original rows and inserts the mirrored rows. `app.get_outstanding_reference_documents` returns posted Journal Entry party rows. A Receive that allocates that amount posts a payment-ledger row that clears the journal outstanding. Advance taxes, `app.get_payment_entry`, and the payment-schedule update wait. System Manager and Auditor can read. Accounts Manager and Accounts User can create, submit, cancel, and amend.
+
 ### 2.18 Sales Invoice → `sales_invoice` + children (P5; owned here, flows in 02-selling)
 
 - **Kind:** submittable. **Naming series:** `ACC-SINV-.YYYY.-` and `ACC-SINV-RET-.YYYY.-` (returns default to the RET series). Title `customer_name`. **Perms:** Accounts Manager rwcsxd, Accounts User rwcs (**no cancel in ERPNext**, kept). 02-selling may add Sales User r.
@@ -1145,7 +1147,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `app.reverse_gl_entries` (+ PLE delink) — §4.0
 - [ ] `app.refresh_outstanding` + `app.set_invoice_status` — §4.0, §5 (`refresh_outstanding` exists and no-ops until invoices; status is not built)
 - [x] `journal_entry` + `journal_entry_account`; `app.on_submit__journal_entry`, `app.journal_entry_gl_map` — §2.16, §4.1, `0303_accounts_journal_entry.sql` (reference validator, reverse mapper and `get_balance` wait until invoices)
-- [ ] `payment_entry` + reference / deduction / taxes children; `app.get_payment_entry` mapper, `get_outstanding_reference_documents`, set amounts/difference, `app.payment_entry_gl_map`, payment schedule update — §2.17, §3.3, §3.7, §4.2
+- [x] `payment_entry` + reference / deduction children; set amounts/difference, `app.payment_entry_gl_map`, `app.on_submit__payment_entry`, `get_outstanding_reference_documents` for posted Journal Entry party rows — §2.17, §3.7, §4.2, `0307_accounts_payment_entry.sql` (advance taxes, `get_payment_entry`, and the payment-schedule update wait)
 - [ ] Advances: `app.get_advance_entries`, `app.reconcile_against_document`, unlink on cancel (`unlink_payment_on_cancellation_of_invoice`) — §3.8, §4.6
 - [ ] Payment Reconciliation page (+ `reconcile_dr_cr_note` system JE) — §2.25, §3.8
 - [ ] `accounts_settings` form (exposed fields of §6.1) — §6

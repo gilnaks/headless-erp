@@ -181,6 +181,16 @@ export type Database = {
         Args: { p_company: string; p_taxes: Json; p_template: string }
         Returns: Json
       }
+      get_outstanding_reference_documents: {
+        Args: {
+          p_account: string
+          p_amount: number
+          p_company: string
+          p_party: string
+          p_party_type: string
+        }
+        Returns: Json
+      }
       get_party_account: {
         Args: { p_company: string; p_party: string; p_party_type: string }
         Returns: string
@@ -246,6 +256,7 @@ export type Database = {
       }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_submit__journal_entry: { Args: { p_id: string }; Returns: undefined }
+      on_submit__payment_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       onboarding_complete: {
         Args: { p_org: string; p_step: string }
@@ -296,6 +307,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      payment_entry_gl_map: { Args: { p_id: string }; Returns: Json }
       payment_terms_template_refresh: {
         Args: { p_template: string }
         Returns: undefined
@@ -5278,6 +5290,359 @@ export type Database = {
           },
         ]
       }
+      payment_entry: {
+        Row: {
+          amended_from: string | null
+          base_paid_amount: number
+          base_received_amount: number
+          base_total_allocated_amount: number
+          clearance_date: string | null
+          company_id: string
+          contact_email: string | null
+          contact_person_id: string | null
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          custom_remarks: boolean
+          difference_amount: number
+          docstatus: number
+          id: string
+          is_opening: string
+          mode_of_payment_id: string | null
+          name: string
+          naming_series: string
+          org_id: string
+          paid_amount: number
+          paid_from_account_balance: number
+          paid_from_account_currency: string | null
+          paid_from_account_id: string
+          paid_from_account_type: string | null
+          paid_to_account_balance: number
+          paid_to_account_currency: string | null
+          paid_to_account_id: string
+          paid_to_account_type: string | null
+          party_balance: number
+          party_id: string | null
+          party_name: string | null
+          party_type: string | null
+          payment_type: string
+          posting_date: string
+          received_amount: number
+          reference_date: string | null
+          reference_no: string | null
+          remarks: string | null
+          source_exchange_rate: number
+          status: string
+          target_exchange_rate: number
+          title: string | null
+          total_allocated_amount: number
+          unallocated_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          base_paid_amount?: number
+          base_received_amount?: number
+          base_total_allocated_amount?: number
+          clearance_date?: string | null
+          company_id: string
+          contact_email?: string | null
+          contact_person_id?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_remarks?: boolean
+          difference_amount?: number
+          docstatus?: number
+          id?: string
+          is_opening?: string
+          mode_of_payment_id?: string | null
+          name: string
+          naming_series?: string
+          org_id: string
+          paid_amount?: number
+          paid_from_account_balance?: number
+          paid_from_account_currency?: string | null
+          paid_from_account_id: string
+          paid_from_account_type?: string | null
+          paid_to_account_balance?: number
+          paid_to_account_currency?: string | null
+          paid_to_account_id: string
+          paid_to_account_type?: string | null
+          party_balance?: number
+          party_id?: string | null
+          party_name?: string | null
+          party_type?: string | null
+          payment_type?: string
+          posting_date?: string
+          received_amount?: number
+          reference_date?: string | null
+          reference_no?: string | null
+          remarks?: string | null
+          source_exchange_rate?: number
+          status?: string
+          target_exchange_rate?: number
+          title?: string | null
+          total_allocated_amount?: number
+          unallocated_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          base_paid_amount?: number
+          base_received_amount?: number
+          base_total_allocated_amount?: number
+          clearance_date?: string | null
+          company_id?: string
+          contact_email?: string | null
+          contact_person_id?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_remarks?: boolean
+          difference_amount?: number
+          docstatus?: number
+          id?: string
+          is_opening?: string
+          mode_of_payment_id?: string | null
+          name?: string
+          naming_series?: string
+          org_id?: string
+          paid_amount?: number
+          paid_from_account_balance?: number
+          paid_from_account_currency?: string | null
+          paid_from_account_id?: string
+          paid_from_account_type?: string | null
+          paid_to_account_balance?: number
+          paid_to_account_currency?: string | null
+          paid_to_account_id?: string
+          paid_to_account_type?: string | null
+          party_balance?: number
+          party_id?: string | null
+          party_name?: string | null
+          party_type?: string | null
+          payment_type?: string
+          posting_date?: string
+          received_amount?: number
+          reference_date?: string | null
+          reference_no?: string | null
+          remarks?: string | null
+          source_exchange_rate?: number
+          status?: string
+          target_exchange_rate?: number
+          title?: string | null
+          total_allocated_amount?: number
+          unallocated_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_entry_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "payment_entry"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_contact_person_id_fkey"
+            columns: ["org_id", "contact_person_id"]
+            isOneToOne: false
+            referencedRelation: "contact"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_mode_of_payment_id_fkey"
+            columns: ["org_id", "mode_of_payment_id"]
+            isOneToOne: false
+            referencedRelation: "mode_of_payment"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_paid_from_account_id_fkey"
+            columns: ["org_id", "paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_org_id_paid_to_account_id_fkey"
+            columns: ["org_id", "paid_to_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      payment_entry_deduction: {
+        Row: {
+          account_id: string
+          amount: number
+          cost_center_id: string
+          description: string | null
+          id: string
+          idx: number
+          is_exchange_gain_loss: boolean
+          org_id: string
+          parent_id: string
+        }
+        Insert: {
+          account_id: string
+          amount?: number
+          cost_center_id: string
+          description?: string | null
+          id?: string
+          idx: number
+          is_exchange_gain_loss?: boolean
+          org_id: string
+          parent_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          cost_center_id?: string
+          description?: string | null
+          id?: string
+          idx?: number
+          is_exchange_gain_loss?: boolean
+          org_id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_entry_deduction_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_deduction_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_deduction_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_entry"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      payment_entry_reference: {
+        Row: {
+          account_id: string | null
+          account_type: string | null
+          advance_voucher_type: string | null
+          allocated_amount: number
+          bill_no: string | null
+          due_date: string | null
+          exchange_gain_loss: number
+          exchange_rate: number
+          id: string
+          idx: number
+          org_id: string
+          outstanding_amount: number
+          parent_id: string
+          payment_term_id: string | null
+          payment_term_outstanding: number
+          payment_type: string | null
+          reference_doctype: string
+          reference_id: string
+          total_amount: number
+        }
+        Insert: {
+          account_id?: string | null
+          account_type?: string | null
+          advance_voucher_type?: string | null
+          allocated_amount?: number
+          bill_no?: string | null
+          due_date?: string | null
+          exchange_gain_loss?: number
+          exchange_rate?: number
+          id?: string
+          idx: number
+          org_id: string
+          outstanding_amount?: number
+          parent_id: string
+          payment_term_id?: string | null
+          payment_term_outstanding?: number
+          payment_type?: string | null
+          reference_doctype: string
+          reference_id: string
+          total_amount?: number
+        }
+        Update: {
+          account_id?: string | null
+          account_type?: string | null
+          advance_voucher_type?: string | null
+          allocated_amount?: number
+          bill_no?: string | null
+          due_date?: string | null
+          exchange_gain_loss?: number
+          exchange_rate?: number
+          id?: string
+          idx?: number
+          org_id?: string
+          outstanding_amount?: number
+          parent_id?: string
+          payment_term_id?: string | null
+          payment_term_outstanding?: number
+          payment_type?: string | null
+          reference_doctype?: string
+          reference_id?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_entry_reference_org_id_account_id_fkey"
+            columns: ["org_id", "account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_reference_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_entry"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "payment_entry_reference_org_id_payment_term_id_fkey"
+            columns: ["org_id", "payment_term_id"]
+            isOneToOne: false
+            referencedRelation: "payment_term"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       payment_ledger_entry: {
         Row: {
           account_currency: string | null
@@ -7932,6 +8297,16 @@ export type Database = {
       }
       get_item_tax_map: {
         Args: { p_company: string; p_taxes?: Json; p_template: string }
+        Returns: Json
+      }
+      get_outstanding_reference_documents: {
+        Args: {
+          p_account: string
+          p_amount: number
+          p_company: string
+          p_party: string
+          p_party_type: string
+        }
         Returns: Json
       }
       get_party_account: {
