@@ -3,6 +3,7 @@ import { DocList } from "@/components/erp/doc/doc-list";
 import { TreeView } from "@/components/erp/doc/tree-view";
 import { NotPermitted } from "@/components/erp/not-permitted";
 import { PlaceholderPage } from "@/components/erp/placeholder-page";
+import { GeneralLedger } from "@/components/erp/report/general-ledger";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
 import type { Doctype } from "@/doctypes/define";
 import { getDoctype } from "@/doctypes/registry";
@@ -10,9 +11,11 @@ import { prefillValues } from "@/doctypes/schema";
 import { loadListParams, loadViewParams } from "@/lib/list-params";
 import { notFound } from "@/lib/navigate";
 import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs, listTreeNodes } from "@/lib/queries/doc";
+import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { optionSourcesOf } from "@/lib/reference-options";
+import { createClient } from "@/lib/supabase/client";
 
 type ItemPageProps = {
     params: Promise<{ org: string; module: string; slug: string[] }>;
@@ -125,6 +128,57 @@ async function SingleRoute({ d, orgSlug }: { d: Doctype; orgSlug: string }) {
     );
 }
 
+function isoDate(date: Date): string {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function defaultRange(): { from: string; to: string } {
+    const to = new Date();
+    const from = new Date();
+    from.setMonth(from.getMonth() - 1);
+    return { from: isoDate(from), to: isoDate(to) };
+}
+
+async function GeneralLedgerRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const range = defaultRange();
+    const from = one("from") || range.from;
+    const to = one("to") || range.to;
+    const account = one("account") ?? "";
+    const showOpening = one("opening") === "true";
+    let company = one("company") ?? "";
+    if (!company) {
+        const supabase = createClient();
+        const { data } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (data?.length === 1) company = data[0].id;
+    }
+    const report = company
+        ? await loadGeneralLedger({ company, from, to, account, showOpening })
+        : { columns: [], rows: [], error: "Company is mandatory" };
+
+    return (
+        <GeneralLedger
+            orgSlug={org.slug}
+            companyId={company}
+            from={from}
+            to={to}
+            accountId={account}
+            showOpening={showOpening}
+            columns={report.columns}
+            rows={report.rows}
+            error={report.error}
+        />
+    );
+}
+
 async function ItemRoute({ params, searchParams }: ItemPageProps) {
     const { org, module: moduleId, slug } = await params;
     if (!getModule(moduleId)) notFound();
@@ -141,6 +195,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     const path = [moduleId, ...slug].join("/");
     const link = findLinkForPath(path);
     if (!link) notFound();
+    if (link.target.kind === "report" && link.target.report === "General Ledger") {
+        return GeneralLedgerRoute({ orgSlug: org, searchParams });
+    }
 
     return <PlaceholderPage title={link.label} description={describe(link, path)} phase={link.phase} />;
 }
