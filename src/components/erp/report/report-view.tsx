@@ -6,7 +6,7 @@ import { Button } from "@/components/base/buttons/button";
 import { FormAlert } from "@/components/erp/form-alert";
 import { cx } from "@/utils/cx";
 
-export type ReportColumn = { field: string; label: string };
+export type ReportColumn = { field: string; label: string; amount?: boolean };
 export type ReportRow = Record<string, unknown> & { row_type?: string };
 
 const AMOUNTS = new Set(["debit", "credit", "balance", "opening_debit", "opening_credit", "closing_debit", "closing_credit"]);
@@ -19,8 +19,12 @@ function formatAmount(value: unknown): string {
         : String(value);
 }
 
-function formatCell(field: string, value: unknown): string {
-    if (AMOUNTS.has(field)) return formatAmount(value);
+function isAmountColumn(column: ReportColumn): boolean {
+    return column.amount === true || AMOUNTS.has(column.field);
+}
+
+function formatCell(column: ReportColumn, value: unknown): string {
+    if (isAmountColumn(column)) return formatAmount(value);
     if (value === null || value === undefined) return "";
     return String(value);
 }
@@ -32,7 +36,7 @@ function csvEscape(value: unknown): string {
 
 function downloadCsv(filename: string, columns: ReportColumn[], rows: ReportRow[]) {
     const header = columns.map((column) => csvEscape(column.label)).join(",");
-    const body = rows.map((row) => columns.map((column) => csvEscape(formatCell(column.field, row[column.field]))).join(",")).join("\n");
+    const body = rows.map((row) => columns.map((column) => csvEscape(formatCell(column, row[column.field]))).join(",")).join("\n");
     const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -85,7 +89,7 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                     id={column.field}
                                     label={column.label}
                                     isRowHeader={column.field === "account" || column.field === "party"}
-                                    className={cx(AMOUNTS.has(column.field) && "[&>div]:justify-end")}
+                                    className={cx(isAmountColumn(column) && "[&>div]:justify-end")}
                                 />
                             )}
                         </Table.Header>
@@ -95,18 +99,22 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                     {(column) => (
                                         <Table.Cell
                                             className={cx(
-                                                AMOUNTS.has(column.field) && "text-right tabular-nums",
+                                                isAmountColumn(column) && "text-right tabular-nums",
                                                 ((row.row_type !== "entry" && row.row_type !== "account" && row.row_type !== "party") ||
                                                     row.is_group === true) &&
                                                     "font-semibold text-primary",
+                                                isAmountColumn(column) &&
+                                                    row.warn_if_negative === true &&
+                                                    Number(row[column.field]) < 0 &&
+                                                    "text-error-primary",
                                             )}
                                         >
                                             {column.field === "account" && typeof row.indent === "number" && row.indent > 0 ? (
                                                 <span style={{ paddingInlineStart: row.indent * 16 }}>
-                                                    {formatCell(column.field, row[column.field])}
+                                                    {formatCell(column, row[column.field])}
                                                 </span>
                                             ) : (
-                                                formatCell(column.field, row[column.field])
+                                                formatCell(column, row[column.field])
                                             )}
                                         </Table.Cell>
                                     )}

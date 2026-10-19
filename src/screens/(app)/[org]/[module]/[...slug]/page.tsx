@@ -4,6 +4,7 @@ import { TreeView } from "@/components/erp/doc/tree-view";
 import { NotPermitted } from "@/components/erp/not-permitted";
 import { PlaceholderPage } from "@/components/erp/placeholder-page";
 import { GeneralLedger } from "@/components/erp/report/general-ledger";
+import { ProfitAndLoss } from "@/components/erp/report/profit-and-loss";
 import { type FiscalYearChoice, TrialBalance } from "@/components/erp/report/trial-balance";
 import { TrialBalanceForParty } from "@/components/erp/report/trial-balance-for-party";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
@@ -15,6 +16,7 @@ import { notFound } from "@/lib/navigate";
 import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs, listTreeNodes } from "@/lib/queries/doc";
 import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
+import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { loadTrialBalance } from "@/lib/queries/trial-balance";
 import { loadTrialBalanceForParty } from "@/lib/queries/trial-balance-for-party";
@@ -318,6 +320,86 @@ async function TrialBalanceForPartyRoute({ orgSlug, searchParams }: { orgSlug: s
     );
 }
 
+async function ProfitAndLossRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const supabase = createClient();
+    const { data } = await supabase
+        .from("fiscal_year")
+        .select("id, year, year_start_date, year_end_date")
+        .eq("org_id", org.id)
+        .order("year_start_date", { ascending: false });
+    const years: FiscalYearChoice[] = (data ?? []).map((year) => ({
+        id: year.id,
+        label: year.year,
+        start: year.year_start_date,
+        end: year.year_end_date,
+    }));
+    const today = isoDate(new Date());
+    const current = years.find((year) => year.start <= today && year.end >= today) ?? years[0];
+    const fromYear = years.find((year) => year.id === one("from_fy")) ?? current;
+    const toYear = years.find((year) => year.id === one("to_fy")) ?? current;
+    const basis = one("basis") === "Date Range" ? "Date Range" : "Fiscal Year";
+    const requestedPeriod = one("periodicity");
+    const periodicity =
+        requestedPeriod === "Monthly" || requestedPeriod === "Quarterly" || requestedPeriod === "Half-Yearly" ? requestedPeriod : "Yearly";
+    const from = one("from") || fromYear?.start || today;
+    const to = one("to") || toYear?.end || today;
+    const accumulated = one("accumulated") === "true";
+    const showZero = one("zero") === "true";
+    let company = one("company") ?? "";
+    if (!company) {
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+    const report =
+        company && fromYear && toYear
+            ? await loadProfitAndLoss({
+                  company,
+                  basis,
+                  fromFiscalYear: fromYear.id,
+                  toFiscalYear: toYear.id,
+                  from,
+                  to,
+                  periodicity,
+                  accumulated,
+                  showZero,
+              })
+            : {
+                  columns: [],
+                  rows: [],
+                  summary: [],
+                  chart: { type: "bar" as const, labels: [], datasets: [] },
+                  error: company ? "Start Year and End Year are mandatory" : "Company is mandatory",
+              };
+
+    return (
+        <ProfitAndLoss
+            orgSlug={org.slug}
+            companyId={company}
+            basis={basis}
+            fromFiscalYearId={fromYear?.id ?? ""}
+            toFiscalYearId={toYear?.id ?? ""}
+            years={years}
+            from={from}
+            to={to}
+            periodicity={periodicity}
+            accumulated={accumulated}
+            showZero={showZero}
+            columns={report.columns}
+            rows={report.rows}
+            summary={report.summary}
+            chart={report.chart}
+            error={report.error}
+        />
+    );
+}
+
 async function ItemRoute({ params, searchParams }: ItemPageProps) {
     const { org, module: moduleId, slug } = await params;
     if (!getModule(moduleId)) notFound();
@@ -342,6 +424,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "report" && link.target.report === "Trial Balance for Party") {
         return TrialBalanceForPartyRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Profit and Loss Statement") {
+        return ProfitAndLossRoute({ orgSlug: org, searchParams });
     }
 
     return <PlaceholderPage title={link.label} description={describe(link, path)} phase={link.phase} />;

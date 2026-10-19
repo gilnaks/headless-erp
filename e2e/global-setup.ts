@@ -67,6 +67,7 @@ const USERS = [
     { env: "E2E_GL", local: "ledger", first_name: "Ledger", last_name: "Admin" },
     { env: "E2E_TB", local: "trial", first_name: "Trial", last_name: "Admin" },
     { env: "E2E_TBP", local: "trial-party", first_name: "Trial Party", last_name: "Admin" },
+    { env: "E2E_PL", local: "profit", first_name: "Profit", last_name: "Admin" },
 ] as const;
 
 /**

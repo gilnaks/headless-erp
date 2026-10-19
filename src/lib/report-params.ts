@@ -31,3 +31,16 @@ export const trialBalanceForPartyParsers = {
     zero: parseAsBoolean.withDefault(false),
     exclude: parseAsBoolean.withDefault(true),
 };
+
+/** Profit and Loss URL state. A blank year follows the fiscal year that contains today. */
+export const profitAndLossParsers = {
+    company: parseAsString.withDefault(""),
+    basis: parseAsString.withDefault("Fiscal Year"),
+    from_fy: parseAsString.withDefault(""),
+    to_fy: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    periodicity: parseAsString.withDefault("Yearly"),
+    accumulated: parseAsBoolean.withDefault(false),
+    zero: parseAsBoolean.withDefault(false),
+};
