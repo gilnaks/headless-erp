@@ -180,6 +180,8 @@ Owned by 02-selling/03-buying for the parent tables; behaviour here. Fields: `co
 
 Full field list in §6. **Perms:** Accounts Manager rw; Sales User r, Purchase User r (we add Accounts User r).
 
+**Built (0309).** One row is seeded with each organization. Accounts Manager can change the exposed flags. System Manager, Accounts User, Sales User, and Purchase User can read. A role link stores the role name, and deleting the role clears it. Advances, reconciliation, opening-entry checks, and reports wait. General ledger posting and exchange rates do not read this row yet.
+
 ### 2.11 Sales / Purchase Taxes and Charges Template → `sales_taxes_and_charges_template` / `purchase_taxes_and_charges_template` + children
 
 - **Kind:** company-scoped master. **Naming:** `"<title> - <ABBR>"` (`autoname`). Title field `title`.
@@ -1150,7 +1152,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `payment_entry` + reference / deduction children; set amounts/difference, `app.payment_entry_gl_map`, `app.on_submit__payment_entry`, `get_outstanding_reference_documents` for posted Journal Entry party rows — §2.17, §3.7, §4.2, `0307_accounts_payment_entry.sql` (advance taxes, `get_payment_entry`, and the payment-schedule update wait)
 - [ ] Advances: `app.get_advance_entries`, `app.reconcile_against_document`, unlink on cancel (`unlink_payment_on_cancellation_of_invoice`) — §3.8, §4.6
 - [ ] Payment Reconciliation page (+ `reconcile_dr_cr_note` system JE) — §2.25, §3.8
-- [ ] `accounts_settings` form (exposed fields of §6.1) — §6
+- [x] `accounts_settings` form (exposed fields of §6.1) — §2.10, §6.1, `0309_accounts_settings.sql` (advances, reconciliation, opening-entry checks, and reports wait)
 - [ ] Opening Entry JE validations (P&L block, round-off for opening) — §3.13
 - [ ] `app.report_general_ledger` — §7.2
 - [ ] `app.report_trial_balance` — §7.2

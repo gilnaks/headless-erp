@@ -591,6 +591,195 @@ export type Database = {
           },
         ]
       }
+      accounts_settings: {
+        Row: {
+          add_taxes_from_item_tax_template: boolean
+          add_taxes_from_taxes_and_charges_template: boolean
+          allow_stale: boolean
+          auto_reconcile_payments: boolean
+          automatically_fetch_payment_terms: boolean
+          book_asset_depreciation_entry_automatically: boolean
+          book_stock_expense_gl_entries: boolean
+          book_tax_discount_loss: boolean
+          calculate_depr_using_total_days: boolean
+          check_supplier_invoice_uniqueness: boolean
+          confirm_before_resetting_posting_date: boolean
+          created_at: string
+          created_by: string | null
+          credit_controller: string | null
+          default_ageing_range: string
+          delete_linked_ledger_entries: boolean
+          determine_address_tax_category_from: string
+          enable_common_party_accounting: boolean
+          enable_discounts_and_margin: boolean
+          enable_fuzzy_matching: boolean
+          enable_immutable_ledger: boolean
+          enable_overdue_billing_threshold: boolean
+          enable_party_matching: boolean
+          exchange_gain_loss_posting_date: string
+          general_ledger_remarks_length: number
+          id: string
+          ignore_account_closing_balance: boolean
+          ignore_is_opening_check_for_reporting: boolean
+          make_payment_via_journal_entry: boolean
+          merge_similar_account_heads: boolean
+          org_id: string
+          over_billing_allowance: number
+          receivable_payable_remarks_length: number
+          role_allowed_to_bypass_overdue_billing: string | null
+          role_allowed_to_over_bill: string | null
+          role_to_notify_on_depreciation_failure: string | null
+          round_row_wise_tax: boolean
+          show_balance_in_coa: boolean
+          show_inclusive_tax_in_print: boolean
+          show_payment_schedule_in_print: boolean
+          show_taxes_as_table_in_print: boolean
+          stale_days: number
+          transfer_match_days: number
+          unlink_advance_payment_on_cancelation_of_order: boolean
+          unlink_payment_on_cancellation_of_invoice: boolean
+          updated_at: string
+          updated_by: string | null
+          use_legacy_budget_controller: boolean
+        }
+        Insert: {
+          add_taxes_from_item_tax_template?: boolean
+          add_taxes_from_taxes_and_charges_template?: boolean
+          allow_stale?: boolean
+          auto_reconcile_payments?: boolean
+          automatically_fetch_payment_terms?: boolean
+          book_asset_depreciation_entry_automatically?: boolean
+          book_stock_expense_gl_entries?: boolean
+          book_tax_discount_loss?: boolean
+          calculate_depr_using_total_days?: boolean
+          check_supplier_invoice_uniqueness?: boolean
+          confirm_before_resetting_posting_date?: boolean
+          created_at?: string
+          created_by?: string | null
+          credit_controller?: string | null
+          default_ageing_range?: string
+          delete_linked_ledger_entries?: boolean
+          determine_address_tax_category_from?: string
+          enable_common_party_accounting?: boolean
+          enable_discounts_and_margin?: boolean
+          enable_fuzzy_matching?: boolean
+          enable_immutable_ledger?: boolean
+          enable_overdue_billing_threshold?: boolean
+          enable_party_matching?: boolean
+          exchange_gain_loss_posting_date?: string
+          general_ledger_remarks_length?: number
+          id?: string
+          ignore_account_closing_balance?: boolean
+          ignore_is_opening_check_for_reporting?: boolean
+          make_payment_via_journal_entry?: boolean
+          merge_similar_account_heads?: boolean
+          org_id: string
+          over_billing_allowance?: number
+          receivable_payable_remarks_length?: number
+          role_allowed_to_bypass_overdue_billing?: string | null
+          role_allowed_to_over_bill?: string | null
+          role_to_notify_on_depreciation_failure?: string | null
+          round_row_wise_tax?: boolean
+          show_balance_in_coa?: boolean
+          show_inclusive_tax_in_print?: boolean
+          show_payment_schedule_in_print?: boolean
+          show_taxes_as_table_in_print?: boolean
+          stale_days?: number
+          transfer_match_days?: number
+          unlink_advance_payment_on_cancelation_of_order?: boolean
+          unlink_payment_on_cancellation_of_invoice?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          use_legacy_budget_controller?: boolean
+        }
+        Update: {
+          add_taxes_from_item_tax_template?: boolean
+          add_taxes_from_taxes_and_charges_template?: boolean
+          allow_stale?: boolean
+          auto_reconcile_payments?: boolean
+          automatically_fetch_payment_terms?: boolean
+          book_asset_depreciation_entry_automatically?: boolean
+          book_stock_expense_gl_entries?: boolean
+          book_tax_discount_loss?: boolean
+          calculate_depr_using_total_days?: boolean
+          check_supplier_invoice_uniqueness?: boolean
+          confirm_before_resetting_posting_date?: boolean
+          created_at?: string
+          created_by?: string | null
+          credit_controller?: string | null
+          default_ageing_range?: string
+          delete_linked_ledger_entries?: boolean
+          determine_address_tax_category_from?: string
+          enable_common_party_accounting?: boolean
+          enable_discounts_and_margin?: boolean
+          enable_fuzzy_matching?: boolean
+          enable_immutable_ledger?: boolean
+          enable_overdue_billing_threshold?: boolean
+          enable_party_matching?: boolean
+          exchange_gain_loss_posting_date?: string
+          general_ledger_remarks_length?: number
+          id?: string
+          ignore_account_closing_balance?: boolean
+          ignore_is_opening_check_for_reporting?: boolean
+          make_payment_via_journal_entry?: boolean
+          merge_similar_account_heads?: boolean
+          org_id?: string
+          over_billing_allowance?: number
+          receivable_payable_remarks_length?: number
+          role_allowed_to_bypass_overdue_billing?: string | null
+          role_allowed_to_over_bill?: string | null
+          role_to_notify_on_depreciation_failure?: string | null
+          round_row_wise_tax?: boolean
+          show_balance_in_coa?: boolean
+          show_inclusive_tax_in_print?: boolean
+          show_payment_schedule_in_print?: boolean
+          show_taxes_as_table_in_print?: boolean
+          stale_days?: number
+          transfer_match_days?: number
+          unlink_advance_payment_on_cancelation_of_order?: boolean
+          unlink_payment_on_cancellation_of_invoice?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          use_legacy_budget_controller?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_settings_org_id_credit_controller_fkey"
+            columns: ["org_id", "credit_controller"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "accounts_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_settings_org_id_role_allowed_to_bypass_overdue_bi_fkey"
+            columns: ["org_id", "role_allowed_to_bypass_overdue_billing"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "accounts_settings_org_id_role_allowed_to_over_bill_fkey"
+            columns: ["org_id", "role_allowed_to_over_bill"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "accounts_settings_org_id_role_to_notify_on_depreciation_fa_fkey"
+            columns: ["org_id", "role_to_notify_on_depreciation_failure"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+        ]
+      }
       address: {
         Row: {
           address_line1: string

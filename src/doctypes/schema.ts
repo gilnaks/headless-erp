@@ -43,6 +43,11 @@ function valueSchema(field: FieldDef): z.ZodType {
         case "Percent":
             return z.string().regex(NUMBER, `${field.label} must be a number`).or(z.literal(""));
         case "Link":
+            if (field.target === "Role") return z.string();
+            return z
+                .string()
+                .regex(UUID, `Select a valid ${field.target ?? field.label}`)
+                .or(z.literal(""));
         case "DynamicLink":
             return z
                 .string()

@@ -1,5 +1,6 @@
 import { account } from "./accounts/account";
 import { accountCategory } from "./accounts/account-category";
+import { accountsSettings } from "./accounts/accounts-settings";
 import { costCenter } from "./accounts/cost-center";
 import { currencyExchange } from "./accounts/currency-exchange";
 import { fiscalYear } from "./accounts/fiscal-year";
@@ -71,6 +72,7 @@ export const DOCTYPES: readonly Doctype[] = [
     fiscalYear,
     accountCategory,
     account,
+    accountsSettings,
     costCenter,
     modeOfPayment,
     paymentTerm,

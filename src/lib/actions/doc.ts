@@ -149,8 +149,17 @@ export async function searchLink(input: {
     const org = await getOrgBySlug(input.orgSlug);
     if (!org) return [];
 
-    const ids = (input.ids ?? []).filter((id) => UUID.test(id));
     const supabase = await createClient();
+    if (input.doctype === "Role") {
+        const { data } = await supabase.from("roles").select("name").eq("org_id", org.id).order("name");
+        const needle = (input.q ?? "").trim().toLowerCase();
+        const selected = new Set(input.ids ?? []);
+        return (data ?? [])
+            .map((row) => ({ id: row.name, label: row.name }))
+            .filter((option) => selected.has(option.id) || option.label.toLowerCase().includes(needle))
+            .slice(0, 20);
+    }
+    const ids = (input.ids ?? []).filter((id) => UUID.test(id));
     const request = supabase.rpc("search_link", {
         p_org: org.id,
         p_doctype: input.doctype,
