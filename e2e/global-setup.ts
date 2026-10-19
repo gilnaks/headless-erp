@@ -64,6 +64,7 @@ const USERS = [
     { env: "E2E_PE", local: "payment", first_name: "Payment", last_name: "Admin" },
     { env: "E2E_AS", local: "accounts-settings", first_name: "Accounts", last_name: "Settings" },
     { env: "E2E_OPEN", local: "opening", first_name: "Opening", last_name: "Admin" },
+    { env: "E2E_GL", local: "ledger", first_name: "Ledger", last_name: "Admin" },
 ] as const;
 
 /**
