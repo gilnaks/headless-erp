@@ -53,7 +53,7 @@ type ReportViewProps = {
 
 /** Shared report table: filters, summary rows, an empty period, and a CSV download. */
 export function ReportView({ title, columns, rows, error, filters, exportName = "report.csv" }: ReportViewProps) {
-    const hasActivity = rows.some((row) => row.row_type === "entry" || row.row_type === "account");
+    const hasActivity = rows.some((row) => row.row_type === "entry" || row.row_type === "account" || row.row_type === "party");
     const headerColumns = columns.map((column) => ({ ...column, id: column.field }));
     const tableRows: (ReportRow & { id: string })[] = rows.map((row, index) => ({
         ...row,
@@ -84,7 +84,7 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                 <Table.Head
                                     id={column.field}
                                     label={column.label}
-                                    isRowHeader={column.field === "account"}
+                                    isRowHeader={column.field === "account" || column.field === "party"}
                                     className={cx(AMOUNTS.has(column.field) && "[&>div]:justify-end")}
                                 />
                             )}
@@ -96,7 +96,8 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                         <Table.Cell
                                             className={cx(
                                                 AMOUNTS.has(column.field) && "text-right tabular-nums",
-                                                ((row.row_type !== "entry" && row.row_type !== "account") || row.is_group === true) &&
+                                                ((row.row_type !== "entry" && row.row_type !== "account" && row.row_type !== "party") ||
+                                                    row.is_group === true) &&
                                                     "font-semibold text-primary",
                                             )}
                                         >
