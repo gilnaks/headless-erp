@@ -4,6 +4,7 @@ import { TreeView } from "@/components/erp/doc/tree-view";
 import { NotPermitted } from "@/components/erp/not-permitted";
 import { PlaceholderPage } from "@/components/erp/placeholder-page";
 import { GeneralLedger } from "@/components/erp/report/general-ledger";
+import { type FiscalYearChoice, TrialBalance } from "@/components/erp/report/trial-balance";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
 import type { Doctype } from "@/doctypes/define";
 import { getDoctype } from "@/doctypes/registry";
@@ -14,6 +15,7 @@ import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs, listTr
 import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { getReferenceOptions } from "@/lib/queries/reference";
+import { loadTrialBalance } from "@/lib/queries/trial-balance";
 import { optionSourcesOf } from "@/lib/reference-options";
 import { createClient } from "@/lib/supabase/client";
 
@@ -179,6 +181,72 @@ async function GeneralLedgerRoute({ orgSlug, searchParams }: { orgSlug: string; 
     );
 }
 
+async function TrialBalanceRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const supabase = createClient();
+    const { data } = await supabase
+        .from("fiscal_year")
+        .select("id, year, year_start_date, year_end_date")
+        .eq("org_id", org.id)
+        .order("year_start_date", { ascending: false });
+    const years: FiscalYearChoice[] = (data ?? []).map((year) => ({
+        id: year.id,
+        label: year.year,
+        start: year.year_start_date,
+        end: year.year_end_date,
+    }));
+    const today = isoDate(new Date());
+    const current = years.find((year) => year.start <= today && year.end >= today) ?? years[0];
+    const requested = one("fiscal_year");
+    const selected = years.find((year) => year.id === requested) ?? current;
+    const from = one("from") || selected?.start || today;
+    const to = one("to") || selected?.end || today;
+    const showZero = one("zero") === "true";
+    const showGroups = one("groups") !== "false";
+    const showNet = one("net") !== "false";
+    let company = one("company") ?? "";
+    if (!company) {
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+    const report =
+        company && selected
+            ? await loadTrialBalance({
+                  company,
+                  fiscalYear: selected.id,
+                  from,
+                  to,
+                  showZero,
+                  showGroups,
+                  showNet,
+              })
+            : { columns: [], rows: [], warnings: [], error: company ? "Fiscal Year is required" : "Company is mandatory" };
+
+    return (
+        <TrialBalance
+            orgSlug={org.slug}
+            companyId={company}
+            fiscalYearId={selected?.id ?? ""}
+            years={years}
+            from={from}
+            to={to}
+            showZero={showZero}
+            showGroups={showGroups}
+            showNet={showNet}
+            columns={report.columns}
+            rows={report.rows}
+            warnings={report.warnings}
+            error={report.error}
+        />
+    );
+}
+
 async function ItemRoute({ params, searchParams }: ItemPageProps) {
     const { org, module: moduleId, slug } = await params;
     if (!getModule(moduleId)) notFound();
@@ -197,6 +265,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     if (!link) notFound();
     if (link.target.kind === "report" && link.target.report === "General Ledger") {
         return GeneralLedgerRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Trial Balance") {
+        return TrialBalanceRoute({ orgSlug: org, searchParams });
     }
 
     return <PlaceholderPage title={link.label} description={describe(link, path)} phase={link.phase} />;

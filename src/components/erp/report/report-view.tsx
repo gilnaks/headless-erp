@@ -9,7 +9,7 @@ import { cx } from "@/utils/cx";
 export type ReportColumn = { field: string; label: string };
 export type ReportRow = Record<string, unknown> & { row_type?: string };
 
-const AMOUNTS = new Set(["debit", "credit", "balance"]);
+const AMOUNTS = new Set(["debit", "credit", "balance", "opening_debit", "opening_credit", "closing_debit", "closing_credit"]);
 
 function formatAmount(value: unknown): string {
     if (value === null || value === undefined || value === "") return "";
@@ -53,7 +53,7 @@ type ReportViewProps = {
 
 /** Shared report table: filters, summary rows, an empty period, and a CSV download. */
 export function ReportView({ title, columns, rows, error, filters, exportName = "report.csv" }: ReportViewProps) {
-    const entries = rows.filter((row) => row.row_type === "entry");
+    const hasActivity = rows.some((row) => row.row_type === "entry" || row.row_type === "account");
     const headerColumns = columns.map((column) => ({ ...column, id: column.field }));
     const tableRows: (ReportRow & { id: string })[] = rows.map((row, index) => ({
         ...row,
@@ -75,7 +75,7 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
             </header>
             {filters}
             {error && <FormAlert>{error}</FormAlert>}
-            {!error && entries.length === 0 && <FormAlert tone="info">No entries in this period.</FormAlert>}
+            {!error && !hasActivity && <FormAlert tone="info">No entries in this period.</FormAlert>}
             {!error && columns.length > 0 && (
                 <div className="overflow-hidden rounded-xl ring-1 ring-secondary">
                     <Table aria-label={title} size="sm">
@@ -96,10 +96,17 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                         <Table.Cell
                                             className={cx(
                                                 AMOUNTS.has(column.field) && "text-right tabular-nums",
-                                                row.row_type !== "entry" && "font-semibold text-primary",
+                                                ((row.row_type !== "entry" && row.row_type !== "account") || row.is_group === true) &&
+                                                    "font-semibold text-primary",
                                             )}
                                         >
-                                            {formatCell(column.field, row[column.field])}
+                                            {column.field === "account" && typeof row.indent === "number" && row.indent > 0 ? (
+                                                <span style={{ paddingInlineStart: row.indent * 16 }}>
+                                                    {formatCell(column.field, row[column.field])}
+                                                </span>
+                                            ) : (
+                                                formatCell(column.field, row[column.field])
+                                            )}
                                         </Table.Cell>
                                     )}
                                 </Table.Row>
