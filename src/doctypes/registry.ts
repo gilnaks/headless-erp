@@ -7,6 +7,7 @@ import { itemTaxTemplate } from "./accounts/item-tax-template";
 import { journalEntry } from "./accounts/journal-entry";
 import { modeOfPayment } from "./accounts/mode-of-payment";
 import { partyType } from "./accounts/party-type";
+import { paymentEntry } from "./accounts/payment-entry";
 import { paymentTerm } from "./accounts/payment-term";
 import { paymentTermsTemplate } from "./accounts/payment-terms-template";
 import { purchaseTaxesAndChargesTemplate } from "./accounts/purchase-taxes-and-charges-template";
@@ -78,6 +79,7 @@ export const DOCTYPES: readonly Doctype[] = [
     salesTaxesAndChargesTemplate,
     itemTaxTemplate,
     journalEntry,
+    paymentEntry,
     currencyExchange,
     partyType,
     taxCategory,
