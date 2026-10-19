@@ -12,6 +12,13 @@ async function memberOptions(orgId: string): Promise<LinkOption[]> {
     return members.map((m) => ({ id: m.userId, label: m.fullName ? `${m.fullName} (${m.email})` : m.email }));
 }
 
+/** `Role` has no id. The stored value is `roles.name`. */
+async function roleOptions(orgId: string): Promise<LinkOption[]> {
+    const supabase = await createClient();
+    const { data } = await supabase.from("roles").select("name").eq("org_id", orgId).order("name");
+    return (data ?? []).map((r) => ({ id: r.name, label: r.name }));
+}
+
 async function linkMeta(doctype: string) {
     const supabase = await createClient();
     const { data } = await supabase
@@ -27,6 +34,7 @@ async function linkMeta(doctype: string) {
 export async function getLinkTitles(orgId: string, doctype: string, ids: string[]): Promise<LinkOption[]> {
     if (!ids.length) return [];
     if (doctype === "User") return (await memberOptions(orgId)).filter((o) => ids.includes(o.id));
+    if (doctype === "Role") return (await roleOptions(orgId)).filter((o) => ids.includes(o.id));
     const meta = await linkMeta(doctype);
     if (!meta) return [];
     const { data } = await docTable(meta.supabase, meta.table).select(`id, ${meta.title}`).eq("org_id", orgId).in("id", ids);
@@ -39,6 +47,10 @@ export async function searchLinkTitles(orgId: string, doctype: string, q: string
     if (doctype === "User") {
         const needle = term.toLowerCase();
         return (await memberOptions(orgId)).filter((o) => o.label.toLowerCase().includes(needle)).slice(0, SEARCH_LIMIT);
+    }
+    if (doctype === "Role") {
+        const needle = term.toLowerCase();
+        return (await roleOptions(orgId)).filter((o) => o.label.toLowerCase().includes(needle)).slice(0, SEARCH_LIMIT);
     }
     const meta = await linkMeta(doctype);
     if (!meta) return [];
