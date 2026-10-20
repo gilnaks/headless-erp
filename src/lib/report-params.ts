@@ -45,6 +45,19 @@ export const profitAndLossParsers = {
     zero: parseAsBoolean.withDefault(false),
 };
 
+/** Cash Flow URL state. Accumulated values stay on unless the URL turns them off. */
+export const cashFlowParsers = {
+    company: parseAsString.withDefault(""),
+    basis: parseAsString.withDefault("Fiscal Year"),
+    from_fy: parseAsString.withDefault(""),
+    to_fy: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    periodicity: parseAsString.withDefault("Yearly"),
+    accumulated: parseAsBoolean.withDefault(true),
+    opening: parseAsBoolean.withDefault(false),
+};
+
 /** Balance Sheet URL state. Accumulated values stay on unless the URL turns them off. */
 export const balanceSheetParsers = {
     company: parseAsString.withDefault(""),

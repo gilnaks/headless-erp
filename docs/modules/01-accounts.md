@@ -1032,6 +1032,8 @@ Widgets whose report is not built yet render the dashboard "not available yet" e
 
 **Cash Flow** (`cash_flow/`, P3 nav / stretch). Common filters + `show_opening_and_closing_balance` (0). Indirect method: start from **Net Profit** (P&L "Profit for the year" per period), then sections by `account_type` net change (`get_cash_flow_accounts`): **Operations** — Depreciation (added back, sign flipped), Net Change in Accounts Receivable, Net Change in Accounts Payable, Net Change in Inventory (Stock), footer "Net Cash from Operations"; **Investing** — Net Change in Fixed Asset, "Net Cash from Investing"; **Financing** — Net Change in Equity, "Net Cash from Financing"; final "Net Change in Cash" (= Σ sections) and, with the option, Opening / Closing cash (accounts of type Cash/Bank). Accounts with other types (e.g. Tax, Current Liability) are not in any section (ERPNext behaviour), so Net Change in Cash may not equal the cash movement — documented in the report description.
 
+**Built (0316):** `app.report_cash_flow` starts from `'Profit for the year'`, adds back depreciation, and takes the credit-minus-debit change in receivables, payables, inventory, fixed assets, and equity. `'Net Change in Cash'` is the sum of the three section footers. Cash and Bank accounts are not section rows; Show Opening and Closing Balance appends their opening and closing balances. Accumulated values default on. The chart is a bar of the three section totals. Migration `0316_accounts_cash_flow.sql`.
+
 **Consolidated Financial Statement** (`consolidated_financial_statement/`, **stretch**). Filters: `company` (a group company), `filter_based_on`, FY or dates, `report` (`Balance Sheet` default \| `Profit and Loss Statement` \| `Cash Flow`), `accumulated_in_group_company` (0), `show_zero_values`. Columns per subsidiary (`companies.parent_company_id` subtree) + Total; accounts matched across companies by `account_name` (+ number); inter-company eliminations none (ERPNext none). Single currency per org assumed (§9).
 
 **Profitability Analysis** (`profitability_analysis/`, **stretch**). Filters: `company`, `based_on` (**Cost Center** \| Project; Accounting Dimension dropped), `fiscal_year`, `from_date`, `to_date`, `show_zero_values`. Columns: Account (cost center / project tree), Income, Expense, Gross Profit / Loss (income − expense). Source: P&L GL rows grouped by `cost_center_id` / `project_id`.
@@ -1171,7 +1173,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `app.report_trial_balance_for_party` — §7.2 (nav P3; PLAN P3 lists GL/TB/BS/P&L only), `0313_accounts_trial_balance_for_party.sql`
 - [x] `app.report_profit_and_loss` (+ `get_period_list` port, chart) — §7.2, `0314_accounts_profit_and_loss.sql`
 - [x] `app.report_balance_sheet` (unclosed + provisional P/L rows) — §7.2, `0315_accounts_balance_sheet.sql`
-- [ ] `app.report_cash_flow` — §7.2 (stretch)
+- [x] `app.report_cash_flow` — §7.2 (stretch), `0316_accounts_cash_flow.sql`
 - [ ] `app.report_consolidated_financial_statement` — §7.2 (stretch)
 - [ ] `app.report_profitability_analysis` — §7.2 (stretch)
 - [ ] Accounting dashboard: 4 cards, P&L / bills / bank balance charts (`app.card_sum`, `app.chart_timeseries`, `app.chart_account_balance_timeline`) — §7.1
