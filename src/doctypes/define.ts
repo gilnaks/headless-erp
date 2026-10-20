@@ -115,6 +115,8 @@ export type FormActionContext = {
 export type FormAction = {
     id: string;
     label: string;
+    /** Draft actions show while the document can be saved. Submitted actions show after submit. */
+    when?: "draft" | "submitted";
     run: (values: FieldValues, ctx: FormActionContext) => FieldValues | Promise<FieldValues>;
 };
 

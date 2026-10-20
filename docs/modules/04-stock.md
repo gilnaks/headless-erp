@@ -229,7 +229,7 @@ One row per `(item, warehouse)`, created on the first SLE or the first open orde
 - **Transit:** `add_to_transit` on a Material Transfer receives into the transit warehouse (`warehouse_type = Transit`, else `Goods In Transit`). A second transfer with `outgoing_stock_entry` pointing at the first moves it out of transit. The first entry stays open until the second is submitted (`per` transferred on the row).
 - **Submit:** SLE + perpetual GL (§4), material-request `ordered_qty` for Issue and Transfer, `app.update_bin_qty`. **Cancel:** reversing SLE and GL. A transit entry that has been received further cannot be cancelled first.
 
-**Built (0404):** `app.on_submit__stock_entry` posts the eight purposes through `app.make_sl_entries` and writes the outward rate back onto the source row. A transfer receives at that rate. Manufacture and Repack put the source value plus additional cost on the finished rows. Additional cost is also a general-ledger pair with remark `Accounting Entry for Stock Additional Cost`, so stock value includes it and the charge account is credited. `add_to_transit` receives into Goods In Transit; a second transfer with `outgoing_stock_entry` moves it on. Cancel reverses the stock ledger, and the framework mirrors the additional-cost pair. Material Request fulfilled qty, work-order qty, BOM explosion, serial and batch checks, and `app.get_item_details` stay on their own lines. Those columns are stored and not validated.
+**Built (0404):** `app.on_submit__stock_entry` posts the eight purposes through `app.make_sl_entries` and writes the outward rate back onto the source row. A transfer receives at that rate. Manufacture and Repack put the source value plus additional cost on the finished rows. Additional cost is also a general-ledger pair with remark `Accounting Entry for Stock Additional Cost`, so stock value includes it and the charge account is credited. `add_to_transit` receives into Goods In Transit; a second transfer with `outgoing_stock_entry` moves it on. Cancel reverses the stock ledger, and the framework mirrors the additional-cost pair. Work-order qty, BOM explosion, serial and batch checks, and `app.get_item_details` stay on their own lines. Material Request fulfilled qty is written by `0407_stock_material_request.sql`. Those columns are stored and not validated.
 
 ### 2.12 Stock Reconciliation → `stock_reconciliation`
 
@@ -262,6 +262,8 @@ Items: `item_code` ✔, `qty` ✔, `uom`, `stock_qty`, `schedule_date` ✔, `war
 Status (03-posting-engine, `status_map`): Draft, Pending, Stopped, Partially Ordered, Ordered (Purchase and Manufacture at `per_ordered = 100`), Transferred (Material Transfer at 100), Issued (Material Issue at 100), Partially Received, Received, Cancelled. Stop is an action. A stopped request is not ordered.
 
 Transfer and Issue submit does not move stock. The Stock Entry mapped from the request does, and it updates `ordered_qty` (the status updater's name for the fulfilled qty on a request).
+
+**Built (0407):** `app.on_submit__material_request` does not post stock. Status becomes Pending and `bin.indented_qty` counts the pending stock qty (Issue subtracts; Purchase, Manufacture, Transfer, and Customer Provided add). A stopped request is left out. Submitting or cancelling a Stock Entry linked to an Issue, Transfer, or Customer Provided row sets `ordered_qty` from `transfer_qty` and recomputes `per_ordered` and the status. At 100, Transfer is Transferred, Issue is Issued, and Customer Provided is Received. A partial Transfer or Customer Provided is Partially Received. A partial Issue is Partially Ordered. Above `mr_qty_allowance` (or above the requested qty when that allowance is empty) throws. `app.make_stock_entry_from_material_request` drafts the stock entry; Customer Provided becomes a zero-rate Material Receipt. The series date is `transaction_date`. Purchase `ordered_qty` waits for the purchase order, and Manufacture waits for the work order. There is no BOM, sales order, Request for Quotation, or Purchase Order mapper. Migrations `0407_stock_material_request.sql` and `0408_material_request_qty_message.sql`.
 
 ---
 
@@ -396,8 +398,9 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 6. **Deviation:** a back-dated SLE reposts later rows in the same transaction. There is no Repost Item Valuation queue. **Reason:** 03-posting-engine; one transaction, with the volume caveat already written there.
 7. **Deviation:** Sales Master Manager and Purchase Master Manager on Price List and Item Price are folded onto Sales Manager and Purchase Manager. **Reason:** those roles are not seeded (00-setup §2.7).
 8. **Not a deviation (recorded for implementers):** Warehouse write is Item Manager, not Stock Manager, because that is the JSON. Stock Manager submits stock entries and reconciliations. `auto_indent` is on only because C4 sets it; the JSON default is off. Rejected quantity on a purchase receipt is not valued unless `set_valuation_rate_for_rejected_materials` (Buying Settings, default off).
-9. **Deviation:** Stock Entry stores material request, work order, BOM, and serial/batch fields but does not update Material Request qty, work-order qty, explode a BOM, or validate serials and batches. **Reason:** those documents and `app.get_item_details` are later checklist lines.
+9. **Deviation:** Stock Entry stores work order, BOM, and serial/batch fields but does not update work-order qty, explode a BOM, or validate serials and batches. A linked Material Request's fulfilled qty is updated. **Reason:** work orders, BOM, and serial/batch are later checklist lines.
 10. **Deviation:** Stock Reconciliation stores batch and serial fields but does not require them on a serialized or batched item. **Reason:** serial and batch documents are a later checklist line.
+11. **Deviation:** Material Request does not store a BOM or a sales order, and it does not map to a Request for Quotation or a Purchase Order. Purchase and Manufacture rows are accepted and stay Pending until those documents exist. **Reason:** buying and manufacturing documents are later checklist lines.
 
 ---
 
@@ -422,7 +425,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4, `0403_stock_perpetual_gl.sql`
 - [x] `stock_entry` for the A6 purposes — §2.11, §4, `0404_stock_stock_entry.sql`
 - [x] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12, `0405_stock_stock_reconciliation.sql`, `0406_stock_reconciliation_zero_qty.sql`
-- [ ] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14
+- [x] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14, `0407_stock_material_request.sql`, `0408_material_request_qty_message.sql`
 - [ ] `batch`, `serial_no`, `serial_and_batch_bundle`, auto-pick on outward — §2.13, §3.5
 - [ ] `app.get_item_details` — §3.1
 - [ ] `app.reorder_items` — §3.4

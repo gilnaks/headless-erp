@@ -17,7 +17,7 @@ import { getDoctypeByName } from "@/doctypes/registry";
 import { formValuesFor, schemaFor } from "@/doctypes/schema";
 import { amendDoc, cancelDoc, deleteDoc, saveDoc, submitDoc } from "@/lib/actions/doc";
 import { applyFieldErrors } from "@/lib/forms";
-import { afterRedirect } from "@/lib/navigate";
+import { afterRedirect, Redirecting } from "@/lib/navigate";
 import { Link } from "@/lib/next-nav";
 import type { ReferenceOptions } from "@/lib/reference-options";
 import { AddressContactRail } from "./address-contact-rail";
@@ -74,6 +74,9 @@ export function DocForm({
     const [tab, setTab] = useState<Key>(d.tabs[0]?.label ?? "");
     const [workflow, setWorkflow] = useState<"submit" | "cancel" | "amend" | null>(null);
     const docstatus = Number(row?.docstatus ?? 0);
+    const shownActions = d.actions.filter((action) =>
+        docstatus === 1 ? action.when === "submitted" : editable && (action.when ?? "draft") === "draft",
+    );
     const status = docstatus === 1 ? "Submitted" : docstatus === 2 ? "Cancelled" : "Draft";
     const statusColor = docstatus === 1 ? "success" : docstatus === 2 ? "error" : "gray";
 
@@ -140,6 +143,7 @@ export function DocForm({
             const changes = await action.run(form.getValues(), { orgSlug, id, notify: setNotice });
             for (const [name, value] of Object.entries(changes)) form.setValue(name, value, { shouldDirty: true });
         } catch (e) {
+            if (e instanceof Redirecting) return;
             setError(e instanceof Error ? e.message : `${action.label} failed.`);
         } finally {
             setRunning(false);
@@ -251,14 +255,14 @@ export function DocForm({
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {editable && d.actions.length > 0 && (
+                        {shownActions.length > 0 && (
                             <Dropdown.Root>
                                 <Button size="sm" color="secondary" iconTrailing={ChevronDown} isLoading={running} showTextWhileLoading>
                                     Actions
                                 </Button>
                                 <Dropdown.Popover placement="bottom right">
                                     <Dropdown.Menu aria-label={`${d.doctype} actions`} onAction={(key) => void runAction(String(key))}>
-                                        {d.actions.map((a) => (
+                                        {shownActions.map((a) => (
                                             <Dropdown.Item key={a.id} id={a.id} label={a.label} />
                                         ))}
                                     </Dropdown.Menu>

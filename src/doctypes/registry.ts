@@ -48,6 +48,7 @@ import { brand } from "./stock/brand";
 import { item } from "./stock/item";
 import { itemGroup } from "./stock/item-group";
 import { itemPrice } from "./stock/item-price";
+import { materialRequest } from "./stock/material-request";
 import { priceList } from "./stock/price-list";
 import { stockEntry } from "./stock/stock-entry";
 import { stockEntryType } from "./stock/stock-entry-type";
@@ -103,6 +104,7 @@ export const DOCTYPES: readonly Doctype[] = [
     uomConversionFactor,
     stockEntryType,
     stockEntry,
+    materialRequest,
     stockReconciliation,
     stockSettings,
     warehouseType,
@@ -124,6 +126,7 @@ export const DOCTYPES: readonly Doctype[] = [
 
 /** Manufacturing reuses the stock document; the descriptor stays on the stock module. */
 const ROUTE_ALIASES: Record<string, { module: string; slug: string }> = {
+    "buying/material-request": { module: "stock", slug: "material-request" },
     "manufacturing/stock-entry": { module: "stock", slug: "stock-entry" },
 };
 
