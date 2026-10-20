@@ -124,7 +124,7 @@ export type FormAction = {
  * A field change handler (ERPNext `frappe.ui.form.on(doctype, { <field>(frm) {...} })`): runs when the user edits
  * the field and returns the fields to set.
  */
-export type FieldTrigger = (values: FieldValues) => FieldValues;
+export type FieldTrigger = (values: FieldValues, path?: string) => FieldValues | Promise<FieldValues>;
 
 /** Document-level check (Frappe controller `validate`) run by the form and `saveDoc`: field name -> message. */
 export type DocValidator = (values: FieldValues) => Record<string, string>;

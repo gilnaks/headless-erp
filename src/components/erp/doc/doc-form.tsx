@@ -156,9 +156,17 @@ export function DocForm({
             const root = name?.split(".")[0];
             const trigger = type === "change" && name ? (d.triggers[name] ?? (root ? d.triggers[root] : undefined)) : undefined;
             if (!trigger) return;
-            for (const [field, value] of Object.entries(trigger(all))) {
-                if (form.getValues(field) !== value) form.setValue(field, value, { shouldDirty: true });
-            }
+            void (async () => {
+                try {
+                    const patch = await trigger(all, name);
+                    for (const [field, value] of Object.entries(patch)) {
+                        if (form.getValues(field) !== value) form.setValue(field, value, { shouldDirty: true });
+                    }
+                } catch (e) {
+                    if (e instanceof Redirecting) return;
+                    setError(e instanceof Error ? e.message : "Could not update the form.");
+                }
+            })();
         });
         return () => subscription.unsubscribe();
     }, [form, d]);

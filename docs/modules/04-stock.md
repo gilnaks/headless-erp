@@ -276,6 +276,8 @@ Transfer and Issue submit does not move stock. The Stock Entry mapped from the r
 
 `app.get_item_details(args)` is what Selling and Buying call when a row's item, qty, UOM or warehouse changes. It returns `item_name`, `description`, `stock_uom`, `conversion_factor`, `stock_qty`, `price_list_rate`, `rate` (price list, then last purchase rate on buying docs when Buying Settings allow it), `income_account` or `expense_account`, `cost_center`, `warehouse` (item default, else company default), `actual_qty`, `projected_qty`, `has_serial_no`, `has_batch_no`, `item_tax_template` (the item or group tax row valid for the date, net rate and tax category), and `weight`. Barcode scan resolves to `item_code` through `item_barcode`.
 
+**Built (0412):** `app.get_item_details` is a security-invoker read. A barcode with no item id resolves through `item_barcode`. Warehouse, accounts, and cost center walk the item default, then that item's group, then the brand, then the company. A warehouse already passed is kept. Selling uses `selling_cost_center_id` and buying uses `buying_cost_center_id`. The conversion factor comes from `item_uom`, else `uom_conversion_factor`, else 1 for the stock UOM. The price is the given price list, else the item's default price list: a party row beats a blank party, the date must be valid, and the largest packing unit that fits wins. A different currency uses `app.get_exchange_rate`. `rate` equals that price. A buying document with no price uses `last_purchase_rate`. Bin qty is the item and warehouse, or 0. The tax template is the item row, else the closest item-group row, for this company and date. An exact tax category beats a blank one. `item_tax_rate` comes from `app.get_item_tax_map`. Stock Entry and Material Request fill a blank UOM, conversion factor, warehouse, expense account, cost center, and rate when the item, qty, or UOM changes. Migration `0412_stock_get_item_details.sql`.
+
 ### 3.2 Ledger
 
 `app.make_sl_entries(entries, opts)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`. A repost rebuilds that voucher's stock GL in the same transaction.
@@ -404,6 +406,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 9. **Deviation:** Stock Entry stores work order and BOM fields but does not update work-order qty or explode a BOM. Serials and batches are checked when the item has them. A linked Material Request's fulfilled qty is updated. **Reason:** work orders and BOM are later checklist lines.
 10. **Deviation:** Stock Reconciliation checks serials and batches when the quantity changes. A zero-qty adjustment does not. Batch-wise valuation stays off. **Reason:** Pick List and batch queues are later lines. Deviation 1 still applies.
 11. **Deviation:** Material Request does not store a BOM or a sales order, and it does not map to a Request for Quotation or a Purchase Order. Purchase and Manufacture rows are accepted and stay Pending until those documents exist. **Reason:** buying and manufacturing documents are later checklist lines.
+12. **Deviation:** `app.get_item_details` does not insert an Item Price, and it does not apply pricing rules, POS, blanket orders, tax withholding, variants, or product bundles. Buying Settings are not built, so a buying document with no price uses `last_purchase_rate`, which is the ERPNext default. **Reason:** §2.6 puts that insert on the selling or buying save. Those other lookups are out of scope.
 
 ---
 
@@ -430,7 +433,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12, `0405_stock_stock_reconciliation.sql`, `0406_stock_reconciliation_zero_qty.sql`
 - [x] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14, `0407_stock_material_request.sql`, `0408_material_request_qty_message.sql`
 - [x] `batch`, `serial_no`, `serial_and_batch_bundle`, auto-pick on outward — §2.13, §3.5, `0409_stock_serial_and_batch.sql`, `0410_stock_serial_batch_one.sql`, `0411_stock_serial_batch_clear.sql`
-- [ ] `app.get_item_details` — §3.1
+- [x] `app.get_item_details` — §3.1, `0412_stock_get_item_details.sql`
 - [ ] `app.reorder_items` — §3.4
 - [ ] Dashboard and the five reports — §7
 - [ ] Company checks `cant_change_valuation_method` and `validate_perpetual_inventory` once SLE exists — §3.3

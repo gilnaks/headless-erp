@@ -196,6 +196,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_item_details: { Args: { p: Json }; Returns: Json }
       get_item_tax_map: {
         Args: { p_company: string; p_taxes: Json; p_template: string }
         Returns: Json
@@ -10107,6 +10108,7 @@ export type Database = {
         }
         Returns: number
       }
+      get_item_details: { Args: { p: Json }; Returns: Json }
       get_item_tax_map: {
         Args: { p_company: string; p_taxes?: Json; p_template: string }
         Returns: Json

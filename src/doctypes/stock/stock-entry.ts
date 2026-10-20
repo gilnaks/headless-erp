@@ -1,3 +1,4 @@
+import { fillStockEntryItem } from "@/lib/stock/item-details";
 import { defineChildDoctype, defineDoctype } from "../define";
 
 function today(): string {
@@ -146,4 +147,5 @@ export const stockEntry = defineDoctype<"stock_entry", "items" | "additional_cos
         ste_purpose: "stock_entry_type_id",
         ste_type: "stock_entry_type_id",
     },
+    triggers: { items: fillStockEntryItem },
 });
