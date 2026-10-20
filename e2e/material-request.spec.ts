@@ -91,7 +91,7 @@ test("a material issue request is fulfilled by a stock entry and returns to pend
     await expect(page.getByText("Submitted", { exact: true })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("textbox", { name: label("Status") })).toHaveValue("Pending");
 
-    await page.getByRole("button", { name: "Actions" }).click();
+    await page.getByRole("button", { name: "Actions", exact: true }).click();
     await page.getByRole("menuitem", { name: "Create Stock Entry" }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/stock/stock-entry/[0-9a-f-]{36}$`), { timeout: 20_000 });
     const entryUrl = page.url();
