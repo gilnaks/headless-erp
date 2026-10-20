@@ -17,7 +17,7 @@ export const materialRequestItem = defineChildDoctype({
         conversion_factor: { type: "Float", label: "UOM Conversion Factor", readOnly: true },
         stock_uom_id: { type: "Link", label: "Stock UOM", target: "UOM", readOnly: true },
         stock_qty: { type: "Float", label: "Qty in Stock UOM", readOnly: true },
-        schedule_date: { type: "Date", label: "Required By", required: true },
+        schedule_date: { type: "Date", label: "Required By" },
         warehouse_id: { type: "Link", label: "Target Warehouse", target: "Warehouse" },
         from_warehouse_id: { type: "Link", label: "Source Warehouse", target: "Warehouse" },
         ordered_qty: { type: "Float", label: "Ordered Qty", readOnly: true },
