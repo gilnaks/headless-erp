@@ -164,7 +164,7 @@ export function DocForm({
             const root = name?.split(".")[0];
             const trigger = type === "change" && name ? (d.triggers[name] ?? (root ? d.triggers[root] : undefined)) : undefined;
             if (!trigger) return;
-            const lookup = /^items\.\d+\.(item_id|qty|uom_id)$/.test(name);
+            const lookup = name != null && /^items\.\d+\.(item_id|qty|uom_id)$/.test(name);
             const token = lookup ? ++triggerGen.current : triggerGen.current;
             void (async () => {
                 try {
