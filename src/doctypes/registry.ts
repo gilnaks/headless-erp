@@ -49,6 +49,7 @@ import { item } from "./stock/item";
 import { itemGroup } from "./stock/item-group";
 import { itemPrice } from "./stock/item-price";
 import { priceList } from "./stock/price-list";
+import { stockEntry } from "./stock/stock-entry";
 import { stockEntryType } from "./stock/stock-entry-type";
 import { stockSettings } from "./stock/stock-settings";
 import { uom } from "./stock/uom";
@@ -100,6 +101,7 @@ export const DOCTYPES: readonly Doctype[] = [
     uomCategory,
     uomConversionFactor,
     stockEntryType,
+    stockEntry,
     stockSettings,
     warehouseType,
     warehouse,
@@ -118,7 +120,14 @@ export const DOCTYPES: readonly Doctype[] = [
     supplierGroup,
 ];
 
+/** Manufacturing reuses the stock document; the descriptor stays on the stock module. */
+const ROUTE_ALIASES: Record<string, { module: string; slug: string }> = {
+    "manufacturing/stock-entry": { module: "stock", slug: "stock-entry" },
+};
+
 export function getDoctype(module: string, slug: string): Doctype | undefined {
+    const alias = ROUTE_ALIASES[`${module}/${slug}`];
+    if (alias) return DOCTYPES.find((d) => d.module === alias.module && d.slug === alias.slug);
     return DOCTYPES.find((d) => d.module === module && d.slug === slug);
 }
 
