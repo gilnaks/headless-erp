@@ -9,7 +9,10 @@ import { address } from "./setup/address";
 import { company } from "./setup/company";
 import { roleProfile } from "./setup/role-profile";
 import { userPermission } from "./setup/user-permission";
+import { batch } from "./stock/batch";
 import { materialRequest } from "./stock/material-request";
+import { serialAndBatchBundle } from "./stock/serial-and-batch-bundle";
+import { serialNo } from "./stock/serial-no";
 import { stockEntry } from "./stock/stock-entry";
 import { stockReconciliation } from "./stock/stock-reconciliation";
 
@@ -37,6 +40,9 @@ describe("registry", () => {
         expect(getDoctype("stock", "stock-reconciliation")).toBe(stockReconciliation);
         expect(getDoctype("stock", "material-request")).toBe(materialRequest);
         expect(getDoctype("buying", "material-request")).toBe(materialRequest);
+        expect(getDoctype("stock", "batch")).toBe(batch);
+        expect(getDoctype("stock", "serial-no")).toBe(serialNo);
+        expect(getDoctype("stock", "serial-and-batch-bundle")).toBe(serialAndBatchBundle);
     });
 
     it.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s is registered in doctype_meta by a migration", (_, d) => {

@@ -75,6 +75,7 @@ const USERS = [
     { env: "E2E_STOCK_ENTRY", local: "stock-entry", first_name: "Stock", last_name: "Entry" },
     { env: "E2E_STOCK_RECONCILIATION", local: "stock-reconciliation", first_name: "Stock", last_name: "Reconciliation" },
     { env: "E2E_MATERIAL_REQUEST", local: "material-request", first_name: "Material", last_name: "Request" },
+    { env: "E2E_SERIAL_BATCH", local: "serial-batch", first_name: "Serial", last_name: "Batch" },
 ] as const;
 
 /**

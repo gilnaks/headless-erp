@@ -44,12 +44,15 @@ import { roleProfile } from "./setup/role-profile";
 import { systemSettings } from "./setup/system-settings";
 import { termsAndConditions } from "./setup/terms-and-conditions";
 import { userPermission } from "./setup/user-permission";
+import { batch } from "./stock/batch";
 import { brand } from "./stock/brand";
 import { item } from "./stock/item";
 import { itemGroup } from "./stock/item-group";
 import { itemPrice } from "./stock/item-price";
 import { materialRequest } from "./stock/material-request";
 import { priceList } from "./stock/price-list";
+import { serialAndBatchBundle } from "./stock/serial-and-batch-bundle";
+import { serialNo } from "./stock/serial-no";
 import { stockEntry } from "./stock/stock-entry";
 import { stockEntryType } from "./stock/stock-entry-type";
 import { stockReconciliation } from "./stock/stock-reconciliation";
@@ -112,6 +115,9 @@ export const DOCTYPES: readonly Doctype[] = [
     item,
     itemGroup,
     brand,
+    batch,
+    serialNo,
+    serialAndBatchBundle,
     priceList,
     itemPrice,
     customer,
