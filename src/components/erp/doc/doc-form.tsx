@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, ChevronLeft, DotsVertical, Mail01, Printer, Trash01 } from "@untitledui/icons";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Heading as AriaHeading, type Key } from "react-aria-components";
 import { type FieldErrors, type FieldValues, useForm, useWatch } from "react-hook-form";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
@@ -25,6 +25,12 @@ import { ChildTable } from "./child-table";
 import { EmailDialog } from "./email-dialog";
 import { FieldRenderer, ReferenceOptionsContext } from "./field-renderer";
 import { FormPreview } from "./form-preview";
+
+function keepTypedValue(field: string, current: unknown): boolean {
+    if (current == null || current === "") return false;
+    if (field.endsWith("basic_rate") || field.endsWith(".rate")) return Number(current) !== 0;
+    return field.endsWith("warehouse_id") || field.endsWith("s_warehouse_id") || field.endsWith("t_warehouse_id");
+}
 
 export type DocFormProps = {
     /** Doctype name; the descriptor is resolved client-side because it holds functions (`dependsOn`). */
@@ -151,18 +157,26 @@ export function DocForm({
     };
 
     // Field triggers react to user edits only; values they set do not re-trigger.
+    // A newer edit drops an older lookup so a slow item fetch cannot overwrite the qty the user just typed.
+    const triggerGen = useRef(0);
     useEffect(() => {
         const subscription = form.watch((all, { name, type }) => {
             const root = name?.split(".")[0];
             const trigger = type === "change" && name ? (d.triggers[name] ?? (root ? d.triggers[root] : undefined)) : undefined;
             if (!trigger) return;
+            const lookup = /^items\.\d+\.(item_id|qty|uom_id)$/.test(name);
+            const token = lookup ? ++triggerGen.current : triggerGen.current;
             void (async () => {
                 try {
                     const patch = await trigger(all, name);
+                    if (lookup && token !== triggerGen.current) return;
                     for (const [field, value] of Object.entries(patch)) {
-                        if (form.getValues(field) !== value) form.setValue(field, value, { shouldDirty: true });
+                        const current = form.getValues(field);
+                        if (keepTypedValue(field, current)) continue;
+                        if (current !== value) form.setValue(field, value, { shouldDirty: true });
                     }
                 } catch (e) {
+                    if (lookup && token !== triggerGen.current) return;
                     if (e instanceof Redirecting) return;
                     setError(e instanceof Error ? e.message : "Could not update the form.");
                 }

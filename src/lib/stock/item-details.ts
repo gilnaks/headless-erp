@@ -96,7 +96,7 @@ export async function getItemDetails(args: ItemDetailsArgs): Promise<ItemDetails
 function sharedPatch(prefix: string, row: Record<string, unknown>, details: ItemDetails, field: string): FieldValues {
     const patch: FieldValues = {};
     if (blank(row.uom_id) && details.uom_id) patch[`${prefix}.uom_id`] = details.uom_id;
-    if (field !== "qty") patch[`${prefix}.conversion_factor`] = details.conversion_factor;
+    if (field !== "qty") patch[`${prefix}.conversion_factor`] = String(details.conversion_factor);
     if (blank(row.cost_center_id) && details.cost_center_id) patch[`${prefix}.cost_center_id`] = details.cost_center_id;
     return patch;
 }
@@ -149,11 +149,11 @@ export async function fillStockEntryItem(values: FieldValues, path?: string): Pr
     return {
         ...sharedPatch(prefix, row, details, changed.field),
         ...assignStockEntryWarehouse(row, purpose, details.warehouse_id, prefix),
-        [`${prefix}.transfer_qty`]: qtyOf(row.qty) * (Number.isFinite(factor) ? factor : 1),
+        [`${prefix}.transfer_qty`]: String(qtyOf(row.qty) * (Number.isFinite(factor) ? factor : 1)),
         ...(blank(row.expense_account_id) && details.expense_account_id
             ? { [`${prefix}.expense_account_id`]: details.expense_account_id }
             : {}),
-        ...(blankRate(row.basic_rate) && details.rate != null ? { [`${prefix}.basic_rate`]: details.rate } : {}),
+        ...(blankRate(row.basic_rate) && details.rate != null ? { [`${prefix}.basic_rate`]: String(details.rate) } : {}),
     };
 }
 
@@ -182,9 +182,9 @@ export async function fillMaterialRequestItem(values: FieldValues, path?: string
         changed.field === "qty" ? qtyOf(row.conversion_factor || details.conversion_factor || 1) : Number(details.conversion_factor);
     return {
         ...sharedPatch(prefix, row, details, changed.field),
-        [`${prefix}.stock_qty`]: qtyOf(row.qty) * (Number.isFinite(factor) ? factor : 1),
+        [`${prefix}.stock_qty`]: String(qtyOf(row.qty) * (Number.isFinite(factor) ? factor : 1)),
         ...(blank(row.stock_uom_id) && details.stock_uom_id ? { [`${prefix}.stock_uom_id`]: details.stock_uom_id } : {}),
         ...(blank(row.warehouse_id) && details.warehouse_id ? { [`${prefix}.warehouse_id`]: details.warehouse_id } : {}),
-        ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: details.rate } : {}),
+        ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: String(details.rate) } : {}),
     };
 }
