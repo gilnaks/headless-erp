@@ -268,10 +268,19 @@ export type Database = {
         Args: { p_entries: Json; p_opts?: Json }
         Returns: undefined
       }
+      make_stock_entry_from_material_request: {
+        Args: { p_id: string }
+        Returns: Json
+      }
       make_stock_gl_entries: {
         Args: { p_voucher_id: string; p_voucher_type: string }
         Returns: undefined
       }
+      material_request_set_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: Json
+      }
+      material_request_status: { Args: { p_id: string }; Returns: string }
       next_name: {
         Args: {
           p_company: string
@@ -281,6 +290,10 @@ export type Database = {
         }
         Returns: string
       }
+      on_cancel__material_request: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_reconciliation: {
@@ -288,6 +301,10 @@ export type Database = {
         Returns: undefined
       }
       on_submit__journal_entry: { Args: { p_id: string }; Returns: undefined }
+      on_submit__material_request: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       on_submit__payment_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_entry: { Args: { p_id: string }; Returns: undefined }
@@ -362,6 +379,14 @@ export type Database = {
           p_record: string
         }
         Returns: boolean
+      }
+      refresh_indented_qty: {
+        Args: { p_item: string; p_org: string; p_warehouse: string }
+        Returns: undefined
+      }
+      refresh_material_request: {
+        Args: { p_from_stock_entry: boolean; p_id: string }
+        Returns: undefined
       }
       refresh_outstanding: {
         Args: { p_voucher_id: string; p_voucher_type: string }
@@ -5231,6 +5256,237 @@ export type Database = {
           },
         ]
       }
+      material_request: {
+        Row: {
+          amended_from: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          docstatus: number
+          id: string
+          material_request_type: string
+          name: string
+          naming_series: string
+          org_id: string
+          per_ordered: number
+          per_received: number
+          schedule_date: string | null
+          set_from_warehouse_id: string | null
+          set_warehouse_id: string | null
+          status: string
+          title: string | null
+          transaction_date: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          docstatus?: number
+          id?: string
+          material_request_type: string
+          name: string
+          naming_series?: string
+          org_id: string
+          per_ordered?: number
+          per_received?: number
+          schedule_date?: string | null
+          set_from_warehouse_id?: string | null
+          set_warehouse_id?: string | null
+          status?: string
+          title?: string | null
+          transaction_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          docstatus?: number
+          id?: string
+          material_request_type?: string
+          name?: string
+          naming_series?: string
+          org_id?: string
+          per_ordered?: number
+          per_received?: number
+          schedule_date?: string | null
+          set_from_warehouse_id?: string | null
+          set_warehouse_id?: string | null
+          status?: string
+          title?: string | null
+          transaction_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_request_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "material_request"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_request_org_id_set_from_warehouse_id_fkey"
+            columns: ["org_id", "set_from_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_org_id_set_warehouse_id_fkey"
+            columns: ["org_id", "set_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      material_request_item: {
+        Row: {
+          amount: number
+          conversion_factor: number
+          cost_center_id: string | null
+          from_warehouse_id: string | null
+          id: string
+          idx: number
+          item_id: string
+          ordered_qty: number
+          org_id: string
+          parent_id: string
+          project: string | null
+          qty: number
+          rate: number
+          received_qty: number
+          schedule_date: string | null
+          stock_qty: number
+          stock_uom_id: string | null
+          uom_id: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          amount?: number
+          conversion_factor?: number
+          cost_center_id?: string | null
+          from_warehouse_id?: string | null
+          id?: string
+          idx: number
+          item_id: string
+          ordered_qty?: number
+          org_id: string
+          parent_id: string
+          project?: string | null
+          qty: number
+          rate?: number
+          received_qty?: number
+          schedule_date?: string | null
+          stock_qty?: number
+          stock_uom_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          amount?: number
+          conversion_factor?: number
+          cost_center_id?: string | null
+          from_warehouse_id?: string | null
+          id?: string
+          idx?: number
+          item_id?: string
+          ordered_qty?: number
+          org_id?: string
+          parent_id?: string
+          project?: string | null
+          qty?: number
+          rate?: number
+          received_qty?: number
+          schedule_date?: string | null
+          stock_qty?: number
+          stock_uom_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_request_item_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_item_org_id_from_warehouse_id_fkey"
+            columns: ["org_id", "from_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "material_request"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_item_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_item_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "material_request_item_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       mode_of_payment: {
         Row: {
           created_at: string
@@ -7562,6 +7818,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "stock_entry_detail_material_request_fkey"
+            columns: ["org_id", "material_request_id"]
+            isOneToOne: false
+            referencedRelation: "material_request"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_entry_detail_material_request_item_fkey"
+            columns: ["org_id", "material_request_item"]
+            isOneToOne: false
+            referencedRelation: "material_request_item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
             foreignKeyName: "stock_entry_detail_org_id_cost_center_id_fkey"
             columns: ["org_id", "cost_center_id"]
             isOneToOne: false
@@ -9523,6 +9793,14 @@ export type Database = {
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
+      make_stock_entry_from_material_request: {
+        Args: { p_id: string }
+        Returns: Json
+      }
+      material_request_set_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: Json
+      }
       onboarding_dismiss: { Args: { p_org: string }; Returns: undefined }
       onboarding_skip: {
         Args: { p_org: string; p_step: string }

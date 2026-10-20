@@ -9,6 +9,7 @@ import { address } from "./setup/address";
 import { company } from "./setup/company";
 import { roleProfile } from "./setup/role-profile";
 import { userPermission } from "./setup/user-permission";
+import { materialRequest } from "./stock/material-request";
 import { stockEntry } from "./stock/stock-entry";
 import { stockReconciliation } from "./stock/stock-reconciliation";
 
@@ -34,6 +35,8 @@ describe("registry", () => {
         expect(getDoctype("stock", "stock-entry")).toBe(stockEntry);
         expect(getDoctype("manufacturing", "stock-entry")).toBe(stockEntry);
         expect(getDoctype("stock", "stock-reconciliation")).toBe(stockReconciliation);
+        expect(getDoctype("stock", "material-request")).toBe(materialRequest);
+        expect(getDoctype("buying", "material-request")).toBe(materialRequest);
     });
 
     it.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s is registered in doctype_meta by a migration", (_, d) => {
