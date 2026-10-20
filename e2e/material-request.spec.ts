@@ -52,12 +52,7 @@ test("a material issue request is fulfilled by a stock entry and returns to pend
     await page.locator('[data-grid="items"][data-row="0"][data-col="qty"] input:visible').fill("10");
     await page.locator('[data-grid="items"][data-row="0"][data-col="basic_rate"] input:visible').fill("5");
     const receiptWarehouse = page.locator('[data-grid="items"][data-row="0"][data-col="t_warehouse_id"] input:visible').first();
-    await receiptWarehouse.click();
-    await receiptWarehouse.pressSequentially("Stores");
-    await page
-        .getByRole("option", { name: /Stores/ })
-        .first()
-        .click();
+    await expect(receiptWarehouse).toHaveValue(/Stores/, { timeout: 15_000 });
     await page.getByRole("button", { name: /^Save/ }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/stock/stock-entry/[0-9a-f-]{36}$`), { timeout: 20_000 });
     await page.getByRole("button", { name: "Submit" }).click();
@@ -78,12 +73,7 @@ test("a material issue request is fulfilled by a stock entry and returns to pend
         .click();
     await page.locator('[data-grid="items"][data-row="0"][data-col="qty"] input:visible').fill("10");
     const warehouse = page.locator('[data-grid="items"][data-row="0"][data-col="warehouse_id"] input:visible').first();
-    await warehouse.click();
-    await warehouse.pressSequentially("Stores");
-    await page
-        .getByRole("option", { name: /Stores/ })
-        .first()
-        .click();
+    await expect(warehouse).toHaveValue(/Stores/, { timeout: 15_000 });
     await page.getByRole("button", { name: /^Save/ }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/stock/material-request/[0-9a-f-]{36}$`), { timeout: 20_000 });
     const requestUrl = page.url();
