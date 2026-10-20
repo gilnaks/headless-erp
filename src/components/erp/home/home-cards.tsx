@@ -1,4 +1,6 @@
 import { BarChart03 } from "@untitledui/icons";
+import { DashboardChart } from "@/components/erp/dashboard/chart";
+import type { ProfitAndLossChart as ProfitChart } from "@/lib/queries/profit-and-loss";
 
 /**
  * Home number cards (Annual Sales, Annual Purchase, Total Stock Value; erpnext/setup/workspace/home/home.json). They
@@ -30,16 +32,19 @@ export function NumberCards() {
     );
 }
 
-/** "Profit and Loss" dashboard chart (erpnext/accounts/dashboard_chart/profit_and_loss): empty until P3. */
-export function ProfitAndLossChart() {
+/** Yearly Profit and Loss for the default company (erpnext/accounts/dashboard_chart/profit_and_loss). */
+export function ProfitAndLossChart({ chart }: { chart: ProfitChart | null }) {
     return (
         <section aria-label="Profit and Loss" className="flex flex-col gap-4 rounded-xl bg-primary p-5 ring-1 ring-secondary">
             <h2 className="text-md font-semibold text-primary">Profit and Loss</h2>
-            <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-secondary py-12 text-center">
-                <BarChart03 aria-hidden="true" className="size-6 text-fg-quaternary" />
-                <p className="text-sm text-tertiary">Your income and expenses over the year, and what's left as profit.</p>
-                <p className="text-xs text-quaternary">Available in phase P3.</p>
-            </div>
+            {chart && chart.labels.length > 0 ? (
+                <DashboardChart chart={chart} />
+            ) : (
+                <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-secondary py-12 text-center">
+                    <BarChart03 aria-hidden="true" className="size-6 text-fg-quaternary" />
+                    <p className="text-sm text-tertiary">Your income and expenses over the year, and what's left as profit.</p>
+                </div>
+            )}
         </section>
     );
 }

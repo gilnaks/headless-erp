@@ -54,6 +54,25 @@ export type Database = {
       auto_create_fiscal_year: { Args: never; Returns: number }
       can_write_file: { Args: { p_name: string }; Returns: boolean }
       cancel_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      card_sum: {
+        Args: { p_doctype: string; p_field: string; p_filters: Json }
+        Returns: Json
+      }
+      chart_account_balance_timeline: {
+        Args: { p_filters: Json }
+        Returns: Json
+      }
+      chart_timeseries: {
+        Args: {
+          p_date_field: string
+          p_doctype: string
+          p_field: string
+          p_filters: Json
+          p_interval: string
+          p_points: number
+        }
+        Returns: Json
+      }
       coa_account_categories: { Args: { p_tree: Json }; Returns: string[] }
       coa_template_nodes: {
         Args: { p_template: string }
@@ -8388,6 +8407,25 @@ export type Database = {
       accept_invitation: { Args: { p_token: string }; Returns: string }
       amend_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       cancel_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      card_sum: {
+        Args: { p_doctype: string; p_field: string; p_filters: Json }
+        Returns: Json
+      }
+      chart_account_balance_timeline: {
+        Args: { p_filters: Json }
+        Returns: Json
+      }
+      chart_timeseries: {
+        Args: {
+          p_date_field: string
+          p_doctype: string
+          p_field: string
+          p_filters: Json
+          p_interval: string
+          p_points: number
+        }
+        Returns: Json
+      }
       coa_template_preview: {
         Args: { p_template: string }
         Returns: {
