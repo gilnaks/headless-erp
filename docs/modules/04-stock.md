@@ -221,13 +221,15 @@ One row per `(item, warehouse)`, created on the first SLE or the first open orde
 ### 2.11 Stock Entry → `stock_entry` + `stock_entry_detail`
 
 - **Naming:** `MAT-STE-.YYYY.-`. **Title:** the stock entry type. **Perms:** Stock User rwcsxd, Stock Manager rwcsxd, Manufacturing User rwcsxd, Manufacturing Manager rwcsxd.
-- **Migration:** `04nn_stock_stock_entry.sql`.
+- **Migration:** `0404_stock_stock_entry.sql`.
 - Header: `stock_entry_type` ✔, `company` ✔, `posting_date` default today, `posting_time` default now, `set_posting_time`, `from_warehouse`, `to_warehouse`, `add_to_transit` (fetched from the type, default false), `total_outgoing_value`, `total_incoming_value`, `value_difference`, `additional_costs` (amount + account, distributed onto incoming rows), `is_opening` (`No|Yes`), `remarks`, `project`, `cost_center`, `bom_no`, `fg_completed_qty`, `use_multi_level_bom` default true, `work_order`. Manufacture fields are accepted and the Manufacture purpose is specified in §4; the BOM explosion that fills the rows is P8. Until then the user types the rows.
 - Detail ✔: `item_code` ✔, `qty` ✔, `uom` ✔, `conversion_factor` ✔, `transfer_qty` (`qty × factor`), `s_warehouse`, `t_warehouse`, `basic_rate`, `basic_amount`, `additional_cost`, `valuation_rate`, `amount`, `expense_account`, `cost_center`, `allow_zero_valuation_rate`, `material_request`, `material_request_item`, `serial_and_batch_bundle`, `batch_no`, `serial_no`, `use_serial_batch_fields`, `is_finished_item`.
 - **Warehouses by purpose:** Material Receipt needs `t_warehouse` only. Material Issue needs `s_warehouse` only. Material Transfer and Material Transfer for Manufacture need both, and they must differ. Repack and Manufacture need a source on outgoing rows and a target on incoming rows. Send to Subcontractor and Material Consumption for Manufacture are accepted as transfers onto the WIP or supplier warehouse; the subcontracting documents that create them are P8.
 - **Rates:** an incoming row with no rate uses `valuation_rate` of the item, then `last_purchase_rate`, then `standard_rate`. A zero rate throws unless `allow_zero_valuation_rate`. An outgoing row's rate is ignored; the ledger sets it (§3.2).
 - **Transit:** `add_to_transit` on a Material Transfer receives into the transit warehouse (`warehouse_type = Transit`, else `Goods In Transit`). A second transfer with `outgoing_stock_entry` pointing at the first moves it out of transit. The first entry stays open until the second is submitted (`per` transferred on the row).
 - **Submit:** SLE + perpetual GL (§4), material-request `ordered_qty` for Issue and Transfer, `app.update_bin_qty`. **Cancel:** reversing SLE and GL. A transit entry that has been received further cannot be cancelled first.
+
+**Built (0404):** `app.on_submit__stock_entry` posts the eight purposes through `app.make_sl_entries` and writes the outward rate back onto the source row. A transfer receives at that rate. Manufacture and Repack put the source value plus additional cost on the finished rows. Additional cost is also a general-ledger pair with remark `Accounting Entry for Stock Additional Cost`, so stock value includes it and the charge account is credited. `add_to_transit` receives into Goods In Transit; a second transfer with `outgoing_stock_entry` moves it on. Cancel reverses the stock ledger, and the framework mirrors the additional-cost pair. Material Request fulfilled qty, work-order qty, BOM explosion, serial and batch checks, and `app.get_item_details` stay on their own lines. Those columns are stored and not validated.
 
 ### 2.12 Stock Reconciliation → `stock_reconciliation`
 
@@ -271,7 +273,7 @@ Transfer and Issue submit does not move stock. The Stock Entry mapped from the r
 
 `app.make_sl_entries(entries, opts)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`. A repost rebuilds that voucher's stock GL in the same transaction.
 
-FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is stored on the stock ledger row. Writing it back onto the voucher row waits until that voucher exists, so the GL can use the same number.
+FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is stored on the stock ledger row. Stock Entry submit writes that rate back onto the source row (`basic_rate`, `amount`, `valuation_rate`).
 
 Back-dated entries are allowed. `stock_frozen_upto` blocks them unless the user has `stock_auth_role`. There is no separate Repost Item Valuation document. LIFO and Standard Cost are stored on Stock Settings and are not valued.
 
@@ -392,6 +394,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 6. **Deviation:** a back-dated SLE reposts later rows in the same transaction. There is no Repost Item Valuation queue. **Reason:** 03-posting-engine; one transaction, with the volume caveat already written there.
 7. **Deviation:** Sales Master Manager and Purchase Master Manager on Price List and Item Price are folded onto Sales Manager and Purchase Manager. **Reason:** those roles are not seeded (00-setup §2.7).
 8. **Not a deviation (recorded for implementers):** Warehouse write is Item Manager, not Stock Manager, because that is the JSON. Stock Manager submits stock entries and reconciliations. `auto_indent` is on only because C4 sets it; the JSON default is off. Rejected quantity on a purchase receipt is not valued unless `set_valuation_rate_for_rejected_materials` (Buying Settings, default off).
+9. **Deviation:** Stock Entry stores material request, work order, BOM, and serial/batch fields but does not update Material Request qty, work-order qty, explode a BOM, or validate serials and batches. **Reason:** those documents and `app.get_item_details` are later checklist lines.
 
 ---
 
@@ -414,7 +417,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `stock_settings` form, C4 values — §2.8, `0400_stock_settings.sql`
 - [x] `stock_ledger_entry`, `bin`, `app.make_sl_entries`, FIFO and moving average, negative stock, synchronous repost — §2.9, §2.10, §3.2, `0401_stock_ledger.sql`, `0402_stock_bin_audit.sql`
 - [x] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4, `0403_stock_perpetual_gl.sql`
-- [ ] `stock_entry` for the A6 purposes — §2.11, §4
+- [x] `stock_entry` for the A6 purposes — §2.11, §4, `0404_stock_stock_entry.sql`
 - [ ] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12
 - [ ] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14
 - [ ] `batch`, `serial_no`, `serial_and_batch_bundle`, auto-pick on outward — §2.13, §3.5
