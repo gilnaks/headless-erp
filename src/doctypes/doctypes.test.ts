@@ -10,6 +10,7 @@ import { company } from "./setup/company";
 import { roleProfile } from "./setup/role-profile";
 import { userPermission } from "./setup/user-permission";
 import { stockEntry } from "./stock/stock-entry";
+import { stockReconciliation } from "./stock/stock-reconciliation";
 
 const migrations = readdirSync(join(process.cwd(), "supabase/migrations"))
     .filter((f) => f.endsWith(".sql"))
@@ -32,6 +33,7 @@ describe("registry", () => {
         expect(getDoctype("setup", "nope")).toBeUndefined();
         expect(getDoctype("stock", "stock-entry")).toBe(stockEntry);
         expect(getDoctype("manufacturing", "stock-entry")).toBe(stockEntry);
+        expect(getDoctype("stock", "stock-reconciliation")).toBe(stockReconciliation);
     });
 
     it.each(DOCTYPES.map((d) => [d.doctype, d] as const))("%s is registered in doctype_meta by a migration", (_, d) => {

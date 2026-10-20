@@ -234,11 +234,13 @@ One row per `(item, warehouse)`, created on the first SLE or the first open orde
 ### 2.12 Stock Reconciliation → `stock_reconciliation`
 
 - **Naming:** `MAT-RECO-.YYYY.-`. **Perms:** Stock Manager rwcsxd only.
-- **Migration:** `04nn_stock_stock_reconciliation.sql`.
+- **Migration:** `0405_stock_stock_reconciliation.sql`, `0406_stock_reconciliation_zero_qty.sql`.
 - Header: `company` ✔, `purpose` ✔ (`Opening Stock|Stock Reconciliation|Adjustment Entry`), `posting_date` ✔, `posting_time` ✔, `expense_account` (Opening Stock → Temporary Opening; otherwise Stock Adjustment), `cost_center`, `difference_amount`, `set_warehouse`.
 - Items ✔: `item_code` ✔, `warehouse` ✔, `qty` (the new on-hand qty for Opening Stock and Stock Reconciliation), `valuation_rate`, `current_qty` and `current_valuation_rate` and `current_amount` filled on save from the bin, `quantity_difference`, `amount_difference`, `batch_no`, `serial_and_batch_bundle`, `allow_zero_valuation_rate`.
 - **Opening Stock** posts the whole qty inward. **Stock Reconciliation** posts `qty − current_qty`. **Adjustment Entry** posts a value-only difference: qty stays, `valuation_rate` is the new rate (`is_adjustment_entry`). Serial and batch items must list the serials or the batch; a qty change without them throws.
 - Opening Stock is the stock opening against Temporary Opening (01-accounts §3.13). It is not a substitute for an opening journal on the GL of non-stock accounts.
+
+**Built (0405):** `app.on_submit__stock_reconciliation` posts Opening Stock, Stock Reconciliation, and Adjustment Entry through `app.make_sl_entries`. Opening Stock is the whole qty inward against Temporary Opening, and it is rejected when that item and warehouse already have stock. Stock Reconciliation and Opening Stock set the balance to the new qty at the new rate. Adjustment Entry keeps the qty and changes the rate. The queue becomes one bucket, and the general ledger posts the value difference to the difference account. Serial and batch columns are stored and not validated.
 
 ### 2.13 Serial, Batch, Pick List, Packing Slip, Landed Cost
 
@@ -273,7 +275,7 @@ Transfer and Issue submit does not move stock. The Stock Entry mapped from the r
 
 `app.make_sl_entries(entries, opts)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`. A repost rebuilds that voucher's stock GL in the same transaction.
 
-FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is stored on the stock ledger row. Stock Entry submit writes that rate back onto the source row (`basic_rate`, `amount`, `valuation_rate`).
+FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is stored on the stock ledger row. Stock Entry submit writes that rate back onto the source row (`basic_rate`, `amount`, `valuation_rate`). A Stock Reconciliation replaces the balance and the queue with one bucket at the new rate, and an Adjustment Entry keeps the qty and changes the rate. The value difference is the new value minus the previous value.
 
 Back-dated entries are allowed. `stock_frozen_upto` blocks them unless the user has `stock_auth_role`. There is no separate Repost Item Valuation document. LIFO and Standard Cost are stored on Stock Settings and are not valued.
 
@@ -395,6 +397,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 7. **Deviation:** Sales Master Manager and Purchase Master Manager on Price List and Item Price are folded onto Sales Manager and Purchase Manager. **Reason:** those roles are not seeded (00-setup §2.7).
 8. **Not a deviation (recorded for implementers):** Warehouse write is Item Manager, not Stock Manager, because that is the JSON. Stock Manager submits stock entries and reconciliations. `auto_indent` is on only because C4 sets it; the JSON default is off. Rejected quantity on a purchase receipt is not valued unless `set_valuation_rate_for_rejected_materials` (Buying Settings, default off).
 9. **Deviation:** Stock Entry stores material request, work order, BOM, and serial/batch fields but does not update Material Request qty, work-order qty, explode a BOM, or validate serials and batches. **Reason:** those documents and `app.get_item_details` are later checklist lines.
+10. **Deviation:** Stock Reconciliation stores batch and serial fields but does not require them on a serialized or batched item. **Reason:** serial and batch documents are a later checklist line.
 
 ---
 
@@ -418,7 +421,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `stock_ledger_entry`, `bin`, `app.make_sl_entries`, FIFO and moving average, negative stock, synchronous repost — §2.9, §2.10, §3.2, `0401_stock_ledger.sql`, `0402_stock_bin_audit.sql`
 - [x] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4, `0403_stock_perpetual_gl.sql`
 - [x] `stock_entry` for the A6 purposes — §2.11, §4, `0404_stock_stock_entry.sql`
-- [ ] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12
+- [x] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12, `0405_stock_stock_reconciliation.sql`, `0406_stock_reconciliation_zero_qty.sql`
 - [ ] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14
 - [ ] `batch`, `serial_no`, `serial_and_batch_bundle`, auto-pick on outward — §2.13, §3.5
 - [ ] `app.get_item_details` — §3.1

@@ -73,6 +73,7 @@ const USERS = [
     { env: "E2E_DASH", local: "dash", first_name: "Dash", last_name: "Admin" },
     { env: "E2E_STOCK_SETTINGS", local: "stock-settings", first_name: "Stock", last_name: "Settings" },
     { env: "E2E_STOCK_ENTRY", local: "stock-entry", first_name: "Stock", last_name: "Entry" },
+    { env: "E2E_STOCK_RECONCILIATION", local: "stock-reconciliation", first_name: "Stock", last_name: "Reconciliation" },
 ] as const;
 
 /**
