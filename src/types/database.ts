@@ -283,10 +283,18 @@ export type Database = {
       }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_entry: { Args: { p_id: string }; Returns: undefined }
+      on_cancel__stock_reconciliation: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       on_submit__journal_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__payment_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_entry: { Args: { p_id: string }; Returns: undefined }
+      on_submit__stock_reconciliation: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       onboarding_complete: {
         Args: { p_org: string; p_step: string }
         Returns: undefined
@@ -7812,6 +7820,194 @@ export type Database = {
           },
           {
             foreignKeyName: "stock_ledger_entry_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      stock_reconciliation: {
+        Row: {
+          amended_from: string | null
+          company_id: string
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          difference_amount: number
+          docstatus: number
+          expense_account_id: string | null
+          id: string
+          name: string
+          naming_series: string
+          org_id: string
+          posting_date: string
+          posting_time: string
+          purpose: string
+          set_warehouse_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          company_id: string
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          difference_amount?: number
+          docstatus?: number
+          expense_account_id?: string | null
+          id?: string
+          name: string
+          naming_series?: string
+          org_id: string
+          posting_date?: string
+          posting_time?: string
+          purpose: string
+          set_warehouse_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          company_id?: string
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          difference_amount?: number
+          docstatus?: number
+          expense_account_id?: string | null
+          id?: string
+          name?: string
+          naming_series?: string
+          org_id?: string
+          posting_date?: string
+          posting_time?: string
+          purpose?: string
+          set_warehouse_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_reconciliation_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "stock_reconciliation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_org_id_expense_account_id_fkey"
+            columns: ["org_id", "expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_org_id_set_warehouse_id_fkey"
+            columns: ["org_id", "set_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      stock_reconciliation_item: {
+        Row: {
+          allow_zero_valuation_rate: boolean
+          amount_difference: number
+          batch_no: string | null
+          current_amount: number
+          current_qty: number
+          current_valuation_rate: number
+          id: string
+          idx: number
+          item_id: string
+          org_id: string
+          parent_id: string
+          qty: number
+          quantity_difference: number
+          serial_and_batch_bundle: string | null
+          serial_no: string | null
+          valuation_rate: number
+          warehouse_id: string | null
+        }
+        Insert: {
+          allow_zero_valuation_rate?: boolean
+          amount_difference?: number
+          batch_no?: string | null
+          current_amount?: number
+          current_qty?: number
+          current_valuation_rate?: number
+          id?: string
+          idx: number
+          item_id: string
+          org_id: string
+          parent_id: string
+          qty?: number
+          quantity_difference?: number
+          serial_and_batch_bundle?: string | null
+          serial_no?: string | null
+          valuation_rate?: number
+          warehouse_id?: string | null
+        }
+        Update: {
+          allow_zero_valuation_rate?: boolean
+          amount_difference?: number
+          batch_no?: string | null
+          current_amount?: number
+          current_qty?: number
+          current_valuation_rate?: number
+          id?: string
+          idx?: number
+          item_id?: string
+          org_id?: string
+          parent_id?: string
+          qty?: number
+          quantity_difference?: number
+          serial_and_batch_bundle?: string | null
+          serial_no?: string | null
+          valuation_rate?: number
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_reconciliation_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "stock_reconciliation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_reconciliation_item_org_id_warehouse_id_fkey"
             columns: ["org_id", "warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouse"

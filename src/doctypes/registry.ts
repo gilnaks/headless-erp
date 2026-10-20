@@ -51,6 +51,7 @@ import { itemPrice } from "./stock/item-price";
 import { priceList } from "./stock/price-list";
 import { stockEntry } from "./stock/stock-entry";
 import { stockEntryType } from "./stock/stock-entry-type";
+import { stockReconciliation } from "./stock/stock-reconciliation";
 import { stockSettings } from "./stock/stock-settings";
 import { uom } from "./stock/uom";
 import { uomCategory } from "./stock/uom-category";
@@ -102,6 +103,7 @@ export const DOCTYPES: readonly Doctype[] = [
     uomConversionFactor,
     stockEntryType,
     stockEntry,
+    stockReconciliation,
     stockSettings,
     warehouseType,
     warehouse,
