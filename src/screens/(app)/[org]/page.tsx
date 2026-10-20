@@ -4,7 +4,7 @@ import { PlaceholderPage } from "@/components/erp/placeholder-page";
 import { notFound } from "@/lib/navigate";
 import { showOnboarding } from "@/lib/onboarding";
 import { getOrgBySlug } from "@/lib/queries/doc";
-import { countCompanies, getOnboarding } from "@/lib/queries/home";
+import { countCompanies, getOnboarding, loadHomeProfitChart } from "@/lib/queries/home";
 import { getMyRoles } from "@/lib/queries/role-permissions";
 
 type OrgPageProps = { params: Promise<{ org: string }> };
@@ -15,7 +15,12 @@ async function OrgHomeBody({ params }: OrgPageProps) {
     const org = await getOrgBySlug(slug);
     if (!org) notFound();
 
-    const [companies, roles, onboarding] = await Promise.all([countCompanies(org.id), getMyRoles(org.id), getOnboarding(org.id)]);
+    const [companies, roles, onboarding, profit] = await Promise.all([
+        countCompanies(org.id),
+        getMyRoles(org.id),
+        getOnboarding(org.id),
+        loadHomeProfitChart(org.id),
+    ]);
     if (companies === 0) {
         return (
             <PlaceholderPage
@@ -34,7 +39,7 @@ async function OrgHomeBody({ params }: OrgPageProps) {
             {roles.includes("System Manager") && showOnboarding(onboarding) && (
                 <OnboardingCard orgSlug={org.slug} steps={onboarding.steps} />
             )}
-            <ProfitAndLossChart />
+            <ProfitAndLossChart chart={profit} />
             <NumberCards />
         </div>
     );

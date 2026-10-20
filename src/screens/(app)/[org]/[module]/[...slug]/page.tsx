@@ -1,3 +1,4 @@
+import { AccountsDashboard } from "@/components/erp/dashboard/accounts-dashboard";
 import { DocForm } from "@/components/erp/doc/doc-form";
 import { DocList } from "@/components/erp/doc/doc-list";
 import { TreeView } from "@/components/erp/doc/tree-view";
@@ -15,6 +16,7 @@ import { getDoctype } from "@/doctypes/registry";
 import { prefillValues } from "@/doctypes/schema";
 import { loadListParams, loadViewParams } from "@/lib/list-params";
 import { notFound } from "@/lib/navigate";
+import { loadBankBalance, loadCardSum, loadChartTimeseries } from "@/lib/queries/accounts-dashboard";
 import { loadBalanceSheet } from "@/lib/queries/balance-sheet";
 import { loadCashFlow } from "@/lib/queries/cash-flow";
 import { getDoc, getDocPermissions, getOrgBySlug, getSingleDoc, listDocs, listTreeNodes } from "@/lib/queries/doc";
@@ -566,6 +568,82 @@ async function CashFlowRoute({ orgSlug, searchParams }: { orgSlug: string; searc
     );
 }
 
+const UNAVAILABLE_CARD = { available: false };
+const EMPTY_SERIES = { available: false, chart: { type: "bar" as const, labels: [], datasets: [] } };
+const EMPTY_PROFIT = { type: "bar" as const, labels: [], datasets: [] };
+
+async function AccountsDashboardRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const supabase = createClient();
+    const { data } = await supabase
+        .from("fiscal_year")
+        .select("id, year_start_date, year_end_date")
+        .eq("org_id", org.id)
+        .order("year_start_date", { ascending: false });
+    const years = data ?? [];
+    const today = isoDate(new Date());
+    const current = years.find((year) => year.year_start_date <= today && year.year_end_date >= today) ?? years[0];
+    const from = one("from") || current?.year_start_date || today;
+    const to = one("to") || current?.year_end_date || today;
+    const chartYear = years.find((year) => year.year_start_date <= to && year.year_end_date >= to) ?? current;
+    let company = one("company") ?? "";
+    if (!company) {
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+
+    const filters = { company, from_date: from, to_date: to };
+    const [outgoingBills, incomingBills, incomingPayment, outgoingPayment, outgoingBillChart, incomingBillChart, bank, profit] = company
+        ? await Promise.all([
+              loadCardSum("sales_invoice", "base_net_total", filters),
+              loadCardSum("purchase_invoice", "base_net_total", filters),
+              loadCardSum("payment_entry", "base_received_amount", filters),
+              loadCardSum("payment_entry", "base_paid_amount", filters),
+              loadChartTimeseries("sales_invoice", "base_net_total", filters),
+              loadChartTimeseries("purchase_invoice", "base_net_total", filters),
+              loadBankBalance(filters),
+              chartYear
+                  ? loadProfitAndLoss({
+                        company,
+                        basis: "Fiscal Year",
+                        fromFiscalYear: chartYear.id,
+                        toFiscalYear: chartYear.id,
+                        from: chartYear.year_start_date,
+                        to: chartYear.year_end_date,
+                        periodicity: "Yearly",
+                        accumulated: false,
+                        showZero: false,
+                    })
+                  : Promise.resolve(null),
+          ])
+        : [UNAVAILABLE_CARD, UNAVAILABLE_CARD, UNAVAILABLE_CARD, UNAVAILABLE_CARD, EMPTY_SERIES, EMPTY_SERIES, EMPTY_SERIES, null];
+
+    return (
+        <AccountsDashboard
+            orgSlug={org.slug}
+            companyId={company}
+            from={from}
+            to={to}
+            outgoingBills={outgoingBills}
+            incomingBills={incomingBills}
+            incomingPayment={incomingPayment}
+            outgoingPayment={outgoingPayment}
+            profit={profit?.chart ?? EMPTY_PROFIT}
+            profitError={profit?.error}
+            outgoingBillChart={outgoingBillChart}
+            incomingBillChart={incomingBillChart}
+            bank={bank}
+            error={company ? undefined : "Company is mandatory"}
+        />
+    );
+}
+
 async function ItemRoute({ params, searchParams }: ItemPageProps) {
     const { org, module: moduleId, slug } = await params;
     if (!getModule(moduleId)) notFound();
@@ -599,6 +677,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "report" && link.target.report === "Cash Flow") {
         return CashFlowRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "dashboard" && moduleId === "accounts") {
+        return AccountsDashboardRoute({ orgSlug: org, searchParams });
     }
 
     return <PlaceholderPage title={link.label} description={describe(link, path)} phase={link.phase} />;

@@ -1008,6 +1008,8 @@ All reports are `app.report_<slug>(filters jsonb) returns jsonb` (`{columns, row
 
 Widgets whose report is not built yet render the dashboard "not available yet" empty state (05-ui-ux) instead of being hidden, so the layout matches ERPNext. Home (00-setup) reuses the Profit and Loss chart.
 
+**Built (0317):** `app.card_sum` totals submitted Receive and Pay payments for the selected dates, and returns the current and previous calendar months so the card can show a monthly percentage. Sales Invoice and Purchase Invoice cards, and both bill charts, return not available. `app.chart_account_balance_timeline` is twelve month-end balances of the default bank account. The Profit and Loss chart is the yearly `app.report_profit_and_loss` result for the fiscal year that contains the to-date. Ageing and Budget Variance stay not available. Migration `0317_accounts_dashboard.sql`.
+
 ### 7.2 Report specs
 
 **General Ledger** (`general_ledger/`, P3). Filters: `company` ✔, `from_date` (today − 1 month) ✔, `to_date` (today) ✔, `account` (multi), `voucher_no`, `against_voucher_no`, `party_type`, `party` (multi, requires party_type), `party_name`, `categorize_by` (`Categorize by Voucher`, **`Categorize by Voucher (Consolidated)`** default, `Categorize by Account`, `Categorize by Party`), `tax_id`, `cost_center` (multi), `project` (multi), `show_opening_entries`, `show_cancelled_entries`, `show_net_values_in_party_account`, `show_remarks`, `ignore_err` (exclude Exchange Rate Revaluation: no-op), `ignore_cr_dr_notes` (exclude system Credit/Debit Note JEs), `disable_opening_balance_calculation`. Validations: "From Date must be before To Date"; party without party type. Columns: Posting Date, Account, Debit, Credit, Balance, Voucher Type, Voucher Subtype, Voucher No, Against Account, Party Type, Party, Party Name, Project, Cost Center, Against Voucher Type, Against Voucher, Supplier Invoice No, Remarks (with `general_ledger_remarks_length`). Rows: **Opening** (Σ before `from_date` plus `is_opening = Yes` rows dated in range unless `show_opening_entries`), entries, **Total**, **Closing (Opening + Total)**; per group when categorised (sub-totals per account / party / voucher); "Consolidated" merges rows of the same voucher + account. Balance is running `Σ(debit − credit)`.
@@ -1176,7 +1178,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 - [x] `app.report_cash_flow` — §7.2 (stretch), `0316_accounts_cash_flow.sql`
 - [ ] `app.report_consolidated_financial_statement` — §7.2 (stretch)
 - [ ] `app.report_profitability_analysis` — §7.2 (stretch)
-- [ ] Accounting dashboard: 4 cards, P&L / bills / bank balance charts (`app.card_sum`, `app.chart_timeseries`, `app.chart_account_balance_timeline`) — §7.1
+- [x] Accounting dashboard: 4 cards, P&L / bills / bank balance charts (`app.card_sum`, `app.chart_timeseries`, `app.chart_account_balance_timeline`) — §7.1
 - [ ] pgTAP: §4.8 rows 6–10 (PE/JE), BS equation, TB debit = credit
 
 ### P5 / P6 — invoices (owned here, scheduled with 02-selling / 03-buying; flagged because the requested grouping is P2/P3/P7)

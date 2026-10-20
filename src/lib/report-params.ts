@@ -58,6 +58,13 @@ export const cashFlowParsers = {
     opening: parseAsBoolean.withDefault(false),
 };
 
+/** Accounts dashboard URL state. Blank dates are filled from the fiscal year that contains today. */
+export const dashboardParsers = {
+    company: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+};
+
 /** Balance Sheet URL state. Accumulated values stay on unless the URL turns them off. */
 export const balanceSheetParsers = {
     company: parseAsString.withDefault(""),

@@ -1,5 +1,41 @@
 import { ONBOARDING_STEP_KEYS, type OnboardingState, type OnboardingStepKey } from "@/lib/onboarding";
+import { loadProfitAndLoss, type ProfitAndLossChart } from "@/lib/queries/profit-and-loss";
 import { createClient } from "@/lib/supabase/client";
+
+function isoDate(date: Date): string {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/** Yearly Profit and Loss for the org's only company, or the first company when there are several. */
+export async function loadHomeProfitChart(orgId: string): Promise<ProfitAndLossChart | null> {
+    const supabase = createClient();
+    const { data: companies } = await supabase.from("companies").select("id").eq("org_id", orgId).order("name").limit(1);
+    const company = companies?.[0]?.id;
+    if (!company) return null;
+    const { data: years } = await supabase
+        .from("fiscal_year")
+        .select("id, year_start_date, year_end_date")
+        .eq("org_id", orgId)
+        .order("year_start_date", { ascending: false });
+    const today = isoDate(new Date());
+    const current = (years ?? []).find((year) => year.year_start_date <= today && year.year_end_date >= today) ?? years?.[0];
+    if (!current) return null;
+    const report = await loadProfitAndLoss({
+        company,
+        basis: "Fiscal Year",
+        fromFiscalYear: current.id,
+        toFiscalYear: current.id,
+        from: current.year_start_date,
+        to: current.year_end_date,
+        periodicity: "Yearly",
+        accumulated: false,
+        showZero: false,
+    });
+    if (report.error) return null;
+    return report.chart;
+}
 
 /** The org's onboarding checklist (RLS: members read). */
 export async function getOnboarding(orgId: string): Promise<OnboardingState> {
