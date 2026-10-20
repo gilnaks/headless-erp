@@ -36,6 +36,7 @@ export const serialAndBatchBundle = defineDoctype<"serial_and_batch_bundle", "en
         },
         posting_datetime: { type: "Data", label: "Posting Datetime", readOnly: true },
         total_qty: { type: "Float", label: "Total Qty", readOnly: true },
+        entries: { type: "Table", label: "Entries", target: "Serial and Batch Entry", required: true },
     },
     children: { entries: serialAndBatchEntry },
     tabs: [

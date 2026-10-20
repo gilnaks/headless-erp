@@ -380,6 +380,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_batch_qty: { Args: { p_batch: string }; Returns: undefined }
       refresh_indented_qty: {
         Args: { p_item: string; p_org: string; p_warehouse: string }
         Returns: undefined
@@ -397,7 +398,10 @@ export type Database = {
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
-      report_trial_balance_for_party: { Args: { p_filters: Json }; Returns: Json }
+      report_trial_balance_for_party: {
+        Args: { p_filters: Json }
+        Returns: Json
+      }
       repost_item_valuation: {
         Args: { p_from: string; p_item: string; p_warehouse: string }
         Returns: undefined
@@ -1084,6 +1088,79 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "roles"
             referencedColumns: ["org_id", "name"]
+          },
+        ]
+      }
+      batch: {
+        Row: {
+          batch_id: string
+          batch_qty: number
+          created_at: string
+          created_by: string | null
+          disabled: boolean
+          expiry_date: string | null
+          id: string
+          item_id: string
+          manufacturing_date: string | null
+          name: string
+          org_id: string
+          supplier_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          batch_id: string
+          batch_qty?: number
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          expiry_date?: string | null
+          id?: string
+          item_id: string
+          manufacturing_date?: string | null
+          name: string
+          org_id: string
+          supplier_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          batch_id?: string
+          batch_qty?: number
+          created_at?: string
+          created_by?: string | null
+          disabled?: boolean
+          expiry_date?: string | null
+          id?: string
+          item_id?: string
+          manufacturing_date?: string | null
+          name?: string
+          org_id?: string
+          supplier_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "batch_org_id_supplier_id_fkey"
+            columns: ["org_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -7521,6 +7598,257 @@ export type Database = {
           },
         ]
       }
+      serial_and_batch_bundle: {
+        Row: {
+          amended_from: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          docstatus: number
+          id: string
+          item_id: string
+          name: string
+          naming_series: string
+          org_id: string
+          posting_datetime: string
+          total_qty: number
+          type_of_transaction: string
+          updated_at: string
+          updated_by: string | null
+          voucher_id: string | null
+          voucher_type: string
+          warehouse_id: string
+        }
+        Insert: {
+          amended_from?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          docstatus?: number
+          id?: string
+          item_id: string
+          name: string
+          naming_series?: string
+          org_id: string
+          posting_datetime?: string
+          total_qty?: number
+          type_of_transaction: string
+          updated_at?: string
+          updated_by?: string | null
+          voucher_id?: string | null
+          voucher_type: string
+          warehouse_id: string
+        }
+        Update: {
+          amended_from?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          docstatus?: number
+          id?: string
+          item_id?: string
+          name?: string
+          naming_series?: string
+          org_id?: string
+          posting_datetime?: string
+          total_qty?: number
+          type_of_transaction?: string
+          updated_at?: string
+          updated_by?: string | null
+          voucher_id?: string | null
+          voucher_type?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serial_and_batch_bundle_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "serial_and_batch_bundle"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_and_batch_bundle_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_and_batch_bundle_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serial_and_batch_bundle_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_and_batch_bundle_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      serial_and_batch_entry: {
+        Row: {
+          batch_id: string | null
+          id: string
+          idx: number
+          incoming_rate: number
+          org_id: string
+          parent_id: string
+          qty: number
+          serial_no_id: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          id?: string
+          idx: number
+          incoming_rate?: number
+          org_id: string
+          parent_id: string
+          qty: number
+          serial_no_id?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          id?: string
+          idx?: number
+          incoming_rate?: number
+          org_id?: string
+          parent_id?: string
+          qty?: number
+          serial_no_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serial_and_batch_entry_org_id_batch_id_fkey"
+            columns: ["org_id", "batch_id"]
+            isOneToOne: false
+            referencedRelation: "batch"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_and_batch_entry_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "serial_and_batch_bundle"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_and_batch_entry_org_id_serial_no_id_fkey"
+            columns: ["org_id", "serial_no_id"]
+            isOneToOne: false
+            referencedRelation: "serial_no"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      serial_no: {
+        Row: {
+          batch_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          id: string
+          item_id: string
+          name: string
+          org_id: string
+          purchase_rate: number
+          serial_no: string
+          updated_at: string
+          updated_by: string | null
+          warehouse_id: string | null
+          warranty_expiry_date: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          item_id: string
+          name: string
+          org_id: string
+          purchase_rate?: number
+          serial_no: string
+          updated_at?: string
+          updated_by?: string | null
+          warehouse_id?: string | null
+          warranty_expiry_date?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          item_id?: string
+          name?: string
+          org_id?: string
+          purchase_rate?: number
+          serial_no?: string
+          updated_at?: string
+          updated_by?: string | null
+          warehouse_id?: string | null
+          warranty_expiry_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serial_no_org_id_batch_id_fkey"
+            columns: ["org_id", "batch_id"]
+            isOneToOne: false
+            referencedRelation: "batch"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_no_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_no_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_no_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serial_no_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "serial_no_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       stock_entry: {
         Row: {
           add_to_transit: boolean
@@ -8039,6 +8367,20 @@ export type Database = {
           warehouse_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_ledger_entry_batch_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batch"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_bundle_fkey"
+            columns: ["serial_and_batch_bundle_id"]
+            isOneToOne: false
+            referencedRelation: "serial_and_batch_bundle"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_ledger_entry_cost_center_fk"
             columns: ["org_id", "cost_center_id"]
@@ -9908,7 +10250,10 @@ export type Database = {
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
-      report_trial_balance_for_party: { Args: { p_filters: Json }; Returns: Json }
+      report_trial_balance_for_party: {
+        Args: { p_filters: Json }
+        Returns: Json
+      }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reset_role_permissions: {
         Args: { p_doctype: string; p_org: string }
