@@ -21,8 +21,8 @@ export const stockReconciliationItem = defineChildDoctype({
         quantity_difference: { type: "Float", label: "Quantity Difference", readOnly: true },
         amount_difference: { type: "Currency", label: "Amount Difference", readOnly: true },
         allow_zero_valuation_rate: { type: "Check", label: "Allow Zero Valuation Rate" },
-        batch_no: { type: "Data", label: "Batch No", readOnly: true },
-        serial_no: { type: "Data", label: "Serial No", readOnly: true },
+        batch_no: { type: "Data", label: "Batch No" },
+        serial_no: { type: "Data", label: "Serial No" },
         serial_and_batch_bundle: { type: "Data", label: "Serial and Batch Bundle", readOnly: true },
     },
     columns: [
@@ -33,6 +33,8 @@ export const stockReconciliationItem = defineChildDoctype({
         "current_qty",
         "quantity_difference",
         "amount_difference",
+        "serial_no",
+        "batch_no",
         "allow_zero_valuation_rate",
     ],
 });
