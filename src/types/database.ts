@@ -54,6 +54,7 @@ export type Database = {
       auto_create_fiscal_year: { Args: never; Returns: number }
       can_write_file: { Args: { p_name: string }; Returns: boolean }
       cancel_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      card_stock: { Args: { p_filters: Json }; Returns: Json }
       card_sum: {
         Args: { p_doctype: string; p_field: string; p_filters: Json }
         Returns: Json
@@ -62,6 +63,7 @@ export type Database = {
         Args: { p_filters: Json }
         Returns: Json
       }
+      chart_stock: { Args: { p_chart: string; p_filters: Json }; Returns: Json }
       chart_timeseries: {
         Args: {
           p_date_field: string
@@ -9988,6 +9990,7 @@ export type Database = {
       accept_invitation: { Args: { p_token: string }; Returns: string }
       amend_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       cancel_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      card_stock: { Args: { p_filters: Json }; Returns: Json }
       card_sum: {
         Args: { p_doctype: string; p_field: string; p_filters: Json }
         Returns: Json
@@ -9996,6 +9999,7 @@ export type Database = {
         Args: { p_filters: Json }
         Returns: Json
       }
+      chart_stock: { Args: { p_chart: string; p_filters: Json }; Returns: Json }
       chart_timeseries: {
         Args: {
           p_date_field: string

@@ -77,6 +77,7 @@ const USERS = [
     { env: "E2E_MATERIAL_REQUEST", local: "material-request", first_name: "Material", last_name: "Request" },
     { env: "E2E_SERIAL_BATCH", local: "serial-batch", first_name: "Serial", last_name: "Batch" },
     { env: "E2E_ITEM_DETAILS", local: "item-details", first_name: "Item", last_name: "Details" },
+    { env: "E2E_STOCK_DASHBOARD", local: "stock-dashboard", first_name: "Stock", last_name: "Dashboard" },
 ] as const;
 
 /**
