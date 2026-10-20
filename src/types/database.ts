@@ -268,6 +268,10 @@ export type Database = {
         Args: { p_entries: Json; p_opts?: Json }
         Returns: undefined
       }
+      make_stock_gl_entries: {
+        Args: { p_voucher_id: string; p_voucher_type: string }
+        Returns: undefined
+      }
       next_name: {
         Args: {
           p_company: string
@@ -7303,8 +7307,10 @@ export type Database = {
           actual_qty: number
           batch_id: string | null
           company_id: string
+          cost_center_id: string | null
           created_at: string
           creation_order: number
+          expense_account_id: string | null
           fiscal_year_id: string | null
           has_batch_no: boolean
           has_serial_no: boolean
@@ -7312,6 +7318,7 @@ export type Database = {
           incoming_rate: number
           is_adjustment_entry: boolean
           is_cancelled: boolean
+          is_opening: boolean
           item_id: string
           org_id: string
           outgoing_rate: number
@@ -7336,8 +7343,10 @@ export type Database = {
           actual_qty: number
           batch_id?: string | null
           company_id: string
+          cost_center_id?: string | null
           created_at?: string
           creation_order?: number
+          expense_account_id?: string | null
           fiscal_year_id?: string | null
           has_batch_no?: boolean
           has_serial_no?: boolean
@@ -7345,6 +7354,7 @@ export type Database = {
           incoming_rate?: number
           is_adjustment_entry?: boolean
           is_cancelled?: boolean
+          is_opening?: boolean
           item_id: string
           org_id: string
           outgoing_rate?: number
@@ -7369,8 +7379,10 @@ export type Database = {
           actual_qty?: number
           batch_id?: string | null
           company_id?: string
+          cost_center_id?: string | null
           created_at?: string
           creation_order?: number
+          expense_account_id?: string | null
           fiscal_year_id?: string | null
           has_batch_no?: boolean
           has_serial_no?: boolean
@@ -7378,6 +7390,7 @@ export type Database = {
           incoming_rate?: number
           is_adjustment_entry?: boolean
           is_cancelled?: boolean
+          is_opening?: boolean
           item_id?: string
           org_id?: string
           outgoing_rate?: number
@@ -7399,6 +7412,20 @@ export type Database = {
           warehouse_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_ledger_entry_cost_center_fk"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_expense_account_fk"
+            columns: ["org_id", "expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
           {
             foreignKeyName: "stock_ledger_entry_org_id_company_id_fkey"
             columns: ["org_id", "company_id"]

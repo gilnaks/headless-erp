@@ -199,9 +199,9 @@ Quality-inspection settings stay at their JSON defaults and the fields are hidde
 
 Append-only for clients. Written only by `app.make_sl_entries`. Cancel inserts a reversing row and sets `is_cancelled` on both (03-posting-engine). A synchronous repost may rewrite the valuation columns of a later row. A client cannot change qty or rate.
 
-Columns: `item_id`, `warehouse_id`, `posting_datetime`, `voucher_type`, `voucher_id`, `voucher_detail_id`, `actual_qty` (signed), `incoming_rate`, `outgoing_rate`, `qty_after_transaction`, `valuation_rate`, `stock_value`, `stock_value_difference`, `stock_queue` (jsonb, FIFO buckets `[qty, rate]`), `serial_and_batch_bundle_id`, `batch_id`, `is_cancelled`, `fiscal_year_id`, `company_id`. Unique order is `(item, warehouse, posting_datetime, creation_order)`.
+Columns: `item_id`, `warehouse_id`, `posting_datetime`, `voucher_type`, `voucher_id`, `voucher_detail_id`, `actual_qty` (signed), `incoming_rate`, `outgoing_rate`, `qty_after_transaction`, `valuation_rate`, `stock_value`, `stock_value_difference`, `stock_queue` (jsonb, FIFO buckets `[qty, rate]`), `serial_and_batch_bundle_id`, `batch_id`, `is_cancelled`, `fiscal_year_id`, `company_id`, `expense_account_id`, `cost_center_id`, `is_opening`. Unique order is `(item, warehouse, posting_datetime, creation_order)`.
 
-**Built (0401):** `app.make_sl_entries` appends the row and values it at FIFO or moving average. A later row for the same item and warehouse is reposted in the same transaction. Cancel flags the original and the reversal. Negative stock is rejected unless the item or Stock Settings allows it, and a frozen date blocks a caller who does not hold `stock_auth_role`. Perpetual inventory GL is the next line. Migration `0401_stock_ledger.sql`.
+**Built (0401):** `app.make_sl_entries` appends the row and values it at FIFO or moving average. A later row for the same item and warehouse is reposted in the same transaction. Cancel flags the original and the reversal. Negative stock is rejected unless the item or Stock Settings allows it, and a frozen date blocks a caller who does not hold `stock_auth_role`. The expense account, cost center, and opening flag stay on the row so a repost can rebuild perpetual GL (§3.3). Migration `0401_stock_ledger.sql`.
 
 ### 2.10 Bin → `bin`
 
@@ -269,7 +269,7 @@ Transfer and Issue submit does not move stock. The Stock Entry mapped from the r
 
 ### 3.2 Ledger
 
-`app.make_sl_entries(entries, opts)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`. Perpetual inventory GL is the next line, so the repost does not post stock-value GL.
+`app.make_sl_entries(entries, opts)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`. A repost rebuilds that voucher's stock GL in the same transaction.
 
 FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is stored on the stock ledger row. Writing it back onto the voucher row waits until that voucher exists, so the GL can use the same number.
 
@@ -290,6 +290,8 @@ When `companies.enable_perpetual_inventory` is on (the wizard default), every SL
 | Landed Cost Voucher | Dr the extra | Cr the charge account |
 
 Company `valuation_method` cannot change once an SLE exists for an item that has no method of its own (`cant_change_valuation_method`, 00-setup). Perpetual inventory cannot be turned off once SLE rows exist.
+
+**Built (0403):** `app.make_stock_gl_entries` posts the stock-value pair for each open stock ledger row when perpetual inventory is on. A receipt debits the warehouse account and credits the row expense account, or Stock Adjustment. An opening row credits Temporary Opening. A transfer debits the target warehouse account and credits the source, and posts nothing when those accounts are the same. A repost rebuilds that voucher's stock GL in the same transaction. Purchase Receipt, Delivery Note, and Landed Cost GL stay on their own lines. Migration `0403_stock_perpetual_gl.sql`.
 
 ### 3.4 Material request reorder
 
@@ -411,7 +413,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 
 - [x] `stock_settings` form, C4 values — §2.8, `0400_stock_settings.sql`
 - [x] `stock_ledger_entry`, `bin`, `app.make_sl_entries`, FIFO and moving average, negative stock, synchronous repost — §2.9, §2.10, §3.2, `0401_stock_ledger.sql`, `0402_stock_bin_audit.sql`
-- [ ] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4
+- [x] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4, `0403_stock_perpetual_gl.sql`
 - [ ] `stock_entry` for the A6 purposes — §2.11, §4
 - [ ] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12
 - [ ] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14
