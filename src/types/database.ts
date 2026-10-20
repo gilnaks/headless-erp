@@ -331,6 +331,7 @@ export type Database = {
         Returns: undefined
       }
       report_balance_sheet: { Args: { p_filters: Json }; Returns: Json }
+      report_cash_flow: { Args: { p_filters: Json }; Returns: Json }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
@@ -8620,6 +8621,7 @@ export type Database = {
       }
       provision_organization: { Args: { p: Json }; Returns: Json }
       report_balance_sheet: { Args: { p_filters: Json }; Returns: Json }
+      report_cash_flow: { Args: { p_filters: Json }; Returns: Json }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
