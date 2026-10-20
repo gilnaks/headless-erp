@@ -17,7 +17,7 @@ One doctype, one route. Selling and Buying sidebar entries for Item, Item Group,
 ERPNext sources read (repo-relative to `C:\Users\John\Desktop\erpnext`):
 
 - Masters: `erpnext/stock/doctype/item/item.{json,py}`, `item_default/`, `erpnext/setup/doctype/item_group/`, `uom/`, `brand/`, `erpnext/stock/doctype/warehouse/warehouse.py`, `price_list/`, `item_price/`, `stock_entry_type/`, `warehouse_type/`, `stock_settings/stock_settings.json`.
-- Ledger: `erpnext/stock/stock_ledger.py`, `erpnext/stock/valuation.py`, `erpnext/stock/doctype/bin/bin.json`, `erpnext/stock/get_item_details.py`.
+- Ledger: `erpnext/stock/stock_ledger.py`, `erpnext/stock/valuation.py`, `erpnext/stock/doctype/bin/bin.json`, `erpnext/stock/get_item_details.py`, `erpnext/stock/reorder_item.py`.
 - Transactions: `stock_entry/stock_entry.py`, `stock_reconciliation/stock_reconciliation.py`, `material_request/material_request.py`, `serial_and_batch_bundle/`, `batch/`, `serial_no/`, `landed_cost_voucher/landed_cost_voucher.py`, `pick_list/`.
 - Reports and dashboard: `erpnext/stock/stock_dashboard/stock/stock.json`, `erpnext/stock/report/{stock_ledger,stock_balance,stock_projected_qty,stock_ageing,stock_analytics}/`.
 - Seed: `erpnext/setup/setup_wizard/operations/install_fixtures.py` (`update` of stock settings is 00-setup C4), `company.py` `create_default_warehouses`.
@@ -308,6 +308,8 @@ Company `valuation_method` cannot change once an SLE exists for an item that has
 
 `app.reorder_items`, daily (03-posting-engine). For each `item_reorder` row (`warehouse`, `warehouse_group_id` optional, `reorder_level`, `reorder_qty`, `material_request_type` default Purchase): if `actual_qty + indented + ordered − reserved` in that warehouse is below `reorder_level`, and `auto_indent` is on, create one draft Material Request per company and type with `qty = reorder_qty`. An open request for the same item and warehouse suppresses a second one. `reorder_email_notify` stays off; no email.
 
+**Built (0413):** `app.reorder_items` runs daily at 00:45 for organizations with `auto_indent` on. A stock item still in life is included when `actual_qty + indented_qty + ordered_qty − reserved_qty`, summed for warehouses under the reorder group, is below `warehouse_reorder_level` and the reorder qty is greater than 0. One draft covers a company and purpose. Qty is the reorder qty in the stock UOM, rounded up when that UOM must be a whole number. Required By is today plus lead time. An open request for the same item and warehouse is left alone. A disabled warehouse, Customer Provided, and Material Transfer are skipped. The job does not submit and does not send email. Migration `0413_stock_reorder_items.sql`.
+
 ### 3.5 Serial and batch
 
 On inward, a serialized item needs one serial per stock qty, and a batched item needs a batch. `create_new_batch` makes the batch from `batch_number_series` when the row has none. The bundle's qty must equal the row's stock qty ("Total quantity in Serial and Batch Bundle {0} is {1}, it should be {2}").
@@ -407,6 +409,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 10. **Deviation:** Stock Reconciliation checks serials and batches when the quantity changes. A zero-qty adjustment does not. Batch-wise valuation stays off. **Reason:** Pick List and batch queues are later lines. Deviation 1 still applies.
 11. **Deviation:** Material Request does not store a BOM or a sales order, and it does not map to a Request for Quotation or a Purchase Order. Purchase and Manufacture rows are accepted and stay Pending until those documents exist. **Reason:** buying and manufacturing documents are later checklist lines.
 12. **Deviation:** `app.get_item_details` does not insert an Item Price, and it does not apply pricing rules, POS, blanket orders, tax withholding, variants, or product bundles. Buying Settings are not built, so a buying document with no price uses `last_purchase_rate`, which is the ERPNext default. **Reason:** §2.6 puts that insert on the selling or buying save. Those other lookups are out of scope.
+13. **Deviation:** `app.reorder_items` leaves the Material Request as a draft and does not email. The trigger is strictly below the reorder level, and the qty stays the reorder qty instead of rising to the shortage. There is no buying UOM on the item. Material Transfer is skipped because a transfer requires a source warehouse and the reorder row does not name one. Variant reorder levels are not copied onto children. **Reason:** §3.4. Buying UOM and variants are out of scope, and `0407` already requires the transfer source.
 
 ---
 
@@ -434,7 +437,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `material_request` for Purchase, Transfer, Issue, Customer Provided; Manufacture rows accepted, BOM fill is P8 — §2.14, `0407_stock_material_request.sql`, `0408_material_request_qty_message.sql`
 - [x] `batch`, `serial_no`, `serial_and_batch_bundle`, auto-pick on outward — §2.13, §3.5, `0409_stock_serial_and_batch.sql`, `0410_stock_serial_batch_one.sql`, `0411_stock_serial_batch_clear.sql`
 - [x] `app.get_item_details` — §3.1, `0412_stock_get_item_details.sql`
-- [ ] `app.reorder_items` — §3.4
+- [x] `app.reorder_items` — §3.4, `0413_stock_reorder_items.sql`
 - [ ] Dashboard and the five reports — §7
 - [ ] Company checks `cant_change_valuation_method` and `validate_perpetual_inventory` once SLE exists — §3.3
 

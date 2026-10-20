@@ -394,6 +394,7 @@ export type Database = {
         Args: { p_voucher_id: string; p_voucher_type: string }
         Returns: undefined
       }
+      reorder_items: { Args: never; Returns: number }
       report_balance_sheet: { Args: { p_filters: Json }; Returns: Json }
       report_cash_flow: { Args: { p_filters: Json }; Returns: Json }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
