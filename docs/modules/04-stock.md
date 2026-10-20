@@ -373,6 +373,8 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 | Oldest Items | Half | items with SLE, oldest `posting_datetime` still in stock (qty_after > 0) |
 | Item Shortage Summary | Half | items whose `projected_qty` is below `safety_stock` or `reorder_level` |
 
+**Built (0414):** `app.card_stock` counts active items in the company organization, counts warehouses of that company that are not disabled (groups included), and sums `bin.stock_value` for those warehouses. `app.chart_stock` draws the top 10 non-group warehouses with stock value, the 10 oldest items whose latest ledger row is still in stock (age is days since the earliest such row; cancelled rows are excluded), and the 10 item and warehouse pairs with the larger shortfall below safety stock or that warehouse's reorder level. Purchase Receipt Trends and Delivery Trends return not available. A missing company is rejected. A company with no stock returns zeros and empty charts. Migration `0414_stock_dashboard.sql`.
+
 ### 7.2 Reports
 
 - **Stock Ledger** (`app.report_stock_ledger`): one row per SLE in the date range. Columns: date, item, item group, warehouse, voucher type, voucher, qty, incoming rate, balance qty, valuation rate, stock value, stock value difference. Filters: company ✔, from/to date ✔, item, warehouse, voucher type. Cancelled rows are excluded.
@@ -410,6 +412,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 11. **Deviation:** Material Request does not store a BOM or a sales order, and it does not map to a Request for Quotation or a Purchase Order. Purchase and Manufacture rows are accepted and stay Pending until those documents exist. **Reason:** buying and manufacturing documents are later checklist lines.
 12. **Deviation:** `app.get_item_details` does not insert an Item Price, and it does not apply pricing rules, POS, blanket orders, tax withholding, variants, or product bundles. Buying Settings are not built, so a buying document with no price uses `last_purchase_rate`, which is the ERPNext default. **Reason:** §2.6 puts that insert on the selling or buying save. Those other lookups are out of scope.
 13. **Deviation:** `app.reorder_items` leaves the Material Request as a draft and does not email. The trigger is strictly below the reorder level, and the qty stays the reorder qty instead of rising to the shortage. There is no buying UOM on the item. Material Transfer is skipped because a transfer requires a source warehouse and the reorder row does not name one. Variant reorder levels are not copied onto children. **Reason:** §3.4. Buying UOM and variants are out of scope, and `0407` already requires the transfer source.
+14. **Deviation:** Purchase Receipt Trends and Delivery Trends return not available. Oldest Items ages an item from the earliest stock ledger date that is still in stock, instead of the Stock Ageing report. **Reason:** Purchase Receipt, Delivery Note, and Stock Ageing are later checklist lines.
 
 ---
 

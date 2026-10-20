@@ -1,4 +1,5 @@
 import { AccountsDashboard } from "@/components/erp/dashboard/accounts-dashboard";
+import { StockDashboard } from "@/components/erp/dashboard/stock-dashboard";
 import { DocForm } from "@/components/erp/doc/doc-form";
 import { DocList } from "@/components/erp/doc/doc-list";
 import { TreeView } from "@/components/erp/doc/tree-view";
@@ -24,6 +25,7 @@ import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
+import { loadStockDashboard } from "@/lib/queries/stock-dashboard";
 import { loadTrialBalance } from "@/lib/queries/trial-balance";
 import { loadTrialBalanceForParty } from "@/lib/queries/trial-balance-for-party";
 import { optionSourcesOf } from "@/lib/reference-options";
@@ -572,6 +574,39 @@ const UNAVAILABLE_CARD = { available: false };
 const EMPTY_SERIES = { available: false, chart: { type: "bar" as const, labels: [], datasets: [] } };
 const EMPTY_PROFIT = { type: "bar" as const, labels: [], datasets: [] };
 
+const EMPTY_STOCK_CARD = { available: false };
+const EMPTY_STOCK_SERIES = { available: false, chart: { type: "bar" as const, labels: [], datasets: [] } };
+
+async function StockDashboardRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const companyParam = params.company;
+    let company = (Array.isArray(companyParam) ? companyParam[0] : companyParam) ?? "";
+    if (!company) {
+        const supabase = createClient();
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+    const dashboard = company ? await loadStockDashboard({ company }) : null;
+
+    return (
+        <StockDashboard
+            orgSlug={org.slug}
+            companyId={company}
+            items={dashboard?.items ?? EMPTY_STOCK_CARD}
+            warehouses={dashboard?.warehouses ?? EMPTY_STOCK_CARD}
+            stockValue={dashboard?.stockValue ?? EMPTY_STOCK_CARD}
+            warehouseChart={dashboard?.warehouseChart ?? EMPTY_STOCK_SERIES}
+            receipts={dashboard?.receipts ?? EMPTY_STOCK_SERIES}
+            deliveries={dashboard?.deliveries ?? EMPTY_STOCK_SERIES}
+            oldest={dashboard?.oldest ?? EMPTY_STOCK_SERIES}
+            shortage={dashboard?.shortage ?? EMPTY_STOCK_SERIES}
+            error={company ? undefined : "Company is mandatory"}
+        />
+    );
+}
+
 async function AccountsDashboardRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
     const org = await getOrgBySlug(orgSlug);
     if (!org) notFound();
@@ -680,6 +715,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "dashboard" && moduleId === "accounts") {
         return AccountsDashboardRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "dashboard" && moduleId === "stock") {
+        return StockDashboardRoute({ orgSlug: org, searchParams });
     }
 
     return <PlaceholderPage title={link.label} description={describe(link, path)} phase={link.phase} />;

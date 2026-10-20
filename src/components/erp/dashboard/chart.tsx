@@ -45,7 +45,7 @@ export function DashboardChart({ chart }: { chart: ProfitAndLossChart }) {
             </ul>
             <div className="h-60 w-full">
                 {chart.type === "line" ? (
-                    <LineChart responsive data={data}>
+                    <LineChart responsive className="h-full w-full" style={{ width: "100%", height: "100%" }} data={data}>
                         {axes}
                         {chart.datasets.map((dataset) => (
                             <Line
@@ -59,7 +59,7 @@ export function DashboardChart({ chart }: { chart: ProfitAndLossChart }) {
                         ))}
                     </LineChart>
                 ) : (
-                    <BarChart responsive data={data}>
+                    <BarChart responsive className="h-full w-full" style={{ width: "100%", height: "100%" }} data={data}>
                         {axes}
                         {chart.datasets.map((dataset) => (
                             <Bar key={dataset.name} dataKey={dataset.name} fill={colorOf(dataset.name)} radius={4} />
