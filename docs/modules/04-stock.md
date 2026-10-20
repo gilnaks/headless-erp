@@ -197,9 +197,11 @@ Quality-inspection settings stay at their JSON defaults and the fields are hidde
 
 ### 2.9 Stock Ledger Entry → `stock_ledger_entry`
 
-Append-only. Written only by `app.make_stock_ledger_entries`. Cancel inserts a reversing row and sets `is_cancelled` on both (03-posting-engine). No update of qty or rate in place.
+Append-only for clients. Written only by `app.make_sl_entries`. Cancel inserts a reversing row and sets `is_cancelled` on both (03-posting-engine). A synchronous repost may rewrite the valuation columns of a later row. A client cannot change qty or rate.
 
-Columns: `item_id`, `warehouse_id`, `posting_datetime`, `voucher_type`, `voucher_id`, `voucher_detail_id`, `actual_qty` (signed), `incoming_rate`, `outgoing_rate`, `qty_after_transaction`, `valuation_rate`, `stock_value`, `stock_value_difference`, `stock_queue` (jsonb, FIFO buckets `[qty, rate]`), `serial_and_batch_bundle_id`, `batch_id`, `is_cancelled`, `fiscal_year_id`, `company_id`. Unique order is `(item, warehouse, posting_datetime, id)`.
+Columns: `item_id`, `warehouse_id`, `posting_datetime`, `voucher_type`, `voucher_id`, `voucher_detail_id`, `actual_qty` (signed), `incoming_rate`, `outgoing_rate`, `qty_after_transaction`, `valuation_rate`, `stock_value`, `stock_value_difference`, `stock_queue` (jsonb, FIFO buckets `[qty, rate]`), `serial_and_batch_bundle_id`, `batch_id`, `is_cancelled`, `fiscal_year_id`, `company_id`. Unique order is `(item, warehouse, posting_datetime, creation_order)`.
+
+**Built (0401):** `app.make_sl_entries` appends the row and values it at FIFO or moving average. A later row for the same item and warehouse is reposted in the same transaction. Cancel flags the original and the reversal. Negative stock is rejected unless the item or Stock Settings allows it, and a frozen date blocks a caller who does not hold `stock_auth_role`. Perpetual inventory GL is the next line. Migration `0401_stock_ledger.sql`.
 
 ### 2.10 Bin → `bin`
 
@@ -213,6 +215,8 @@ One row per `(item, warehouse)`, created on the first SLE or the first open orde
 | reserved_qty | 0 while reservation is off |
 | planned_qty, reserved_qty_for_production | P8 work orders; 0 until then |
 | projected_qty | `actual_qty + ordered_qty + indented_qty + planned_qty − reserved_qty − reserved_qty_for_production − reserved_qty_for_sub_contract − reserved_qty_for_production_plan` (`bin.py`) |
+
+**Built (0401):** `app.update_bin_qty` sets actual qty, valuation rate, and stock value from the latest open stock ledger row. Ordered, indented, reserved, and production quantities stay 0, so projected qty equals actual qty. The bin is not edited from the client. `0402_stock_bin_audit.sql` adds `updated_by` so the audit trigger can stamp a recompute.
 
 ### 2.11 Stock Entry → `stock_entry` + `stock_entry_detail`
 
@@ -265,11 +269,11 @@ Transfer and Issue submit does not move stock. The Stock Entry mapped from the r
 
 ### 3.2 Ledger
 
-`app.make_stock_ledger_entries(voucher_type, voucher_id)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`.
+`app.make_sl_entries(entries, opts)` follows 03-posting-engine, in order: lock the item and warehouse, find the previous SLE, value at FIFO or moving average, write the row, reject negative qty unless the setting or the item allows it, repost every later SLE for that pair in the same transaction, then `app.update_bin_qty`. Perpetual inventory GL is the next line, so the repost does not post stock-value GL.
 
-FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is written back onto the voucher row (`incoming_rate` on a delivery note or sales invoice) so the GL uses the same number.
+FIFO buckets live in `stock_queue`. An inward appends. An outward consumes from the front. Moving average recomputes the rate on inward and keeps it on outward. The outward `outgoing_rate` is stored on the stock ledger row. Writing it back onto the voucher row waits until that voucher exists, so the GL can use the same number.
 
-Back-dated entries are allowed. `stock_frozen_upto` blocks them unless the user has `stock_auth_role`. There is no separate Repost Item Valuation document.
+Back-dated entries are allowed. `stock_frozen_upto` blocks them unless the user has `stock_auth_role`. There is no separate Repost Item Valuation document. LIFO and Standard Cost are stored on Stock Settings and are not valued.
 
 ### 3.3 Perpetual inventory GL
 
@@ -406,7 +410,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 ### P4 — ledger
 
 - [x] `stock_settings` form, C4 values — §2.8, `0400_stock_settings.sql`
-- [ ] `stock_ledger_entry`, `bin`, `app.make_stock_ledger_entries`, FIFO and moving average, negative stock, synchronous repost — §2.9, §2.10, §3.2
+- [x] `stock_ledger_entry`, `bin`, `app.make_sl_entries`, FIFO and moving average, negative stock, synchronous repost — §2.9, §2.10, §3.2, `0401_stock_ledger.sql`, `0402_stock_bin_audit.sql`
 - [ ] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4
 - [ ] `stock_entry` for the A6 purposes — §2.11, §4
 - [ ] `stock_reconciliation`, including Opening Stock against Temporary Opening — §2.12

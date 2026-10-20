@@ -49,8 +49,8 @@ select is(
       and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'org_id' and not a.attisdropped)
       and not exists (select 1 from public.doctype_meta d where d.table_name = c.relname)
       and c.relname <> all (array[
-        'email_log', 'gl_entry', 'invitations', 'onboarding_progress', 'org_currency',
-        'payment_ledger_entry', 'role_permissions'
+        'bin', 'email_log', 'gl_entry', 'invitations', 'onboarding_progress', 'org_currency',
+        'payment_ledger_entry', 'role_permissions', 'stock_ledger_entry'
       ])),
   null,
   'every tenant table is registered in doctype_meta (or explicitly exempt)'

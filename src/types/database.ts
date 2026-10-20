@@ -264,6 +264,10 @@ export type Database = {
         Args: { p_entries: Json; p_opts?: Json }
         Returns: undefined
       }
+      make_sl_entries: {
+        Args: { p_entries: Json; p_opts?: Json }
+        Returns: undefined
+      }
       next_name: {
         Args: {
           p_company: string
@@ -355,6 +359,10 @@ export type Database = {
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance_for_party: { Args: { p_filters: Json }; Returns: Json }
+      repost_item_valuation: {
+        Args: { p_from: string; p_item: string; p_warehouse: string }
+        Returns: undefined
+      }
       resend_invitation: { Args: { p_id: string }; Returns: Json }
       reserved_slugs: { Args: never; Returns: string[] }
       reset_role_permissions: {
@@ -440,6 +448,10 @@ export type Database = {
       }
       tree_label: { Args: { p_id: string }; Returns: unknown }
       uom_names_curated: { Args: never; Returns: string[] }
+      update_bin_qty: {
+        Args: { p_item: string; p_warehouse: string }
+        Returns: undefined
+      }
       user_org_ids: { Args: never; Returns: string[] }
       user_roles: { Args: { p_org: string }; Returns: string[] }
       validate_approving_authority: {
@@ -1033,6 +1045,101 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "roles"
             referencedColumns: ["org_id", "name"]
+          },
+        ]
+      }
+      bin: {
+        Row: {
+          actual_qty: number
+          created_at: string
+          id: string
+          indented_qty: number
+          item_id: string
+          ordered_qty: number
+          org_id: string
+          planned_qty: number
+          projected_qty: number
+          reserved_qty: number
+          reserved_qty_for_production: number
+          reserved_qty_for_production_plan: number
+          reserved_qty_for_sub_contract: number
+          stock_uom_id: string | null
+          stock_value: number
+          updated_at: string
+          updated_by: string | null
+          valuation_rate: number
+          warehouse_id: string
+        }
+        Insert: {
+          actual_qty?: number
+          created_at?: string
+          id?: string
+          indented_qty?: number
+          item_id: string
+          ordered_qty?: number
+          org_id: string
+          planned_qty?: number
+          projected_qty?: number
+          reserved_qty?: number
+          reserved_qty_for_production?: number
+          reserved_qty_for_production_plan?: number
+          reserved_qty_for_sub_contract?: number
+          stock_uom_id?: string | null
+          stock_value?: number
+          updated_at?: string
+          updated_by?: string | null
+          valuation_rate?: number
+          warehouse_id: string
+        }
+        Update: {
+          actual_qty?: number
+          created_at?: string
+          id?: string
+          indented_qty?: number
+          item_id?: string
+          ordered_qty?: number
+          org_id?: string
+          planned_qty?: number
+          projected_qty?: number
+          reserved_qty?: number
+          reserved_qty_for_production?: number
+          reserved_qty_for_production_plan?: number
+          reserved_qty_for_sub_contract?: number
+          stock_uom_id?: string | null
+          stock_value?: number
+          updated_at?: string
+          updated_by?: string | null
+          valuation_rate?: number
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bin_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bin_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "bin_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "bin_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -7188,6 +7295,151 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_ledger_entry: {
+        Row: {
+          actual_qty: number
+          batch_id: string | null
+          company_id: string
+          created_at: string
+          creation_order: number
+          fiscal_year_id: string | null
+          has_batch_no: boolean
+          has_serial_no: boolean
+          id: string
+          incoming_rate: number
+          is_adjustment_entry: boolean
+          is_cancelled: boolean
+          item_id: string
+          org_id: string
+          outgoing_rate: number
+          posting_date: string
+          posting_datetime: string
+          posting_time: string
+          project_id: string | null
+          qty_after_transaction: number
+          serial_and_batch_bundle_id: string | null
+          stock_queue: Json
+          stock_uom_id: string
+          stock_value: number
+          stock_value_difference: number
+          valuation_rate: number
+          voucher_detail_id: string | null
+          voucher_id: string
+          voucher_no: string
+          voucher_type: string
+          warehouse_id: string
+        }
+        Insert: {
+          actual_qty: number
+          batch_id?: string | null
+          company_id: string
+          created_at?: string
+          creation_order?: number
+          fiscal_year_id?: string | null
+          has_batch_no?: boolean
+          has_serial_no?: boolean
+          id?: string
+          incoming_rate?: number
+          is_adjustment_entry?: boolean
+          is_cancelled?: boolean
+          item_id: string
+          org_id: string
+          outgoing_rate?: number
+          posting_date: string
+          posting_datetime: string
+          posting_time: string
+          project_id?: string | null
+          qty_after_transaction?: number
+          serial_and_batch_bundle_id?: string | null
+          stock_queue?: Json
+          stock_uom_id: string
+          stock_value?: number
+          stock_value_difference?: number
+          valuation_rate?: number
+          voucher_detail_id?: string | null
+          voucher_id: string
+          voucher_no: string
+          voucher_type: string
+          warehouse_id: string
+        }
+        Update: {
+          actual_qty?: number
+          batch_id?: string | null
+          company_id?: string
+          created_at?: string
+          creation_order?: number
+          fiscal_year_id?: string | null
+          has_batch_no?: boolean
+          has_serial_no?: boolean
+          id?: string
+          incoming_rate?: number
+          is_adjustment_entry?: boolean
+          is_cancelled?: boolean
+          item_id?: string
+          org_id?: string
+          outgoing_rate?: number
+          posting_date?: string
+          posting_datetime?: string
+          posting_time?: string
+          project_id?: string | null
+          qty_after_transaction?: number
+          serial_and_batch_bundle_id?: string | null
+          stock_queue?: Json
+          stock_uom_id?: string
+          stock_value?: number
+          stock_value_difference?: number
+          valuation_rate?: number
+          voucher_detail_id?: string | null
+          voucher_id?: string
+          voucher_no?: string
+          voucher_type?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_ledger_entry_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_org_id_fiscal_year_id_fkey"
+            columns: ["org_id", "fiscal_year_id"]
+            isOneToOne: false
+            referencedRelation: "fiscal_year"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "stock_ledger_entry_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
