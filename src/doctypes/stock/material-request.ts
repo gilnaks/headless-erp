@@ -1,3 +1,4 @@
+import { fillMaterialRequestItem } from "@/lib/stock/item-details";
 import { defineChildDoctype, defineDoctype } from "../define";
 
 function today(): string {
@@ -98,6 +99,7 @@ export const materialRequest = defineDoctype<"material_request", "items">({
         mr_map: "material_request_type",
         mr_empty: "items",
     },
+    triggers: { items: fillMaterialRequestItem },
     actions: [
         {
             id: "stop",
