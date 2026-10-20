@@ -7191,6 +7191,149 @@ export type Database = {
           },
         ]
       }
+      stock_settings: {
+        Row: {
+          action_if_quality_inspection_is_not_submitted: string
+          action_if_quality_inspection_is_rejected: string
+          allow_existing_serial_no: boolean
+          allow_negative_stock: boolean
+          allow_to_edit_stock_uom_qty_for_purchase: boolean
+          allow_to_edit_stock_uom_qty_for_sales: boolean
+          allow_to_edit_stock_uom_qty_for_stock_entry: boolean
+          auto_create_serial_and_batch_bundle_for_outward: boolean
+          auto_indent: boolean
+          auto_insert_price_list_rate_if_missing: boolean
+          clean_description_html: boolean
+          created_at: string
+          created_by: string | null
+          do_not_use_batchwise_valuation: boolean
+          enable_stock_reservation: boolean
+          id: string
+          item_naming_by: string
+          mr_qty_allowance: number | null
+          org_id: string
+          over_delivery_receipt_allowance: number | null
+          over_picking_allowance: number | null
+          pick_serial_and_batch_based_on: string
+          role_allowed_to_over_deliver_receive: string | null
+          set_qty_in_transactions_based_on_serial_no_input: boolean
+          show_barcode_field: boolean
+          stock_auth_role: string | null
+          stock_frozen_upto: string | null
+          stock_frozen_upto_days: number | null
+          stock_uom_id: string | null
+          update_price_list_based_on: string
+          updated_at: string
+          updated_by: string | null
+          use_serial_batch_fields: boolean
+          validate_material_transfer_warehouses: boolean
+          valuation_method: string
+        }
+        Insert: {
+          action_if_quality_inspection_is_not_submitted?: string
+          action_if_quality_inspection_is_rejected?: string
+          allow_existing_serial_no?: boolean
+          allow_negative_stock?: boolean
+          allow_to_edit_stock_uom_qty_for_purchase?: boolean
+          allow_to_edit_stock_uom_qty_for_sales?: boolean
+          allow_to_edit_stock_uom_qty_for_stock_entry?: boolean
+          auto_create_serial_and_batch_bundle_for_outward?: boolean
+          auto_indent?: boolean
+          auto_insert_price_list_rate_if_missing?: boolean
+          clean_description_html?: boolean
+          created_at?: string
+          created_by?: string | null
+          do_not_use_batchwise_valuation?: boolean
+          enable_stock_reservation?: boolean
+          id?: string
+          item_naming_by?: string
+          mr_qty_allowance?: number | null
+          org_id: string
+          over_delivery_receipt_allowance?: number | null
+          over_picking_allowance?: number | null
+          pick_serial_and_batch_based_on?: string
+          role_allowed_to_over_deliver_receive?: string | null
+          set_qty_in_transactions_based_on_serial_no_input?: boolean
+          show_barcode_field?: boolean
+          stock_auth_role?: string | null
+          stock_frozen_upto?: string | null
+          stock_frozen_upto_days?: number | null
+          stock_uom_id?: string | null
+          update_price_list_based_on?: string
+          updated_at?: string
+          updated_by?: string | null
+          use_serial_batch_fields?: boolean
+          validate_material_transfer_warehouses?: boolean
+          valuation_method?: string
+        }
+        Update: {
+          action_if_quality_inspection_is_not_submitted?: string
+          action_if_quality_inspection_is_rejected?: string
+          allow_existing_serial_no?: boolean
+          allow_negative_stock?: boolean
+          allow_to_edit_stock_uom_qty_for_purchase?: boolean
+          allow_to_edit_stock_uom_qty_for_sales?: boolean
+          allow_to_edit_stock_uom_qty_for_stock_entry?: boolean
+          auto_create_serial_and_batch_bundle_for_outward?: boolean
+          auto_indent?: boolean
+          auto_insert_price_list_rate_if_missing?: boolean
+          clean_description_html?: boolean
+          created_at?: string
+          created_by?: string | null
+          do_not_use_batchwise_valuation?: boolean
+          enable_stock_reservation?: boolean
+          id?: string
+          item_naming_by?: string
+          mr_qty_allowance?: number | null
+          org_id?: string
+          over_delivery_receipt_allowance?: number | null
+          over_picking_allowance?: number | null
+          pick_serial_and_batch_based_on?: string
+          role_allowed_to_over_deliver_receive?: string | null
+          set_qty_in_transactions_based_on_serial_no_input?: boolean
+          show_barcode_field?: boolean
+          stock_auth_role?: string | null
+          stock_frozen_upto?: string | null
+          stock_frozen_upto_days?: number | null
+          stock_uom_id?: string | null
+          update_price_list_based_on?: string
+          updated_at?: string
+          updated_by?: string | null
+          use_serial_batch_fields?: boolean
+          validate_material_transfer_warehouses?: boolean
+          valuation_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_settings_org_id_role_allowed_to_over_deliver_receive_fkey"
+            columns: ["org_id", "role_allowed_to_over_deliver_receive"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "stock_settings_org_id_stock_auth_role_fkey"
+            columns: ["org_id", "stock_auth_role"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "stock_settings_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       supplier: {
         Row: {
           alias: string | null

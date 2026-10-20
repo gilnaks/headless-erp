@@ -193,6 +193,8 @@ Single, one row per org. A4 seeds JSON defaults; C4 applies the wizard overrides
 
 Quality-inspection settings stay at their JSON defaults and the fields are hidden. `action_if_quality_inspection_is_not_submitted` default `Stop` never runs because inspection is not built.
 
+**Built (0400):** One `stock_settings` row is seeded for each organization with the C4 defaults, including Default Stock UOM `Nos`. Stock Manager can edit it. Sales User and System Manager can read it. Quality-inspection columns stay off the form. Migration `0400_stock_settings.sql`.
+
 ### 2.9 Stock Ledger Entry → `stock_ledger_entry`
 
 Append-only. Written only by `app.make_stock_ledger_entries`. Cancel inserts a reversing row and sets `is_cancelled` on both (03-posting-engine). No update of qty or rate in place.
@@ -403,7 +405,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 
 ### P4 — ledger
 
-- [ ] `stock_settings` form, C4 values — §2.8
+- [x] `stock_settings` form, C4 values — §2.8, `0400_stock_settings.sql`
 - [ ] `stock_ledger_entry`, `bin`, `app.make_stock_ledger_entries`, FIFO and moving average, negative stock, synchronous repost — §2.9, §2.10, §3.2
 - [ ] Perpetual GL for receipt, issue, transfer, reconciliation — §3.3, §4
 - [ ] `stock_entry` for the A6 purposes — §2.11, §4

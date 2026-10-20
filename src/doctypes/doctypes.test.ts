@@ -19,8 +19,10 @@ describe("registry", () => {
     it("has unique doctype names and module/slug pairs", () => {
         expect(new Set(DOCTYPES.map((d) => d.doctype)).size).toBe(DOCTYPES.length);
         expect(new Set(DOCTYPES.map(docPath)).size).toBe(DOCTYPES.length);
-        // The print route addresses doctypes by slug alone (`/print/<slug>/<id>`).
-        expect(new Set(DOCTYPES.map((d) => d.slug)).size).toBe(DOCTYPES.length);
+        // Print addresses non-single doctypes by slug alone (`/print/<slug>/<id>`). Singles are
+        // addressed by module and slug, so Accounts Settings and Stock Settings can both be `settings`.
+        const printed = DOCTYPES.filter((d) => !d.single);
+        expect(new Set(printed.map((d) => d.slug)).size).toBe(printed.length);
     });
 
     it("looks doctypes up by route and by name", () => {
