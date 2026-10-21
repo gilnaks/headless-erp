@@ -11,6 +11,7 @@ import { GeneralLedger } from "@/components/erp/report/general-ledger";
 import { ProfitAndLoss } from "@/components/erp/report/profit-and-loss";
 import { StockBalance } from "@/components/erp/report/stock-balance";
 import { StockLedger } from "@/components/erp/report/stock-ledger";
+import { StockProjectedQty } from "@/components/erp/report/stock-projected-qty";
 import { type FiscalYearChoice, TrialBalance } from "@/components/erp/report/trial-balance";
 import { TrialBalanceForParty } from "@/components/erp/report/trial-balance-for-party";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
@@ -30,6 +31,7 @@ import { getReferenceOptions } from "@/lib/queries/reference";
 import { loadStockBalance } from "@/lib/queries/stock-balance";
 import { loadStockDashboard } from "@/lib/queries/stock-dashboard";
 import { loadStockLedger } from "@/lib/queries/stock-ledger";
+import { loadStockProjectedQty } from "@/lib/queries/stock-projected-qty";
 import { loadTrialBalance } from "@/lib/queries/trial-balance";
 import { loadTrialBalanceForParty } from "@/lib/queries/trial-balance-for-party";
 import { optionSourcesOf } from "@/lib/reference-options";
@@ -234,6 +236,37 @@ async function StockBalanceRoute({ orgSlug, searchParams }: { orgSlug: string; s
             itemGroupId={itemGroup}
             warehouseId={warehouse}
             includeZero={includeZero}
+            columns={report.columns}
+            rows={report.rows}
+            error={report.error}
+        />
+    );
+}
+
+async function StockProjectedQtyRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const item = one("item") ?? "";
+    const warehouse = one("warehouse") ?? "";
+    let company = one("company") ?? "";
+    if (!company) {
+        const supabase = createClient();
+        const { data } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (data?.length === 1) company = data[0].id;
+    }
+    const report = await loadStockProjectedQty({ company, item, warehouse });
+
+    return (
+        <StockProjectedQty
+            orgSlug={org.slug}
+            companyId={company}
+            itemId={item}
+            warehouseId={warehouse}
             columns={report.columns}
             rows={report.rows}
             error={report.error}
@@ -789,6 +822,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "report" && link.target.report === "Stock Balance") {
         return StockBalanceRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Stock Projected Qty") {
+        return StockProjectedQtyRoute({ orgSlug: org, searchParams });
     }
     if (link.target.kind === "report" && link.target.report === "Trial Balance") {
         return TrialBalanceRoute({ orgSlug: org, searchParams });

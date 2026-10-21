@@ -19,6 +19,13 @@ export const stockLedgerParsers = {
     voucher_type: parseAsString.withDefault(""),
 };
 
+/** Stock Projected Qty URL state. Company is optional; a blank company lists every bin the caller can read. */
+export const stockProjectedQtyParsers = {
+    company: parseAsString.withDefault(""),
+    item: parseAsString.withDefault(""),
+    warehouse: parseAsString.withDefault(""),
+};
+
 /** Stock Balance URL state. Blank dates are filled with today minus one month through today. Include zero defaults off. */
 export const stockBalanceParsers = {
     company: parseAsString.withDefault(""),
