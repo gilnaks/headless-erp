@@ -254,6 +254,7 @@ export const MODULES: ModuleNav[] = [
                     doctype("Territory", "selling/territory", "P2"),
                     doctype("Sales Person", "selling/sales-person", "P2"),
                     doctype("Industry Type", "selling/industry-type", "P2"),
+                    doctype("Quotation Lost Reason", "selling/quotation-lost-reason", "P5"),
                     doctype("Settings", "selling/settings", "P5", "Selling Settings"),
                 ],
             },

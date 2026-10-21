@@ -7174,6 +7174,44 @@ export type Database = {
           },
         ]
       }
+      quotation_lost_reason: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          order_lost_reason: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          order_lost_reason: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          order_lost_reason?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_lost_reason_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permission_template: {
         Row: {
           can_amend: boolean
