@@ -47,7 +47,7 @@ Module id `selling`, label **Selling**. Each row is one descriptor unless marked
 | Setup › Settings | `selling/settings` | single | P5 (row seeded in A4/A20) |
 | *(not in nav)* Industry Type | `selling/industry-type` | doctype (Customer link) | P2 |
 | *(not in nav)* Product Bundle | `selling/product-bundle` | submittable | P2 |
-| *(not in nav)* Quotation Lost Reason | `selling/quotation-lost-reason` | doctype | P5 |
+| Setup › Quotation Lost Reason | `selling/quotation-lost-reason` | doctype | P5 |
 
 Out of scope (PLAN / `.cursorrules`): CRM (Lead, Opportunity, Prospect, Campaign, Competitors), Pricing Rule, Coupon Code, Loyalty, POS, Blanket Order, Installation Note, Delivery Trip, Sales Partner and commission reports, UTM, Shopping Cart, inter-company orders, subcontracted sales orders, stock reservation entries (Stock Settings `enable_stock_reservation` defaults to 0; the columns stay, the entry doctype is not built). Pick List is specified in 04-stock, not here.
 
@@ -162,6 +162,8 @@ Child of Customer, Sales Order and Delivery Note.
 
 - **Naming:** `field:order_lost_reason`. **Perms:** Sales Manager rwcd, Sales User r. Field: `order_lost_reason` text ✔ unique.
 - Used only by Quotation "Set as Lost" (§3.4). No seed; the action refuses an unknown reason ("Invalid lost reason {0}, please create a new lost reason").
+
+**Built (0500):** `quotation_lost_reason` stores one trimmed reason, unique per organization ignoring case. Sales Manager can create, edit, and delete. Sales User and System Manager can read. It is listed under Selling Setup. Migration `0500_selling_quotation_lost_reason.sql`.
 
 ### 2.9 Product Bundle → `product_bundle`
 
@@ -532,7 +534,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 
 ### P5 — transactions
 
-- [ ] `quotation_lost_reason` — §2.8
+- [x] `quotation_lost_reason` — §2.8, `0500_selling_quotation_lost_reason.sql`
 - [ ] `quotation` + `quotation_item` + lost-reason child; revise, set-as-lost, `app.expire_quotations` — §2.10, §3.2–§3.4, §5.1
 - [ ] `sales_order` + `sales_order_item`; delivery-date, PO-number, skip-delivery and credit-limit checks; close / hold — §2.11, §3.6, §5.2
 - [ ] `delivery_note` + `delivery_note_item` + `packed_item`; `app.make_packing_list` — §2.12, §2.13
