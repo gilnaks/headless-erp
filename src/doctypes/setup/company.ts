@@ -171,5 +171,7 @@ export const company = defineDoctype({
         duplicate: "company_name",
         country_unknown: "country",
         currency_unknown: "default_currency",
+        company_valuation: "valuation_method",
+        company_perpetual: "enable_perpetual_inventory",
     },
 });
