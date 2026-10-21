@@ -177,6 +177,7 @@ export type Database = {
         Args: { p_code: string; p_org: string }
         Returns: undefined
       }
+      expire_quotations: { Args: never; Returns: undefined }
       file_doctype: { Args: { p_name: string }; Returns: string }
       file_org: { Args: { p_name: string }; Returns: string }
       fiscal_year_check_overlap: { Args: { p_fy: string }; Returns: undefined }
@@ -298,6 +299,7 @@ export type Database = {
         Returns: undefined
       }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
+      on_cancel__quotation: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_reconciliation: {
         Args: { p_id: string }
@@ -310,6 +312,7 @@ export type Database = {
       }
       on_submit__payment_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
+      on_submit__quotation: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_reconciliation: {
         Args: { p_id: string }
@@ -374,6 +377,10 @@ export type Database = {
         Returns: undefined
       }
       provision_organization: { Args: { p: Json }; Returns: Json }
+      quotation_refresh_latest: {
+        Args: { p_exclude: string; p_include: string; p_root: string }
+        Returns: undefined
+      }
       record_allowed: {
         Args: {
           p_doctype: string
@@ -425,6 +432,7 @@ export type Database = {
         Args: { p_voucher_id: string; p_voucher_type: string }
         Returns: undefined
       }
+      revise_quotation: { Args: { p_id: string }; Returns: Json }
       round: { Args: { p_precision: number; p_value: number }; Returns: number }
       sanitize_doc_payload: {
         Args: { p_doctype: string; p_payload: Json }
@@ -487,6 +495,10 @@ export type Database = {
       set_mode_of_payment_account: {
         Args: { p_company: string }
         Returns: undefined
+      }
+      set_quotation_lost: {
+        Args: { p_detail: string; p_id: string; p_reason_id: string }
+        Returns: Json
       }
       submit_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
       sync_role_permissions: { Args: { p_org?: string }; Returns: undefined }
@@ -7174,6 +7186,253 @@ export type Database = {
           },
         ]
       }
+      quotation: {
+        Row: {
+          amended_from: string | null
+          base_grand_total: number
+          company_id: string
+          conversion_rate: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          customer_name: string | null
+          docstatus: number
+          grand_total: number
+          id: string
+          is_active: boolean
+          is_latest_revision: boolean
+          name: string
+          naming_series: string
+          net_total: number
+          order_lost_reason: string | null
+          order_type: string
+          org_id: string
+          quotation_to: string
+          revision_of: string | null
+          selling_price_list_id: string
+          status: string
+          total: number
+          transaction_date: string
+          updated_at: string
+          updated_by: string | null
+          valid_till: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          base_grand_total?: number
+          company_id: string
+          conversion_rate?: number
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          customer_id: string
+          customer_name?: string | null
+          docstatus?: number
+          grand_total?: number
+          id?: string
+          is_active?: boolean
+          is_latest_revision?: boolean
+          name: string
+          naming_series?: string
+          net_total?: number
+          order_lost_reason?: string | null
+          order_type?: string
+          org_id: string
+          quotation_to?: string
+          revision_of?: string | null
+          selling_price_list_id: string
+          status?: string
+          total?: number
+          transaction_date?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_till?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          base_grand_total?: number
+          company_id?: string
+          conversion_rate?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          customer_name?: string | null
+          docstatus?: number
+          grand_total?: number
+          id?: string
+          is_active?: boolean
+          is_latest_revision?: boolean
+          name?: string
+          naming_series?: string
+          net_total?: number
+          order_lost_reason?: string | null
+          order_type?: string
+          org_id?: string
+          quotation_to?: string
+          revision_of?: string | null
+          selling_price_list_id?: string
+          status?: string
+          total?: number
+          transaction_date?: string
+          updated_at?: string
+          updated_by?: string | null
+          valid_till?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "quotation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_org_id_revision_of_fkey"
+            columns: ["org_id", "revision_of"]
+            isOneToOne: false
+            referencedRelation: "quotation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_org_id_selling_price_list_id_fkey"
+            columns: ["org_id", "selling_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      quotation_item: {
+        Row: {
+          amount: number
+          conversion_factor: number
+          discount_percentage: number
+          id: string
+          idx: number
+          is_alternative: boolean
+          is_free_item: boolean
+          item_id: string
+          item_name: string | null
+          net_amount: number
+          net_rate: number
+          ordered_qty: number
+          org_id: string
+          parent_id: string
+          price_list_rate: number | null
+          qty: number
+          rate: number | null
+          stock_qty: number
+          stock_uom_id: string | null
+          uom_id: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          amount?: number
+          conversion_factor?: number
+          discount_percentage?: number
+          id?: string
+          idx: number
+          is_alternative?: boolean
+          is_free_item?: boolean
+          item_id: string
+          item_name?: string | null
+          net_amount?: number
+          net_rate?: number
+          ordered_qty?: number
+          org_id: string
+          parent_id: string
+          price_list_rate?: number | null
+          qty: number
+          rate?: number | null
+          stock_qty?: number
+          stock_uom_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          amount?: number
+          conversion_factor?: number
+          discount_percentage?: number
+          id?: string
+          idx?: number
+          is_alternative?: boolean
+          is_free_item?: boolean
+          item_id?: string
+          item_name?: string | null
+          net_amount?: number
+          net_rate?: number
+          ordered_qty?: number
+          org_id?: string
+          parent_id?: string
+          price_list_rate?: number | null
+          qty?: number
+          rate?: number | null
+          stock_qty?: number
+          stock_uom_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "quotation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_item_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_item_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_item_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       quotation_lost_reason: {
         Row: {
           created_at: string
@@ -7209,6 +7468,45 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotation_lost_reason_detail: {
+        Row: {
+          id: string
+          idx: number
+          org_id: string
+          parent_id: string
+          quotation_lost_reason_id: string
+        }
+        Insert: {
+          id?: string
+          idx: number
+          org_id: string
+          parent_id: string
+          quotation_lost_reason_id: string
+        }
+        Update: {
+          id?: string
+          idx?: number
+          org_id?: string
+          parent_id?: string
+          quotation_lost_reason_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_lost_reason_detail_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "quotation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "quotation_lost_reason_detail_org_id_quotation_lost_reason__fkey"
+            columns: ["org_id", "quotation_lost_reason_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_lost_reason"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -10314,6 +10612,7 @@ export type Database = {
         Args: { p_doctype: string; p_org: string }
         Returns: number
       }
+      revise_quotation: { Args: { p_id: string }; Returns: Json }
       sanitize_html: { Args: { p_html: string }; Returns: string }
       save_doc: { Args: { p_doctype: string; p_payload: Json }; Returns: Json }
       search_link: {
@@ -10331,6 +10630,10 @@ export type Database = {
       set_email_account_key: {
         Args: { p_id: string; p_secret: string }
         Returns: undefined
+      }
+      set_quotation_lost: {
+        Args: { p_detail: string; p_id: string; p_reason_id: string }
+        Returns: Json
       }
       submit_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
     }

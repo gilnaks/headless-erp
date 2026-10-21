@@ -180,6 +180,8 @@ Child of Customer, Sales Order and Delivery Note.
 - **Kind:** submittable, company-scoped. **Naming:** `SAL-QTN-.YYYY.-`. A revision is named `<original>-R<n>` (§3.4), not the series. **Title:** `customer_name`. **Perms:** Sales User rwcsxd, Sales Manager rwcsxd.
 - **Migration:** `05nn_selling_quotation.sql`.
 
+**Built (0501).** `0501_selling_quotation.sql` stores the quotation, its items, and the lost-reason child. Submit names a draft `SAL-QTN-.YYYY.-`, sets status Open, and calls `app.validate_approving_authority`. Header `total`, `net_total`, and `grand_total` are the sum of item amounts, and `base_grand_total` is that sum times `conversion_rate`. A currency that matches the company forces `conversion_rate` to 1. `selling_settings` is not built, so duplicate item rows are allowed, a zero quantity is rejected, and the selling-price check is off. Revise copies a submitted quotation into `<root>-R<n>`, clears Valid Till, and on submit deactivates the other active versions. One submitted version is `is_latest_revision` (latest `transaction_date`, then `created_at`). Set as Lost stores the reason and the detail, and marks the other non-ordered versions Lost. `app.expire_quotations` runs daily at 00:20 and sets a submitted row whose `valid_till` is before today to Expired. Sales User and Sales Manager can create, write, submit, cancel, amend, and delete. System Manager can read. `Replied` is never written. `Ordered` and `Partially Ordered` stay in the check and are not written while ordered quantity stays 0.
+
 Header fields we keep (shared money columns are the selling subset of 01-accounts §3.11: `total_qty`, `total`, `net_total`, `base_*`, `taxes`, `apply_discount_on` default `Grand Total`, `additional_discount_percentage`, `discount_amount`, `grand_total`, `rounding_adjustment`, `rounded_total`, `in_words`, `disable_rounded_total`, `payment_terms_template`, `payment_schedule`, `tc_name`, `terms`, `letter_head`, `group_same_items`):
 
 | fieldname | column | req | default | notes |
@@ -516,6 +518,7 @@ The Selling sidebar links to the P7 reports specified in 01-accounts. No second 
 10. **Not a deviation (recorded for implementers):** quotation status `Replied` is never written, and `Expired` is only written by the daily job, not by `set_status`. That is what `status_map` and `set_expired_status` do; a later status refresh moves an expired quotation back to Open.
 11. **Deviation:** sales-partner commission fields (`sales_partner`, `commission_rate`, `total_commission`) are omitted. Sales-team allocation and incentives stay, using `grant_commission` on the item. **Reason:** Sales Partner is not on the sidebar and `enable_tracking_sales_commissions` defaults off; the team itself is on the default customer and order forms.
 12. **Deviation:** Selling sidebar entries for Sales Invoice, Delivery Note, Item and Price List open the canonical route in §1 rather than a second copy of the doctype. **Reason:** one table, one form; the current `navigation.ts` paths are placeholders until P5.
+13. **Deviation:** Quotation header totals are the sum of item amounts. Tax rows, rounding, `in_words`, margin columns, and the payment schedule wait for the open accounts lines. Packed items wait for `app.make_packing_list`. `app.map_doc` to a sales order or a sales invoice waits for its own line. Competitors, opportunity, and lead stay out (items 1 and 3). There is no sales order table, so cancel does not look for one. **Reason:** those engines are still open checklist lines.
 
 ---
 
@@ -535,7 +538,7 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 ### P5 — transactions
 
 - [x] `quotation_lost_reason` — §2.8, `0500_selling_quotation_lost_reason.sql`
-- [ ] `quotation` + `quotation_item` + lost-reason child; revise, set-as-lost, `app.expire_quotations` — §2.10, §3.2–§3.4, §5.1
+- [x] `quotation` + `quotation_item` + lost-reason child; revise, set-as-lost, `app.expire_quotations` — §2.10, §3.4, §5.1, `0501_selling_quotation.sql`
 - [ ] `sales_order` + `sales_order_item`; delivery-date, PO-number, skip-delivery and credit-limit checks; close / hold — §2.11, §3.6, §5.2
 - [ ] `delivery_note` + `delivery_note_item` + `packed_item`; `app.make_packing_list` — §2.12, §2.13
 - [ ] `app.map_doc` for quotation → order, quotation → invoice, order → note, order → invoice, note → invoice, note return — §3
