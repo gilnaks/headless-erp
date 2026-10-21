@@ -230,17 +230,28 @@ select is(
   'a transfer whose warehouses share an account posts no GL'
 );
 
-reset role;
-update public.companies set enable_perpetual_inventory = false
- where id = current_setting('test.company')::uuid;
-set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000007401","role":"authenticated"}', true);
+select set_config(
+  'test.off_company',
+  public.create_company(jsonb_build_object(
+    'org_id', current_setting('test.org'),
+    'company_name', 'Stock GL Off',
+    'abbr', 'OFF',
+    'default_currency', 'PHP',
+    'country', 'Philippines',
+    'enable_perpetual_inventory', false
+  )) ->> 'id',
+  true
+);
+select set_config('test.off_wh', (
+  select w.id::text from public.warehouse w
+   where w.company_id = current_setting('test.off_company')::uuid and w.warehouse_name = 'Stores'
+), true);
 
 do $$
 begin
   perform app.make_sl_entries(jsonb_build_array(jsonb_build_object(
     'item_id', '20000000-0000-0000-0000-0000000074d5',
-    'warehouse_id', current_setting('test.wh'),
+    'warehouse_id', current_setting('test.off_wh'),
     'actual_qty', 10, 'incoming_rate', 5,
     'posting_date', '2026-02-07',
     'voucher_type', 'Stock Entry', 'voucher_id', '10000000-0000-0000-0000-0000000074f1', 'voucher_no', 'OFF-1'
@@ -258,12 +269,6 @@ select is(
   true,
   'perpetual inventory off still posts the stock ledger and posts no GL'
 );
-
-reset role;
-update public.companies set enable_perpetual_inventory = true
- where id = current_setting('test.company')::uuid;
-set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000007401","role":"authenticated"}', true);
 
 do $$
 begin

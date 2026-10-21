@@ -302,6 +302,8 @@ When `companies.enable_perpetual_inventory` is on (the wizard default), every SL
 
 Company `valuation_method` cannot change once an SLE exists for an item that has no method of its own (`cant_change_valuation_method`, 00-setup). Perpetual inventory cannot be turned off once SLE rows exist.
 
+**Built (0420):** `app.companies_validate` rejects a valuation-method change when a stock ledger row for that company belongs to an item with no method of its own, including a cancelled row. It rejects turning perpetual inventory off when a non-cancelled row exists, and it rejects changing item-wise inventory accounts in that same case. A company with no such row can change the method, including to LIFO. An item that stores its own method does not block the company change. Migration `0420_company_valuation_lock.sql`.
+
 **Built (0403):** `app.make_stock_gl_entries` posts the stock-value pair for each open stock ledger row when perpetual inventory is on. A receipt debits the warehouse account and credits the row expense account, or Stock Adjustment. An opening row credits Temporary Opening. A transfer debits the target warehouse account and credits the source, and posts nothing when those accounts are the same. A repost rebuilds that voucher's stock GL in the same transaction. Purchase Receipt, Delivery Note, and Landed Cost GL stay on their own lines. Migration `0403_stock_perpetual_gl.sql`.
 
 ### 3.4 Material request reorder
@@ -428,6 +430,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 17. **Deviation:** Stock Projected Qty shows the §7.2 columns only. ERPNext also shows item name, description, item group, brand, UOM, the extra reserved columns, and reorder qty, and it filters by item group, brand, and include UOM. **Reason:** §7.2 names those columns and the company, item, and warehouse filters. Reserved, planned, and ordered stay 0 until their documents exist.
 18. **Deviation:** Stock Ageing shows item, warehouse, available qty, average age, and a qty column per age bucket. ERPNext also shows item name, description, item group, brand, UOM, earliest, latest, a value column beside each age bucket, and an average-age chart, and its range box defaults to `30, 60, 90` rather than `accounts_settings.default_ageing_range`. **Reason:** §7.2 names the FIFO qty buckets, the average age, and the company, to-date, item, and warehouse filters. The warehouse column stays because the slots are per warehouse. Warehouse type, brand, and the show-warehouse checkbox are not filters.
 19. **Deviation:** Stock Analytics shows the movement in each period and rolls Warehouse, Item, Item Group, or Brand up the tree. ERPNext shows one row per item with a carried balance, item name, item group, brand, UOM, and a line chart, and empty periods repeat the previous balance. **Reason:** §7.2 names the tree and the stock value movement or quantity. Warehouse type and half-yearly are not filters.
+20. **Deviation:** Turning perpetual inventory off is rejected whenever a non-cancelled stock ledger row exists. ERPNext raises that message only when `enable_item_wise_inventory_account` also changes in the same save. Enabling perpetual inventory with no default inventory account stays allowed. **Reason:** §3.3 says the block is the stock ledger row. A trigger cannot show ERPNext's non-blocking alert.
 
 ---
 
@@ -457,7 +460,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `app.get_item_details` — §3.1, `0412_stock_get_item_details.sql`
 - [x] `app.reorder_items` — §3.4, `0413_stock_reorder_items.sql`
 - [x] Dashboard and the five reports — §7
-- [ ] Company checks `cant_change_valuation_method` and `validate_perpetual_inventory` once SLE exists — §3.3
+- [x] Company checks `cant_change_valuation_method` and `validate_perpetual_inventory` once SLE exists — §3.3, `0420_company_valuation_lock.sql`
 
 ### P5 / P6 — with the documents that use them
 
