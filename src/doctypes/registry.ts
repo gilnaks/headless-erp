@@ -22,6 +22,7 @@ import { customer } from "./selling/customer";
 import { customerGroup } from "./selling/customer-group";
 import { industryType } from "./selling/industry-type";
 import { productBundle } from "./selling/product-bundle";
+import { quotation } from "./selling/quotation";
 import { quotationLostReason } from "./selling/quotation-lost-reason";
 import { salesPerson } from "./selling/sales-person";
 import { territory } from "./selling/territory";
@@ -127,6 +128,7 @@ export const DOCTYPES: readonly Doctype[] = [
     territory,
     industryType,
     quotationLostReason,
+    quotation,
     productBundle,
     supplier,
     supplierGroup,
