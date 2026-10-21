@@ -263,3 +263,48 @@ export async function fillSalesOrderItem(values: FieldValues, path?: string): Pr
         ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: String(details.rate) } : {}),
     };
 }
+
+/** Fills a blank Delivery Note row from get_item_details. A rate the user already typed stays. */
+export async function fillDeliveryNoteItem(values: FieldValues, path?: string): Promise<FieldValues> {
+    const changed = changedItem(path);
+    if (!changed) return {};
+    const companyId = text(values.company_id);
+    const row = rowAt(values, changed.index);
+    const itemId = row ? text(row.item_id) : "";
+    if (!row || !companyId || !itemId) return {};
+
+    const details = await getItemDetails({
+        itemId,
+        companyId,
+        doctype: "Delivery Note",
+        transactionType: "selling",
+        qty: qtyOf(row.qty),
+        uomId: text(row.uom_id) || undefined,
+        customerId: text(values.customer_id) || undefined,
+        transactionDate: text(values.posting_date) || undefined,
+        warehouseId: text(values.set_warehouse_id) || undefined,
+    });
+    const prefix = `items.${changed.index}`;
+    const factor =
+        changed.field === "qty" ? qtyOf(row.conversion_factor || details.conversion_factor || 1) : Number(details.conversion_factor);
+    const headerWarehouse = text(values.set_warehouse_id);
+    const headerTarget = text(values.set_target_warehouse_id);
+    return {
+        ...sharedPatch(prefix, row, details, changed.field),
+        [`${prefix}.stock_qty`]: String(qtyOf(row.qty) * (Number.isFinite(factor) ? factor : 1)),
+        ...(blank(row.item_name) && details.item_name ? { [`${prefix}.item_name`]: details.item_name } : {}),
+        ...(blank(row.stock_uom_id) && details.stock_uom_id ? { [`${prefix}.stock_uom_id`]: details.stock_uom_id } : {}),
+        ...(blank(row.warehouse_id) && (headerWarehouse || details.warehouse_id)
+            ? { [`${prefix}.warehouse_id`]: headerWarehouse || (details.warehouse_id ?? "") }
+            : {}),
+        ...(blank(row.target_warehouse_id) && headerTarget ? { [`${prefix}.target_warehouse_id`]: headerTarget } : {}),
+        ...(blank(row.expense_account_id) && details.expense_account_id
+            ? { [`${prefix}.expense_account_id`]: details.expense_account_id }
+            : {}),
+        ...(blank(row.cost_center_id) && details.cost_center_id ? { [`${prefix}.cost_center_id`]: details.cost_center_id } : {}),
+        ...(blank(row.price_list_rate) && details.price_list_rate != null
+            ? { [`${prefix}.price_list_rate`]: String(details.price_list_rate) }
+            : {}),
+        ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: String(details.rate) } : {}),
+    };
+}
