@@ -154,6 +154,8 @@ export type Database = {
         Args: { p_doctype: string; p_id: string }
         Returns: undefined
       }
+      delivery_note_check_credit: { Args: { p_id: string }; Returns: undefined }
+      delivery_note_next_status: { Args: { p_id: string }; Returns: string }
       doc_system_columns: { Args: never; Returns: string[] }
       doc_writable_columns: {
         Args: { p_exclude?: string[]; p_keys: string[]; p_table: string }
@@ -268,6 +270,10 @@ export type Database = {
         Args: { p_entries: Json; p_opts?: Json }
         Returns: undefined
       }
+      make_packing_list: {
+        Args: { p_doctype: string; p_parent: string }
+        Returns: undefined
+      }
       make_sl_entries: {
         Args: { p_entries: Json; p_opts?: Json }
         Returns: undefined
@@ -294,6 +300,7 @@ export type Database = {
         }
         Returns: string
       }
+      on_cancel__delivery_note: { Args: { p_id: string }; Returns: undefined }
       on_cancel__material_request: {
         Args: { p_id: string }
         Returns: undefined
@@ -306,6 +313,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: undefined
       }
+      on_submit__delivery_note: { Args: { p_id: string }; Returns: undefined }
       on_submit__journal_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__material_request: {
         Args: { p_id: string }
@@ -518,6 +526,10 @@ export type Database = {
       uom_names_curated: { Args: never; Returns: string[] }
       update_bin_qty: {
         Args: { p_item: string; p_warehouse: string }
+        Returns: undefined
+      }
+      update_delivery_note_status: {
+        Args: { p_id: string; p_status: string }
         Returns: undefined
       }
       update_sales_order_status: {
@@ -3062,6 +3074,370 @@ export type Database = {
             columns: ["org_id", "sales_person_id"]
             isOneToOne: false
             referencedRelation: "sales_person"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      delivery_note: {
+        Row: {
+          amended_from: string | null
+          base_grand_total: number
+          company_id: string
+          conversion_rate: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          customer_name: string | null
+          docstatus: number
+          grand_total: number
+          id: string
+          instructions: string | null
+          is_return: boolean
+          lr_date: string | null
+          lr_no: string | null
+          name: string
+          naming_series: string
+          net_total: number
+          org_id: string
+          per_billed: number
+          per_installed: number
+          per_returned: number
+          posting_date: string
+          posting_time: string
+          print_without_amount: boolean
+          return_against: string | null
+          selling_price_list_id: string
+          set_posting_time: boolean
+          set_target_warehouse_id: string | null
+          set_warehouse_id: string | null
+          status: string
+          tax_id: string | null
+          total: number
+          transporter_id: string | null
+          updated_at: string
+          updated_by: string | null
+          vehicle_no: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          base_grand_total?: number
+          company_id: string
+          conversion_rate?: number
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          customer_id: string
+          customer_name?: string | null
+          docstatus?: number
+          grand_total?: number
+          id?: string
+          instructions?: string | null
+          is_return?: boolean
+          lr_date?: string | null
+          lr_no?: string | null
+          name: string
+          naming_series?: string
+          net_total?: number
+          org_id: string
+          per_billed?: number
+          per_installed?: number
+          per_returned?: number
+          posting_date?: string
+          posting_time?: string
+          print_without_amount?: boolean
+          return_against?: string | null
+          selling_price_list_id: string
+          set_posting_time?: boolean
+          set_target_warehouse_id?: string | null
+          set_warehouse_id?: string | null
+          status?: string
+          tax_id?: string | null
+          total?: number
+          transporter_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_no?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          base_grand_total?: number
+          company_id?: string
+          conversion_rate?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          customer_name?: string | null
+          docstatus?: number
+          grand_total?: number
+          id?: string
+          instructions?: string | null
+          is_return?: boolean
+          lr_date?: string | null
+          lr_no?: string | null
+          name?: string
+          naming_series?: string
+          net_total?: number
+          org_id?: string
+          per_billed?: number
+          per_installed?: number
+          per_returned?: number
+          posting_date?: string
+          posting_time?: string
+          print_without_amount?: boolean
+          return_against?: string | null
+          selling_price_list_id?: string
+          set_posting_time?: boolean
+          set_target_warehouse_id?: string | null
+          set_warehouse_id?: string | null
+          status?: string
+          tax_id?: string | null
+          total?: number
+          transporter_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_no?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_note_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "delivery_note"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_return_against_fkey"
+            columns: ["org_id", "return_against"]
+            isOneToOne: false
+            referencedRelation: "delivery_note"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_selling_price_list_id_fkey"
+            columns: ["org_id", "selling_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_set_target_warehouse_id_fkey"
+            columns: ["org_id", "set_target_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_set_warehouse_id_fkey"
+            columns: ["org_id", "set_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_org_id_transporter_id_fkey"
+            columns: ["org_id", "transporter_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      delivery_note_item: {
+        Row: {
+          against_sales_order_id: string | null
+          amount: number
+          billed_amt: number
+          closed: boolean
+          conversion_factor: number
+          cost_center_id: string | null
+          discount_percentage: number
+          dn_detail_id: string | null
+          expense_account_id: string | null
+          id: string
+          idx: number
+          incoming_rate: number
+          is_stock_item: boolean
+          item_id: string
+          item_name: string | null
+          net_amount: number
+          net_rate: number
+          org_id: string
+          parent_id: string
+          price_list_rate: number | null
+          qty: number
+          rate: number | null
+          received_qty: number
+          returned_qty: number
+          so_detail_id: string | null
+          stock_qty: number
+          stock_uom_id: string | null
+          target_warehouse_id: string | null
+          uom_id: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          against_sales_order_id?: string | null
+          amount?: number
+          billed_amt?: number
+          closed?: boolean
+          conversion_factor?: number
+          cost_center_id?: string | null
+          discount_percentage?: number
+          dn_detail_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx: number
+          incoming_rate?: number
+          is_stock_item?: boolean
+          item_id: string
+          item_name?: string | null
+          net_amount?: number
+          net_rate?: number
+          org_id: string
+          parent_id: string
+          price_list_rate?: number | null
+          qty: number
+          rate?: number | null
+          received_qty?: number
+          returned_qty?: number
+          so_detail_id?: string | null
+          stock_qty?: number
+          stock_uom_id?: string | null
+          target_warehouse_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          against_sales_order_id?: string | null
+          amount?: number
+          billed_amt?: number
+          closed?: boolean
+          conversion_factor?: number
+          cost_center_id?: string | null
+          discount_percentage?: number
+          dn_detail_id?: string | null
+          expense_account_id?: string | null
+          id?: string
+          idx?: number
+          incoming_rate?: number
+          is_stock_item?: boolean
+          item_id?: string
+          item_name?: string | null
+          net_amount?: number
+          net_rate?: number
+          org_id?: string
+          parent_id?: string
+          price_list_rate?: number | null
+          qty?: number
+          rate?: number | null
+          received_qty?: number
+          returned_qty?: number
+          so_detail_id?: string | null
+          stock_qty?: number
+          stock_uom_id?: string | null
+          target_warehouse_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_note_item_org_id_against_sales_order_id_fkey"
+            columns: ["org_id", "against_sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_order"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_dn_detail_id_fkey"
+            columns: ["org_id", "dn_detail_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_note_item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_expense_account_id_fkey"
+            columns: ["org_id", "expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_note"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_so_detail_id_fkey"
+            columns: ["org_id", "so_detail_id"]
+            isOneToOne: false
+            referencedRelation: "sales_order_item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_target_warehouse_id_fkey"
+            columns: ["org_id", "target_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "delivery_note_item_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
             referencedColumns: ["org_id", "id"]
           },
         ]
@@ -5943,6 +6319,96 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currency"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      packed_item: {
+        Row: {
+          description: string | null
+          id: string
+          idx: number
+          item_id: string
+          item_name: string | null
+          org_id: string
+          parent_detail_id: string | null
+          parent_doctype: string
+          parent_id: string
+          parent_item_id: string | null
+          product_bundle_id: string | null
+          qty: number
+          rate: number
+          uom_id: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          idx: number
+          item_id: string
+          item_name?: string | null
+          org_id: string
+          parent_detail_id?: string | null
+          parent_doctype?: string
+          parent_id: string
+          parent_item_id?: string | null
+          product_bundle_id?: string | null
+          qty?: number
+          rate?: number
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          idx?: number
+          item_id?: string
+          item_name?: string | null
+          org_id?: string
+          parent_detail_id?: string | null
+          parent_doctype?: string
+          parent_id?: string
+          parent_item_id?: string | null
+          product_bundle_id?: string | null
+          qty?: number
+          rate?: number
+          uom_id?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packed_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "packed_item_org_id_parent_item_id_fkey"
+            columns: ["org_id", "parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "packed_item_org_id_product_bundle_id_fkey"
+            columns: ["org_id", "product_bundle_id"]
+            isOneToOne: false
+            referencedRelation: "product_bundle"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "packed_item_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "packed_item_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }
@@ -10989,6 +11455,10 @@ export type Database = {
         Returns: Json
       }
       submit_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      update_delivery_note_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
+      }
       update_sales_order_status: {
         Args: { p_id: string; p_status: string }
         Returns: undefined

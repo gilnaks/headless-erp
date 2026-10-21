@@ -49,6 +49,7 @@ import { termsAndConditions } from "./setup/terms-and-conditions";
 import { userPermission } from "./setup/user-permission";
 import { batch } from "./stock/batch";
 import { brand } from "./stock/brand";
+import { deliveryNote } from "./stock/delivery-note";
 import { item } from "./stock/item";
 import { itemGroup } from "./stock/item-group";
 import { itemPrice } from "./stock/item-price";
@@ -111,6 +112,7 @@ export const DOCTYPES: readonly Doctype[] = [
     stockEntryType,
     stockEntry,
     materialRequest,
+    deliveryNote,
     stockReconciliation,
     stockSettings,
     warehouseType,
