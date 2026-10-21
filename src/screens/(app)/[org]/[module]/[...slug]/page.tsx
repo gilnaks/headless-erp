@@ -10,6 +10,7 @@ import { CashFlow } from "@/components/erp/report/cash-flow";
 import { GeneralLedger } from "@/components/erp/report/general-ledger";
 import { ProfitAndLoss } from "@/components/erp/report/profit-and-loss";
 import { StockAgeing } from "@/components/erp/report/stock-ageing";
+import { StockAnalytics } from "@/components/erp/report/stock-analytics";
 import { StockBalance } from "@/components/erp/report/stock-balance";
 import { StockLedger } from "@/components/erp/report/stock-ledger";
 import { StockProjectedQty } from "@/components/erp/report/stock-projected-qty";
@@ -30,6 +31,7 @@ import { getListLinkTitles } from "@/lib/queries/links";
 import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { loadStockAgeing } from "@/lib/queries/stock-ageing";
+import { loadStockAnalytics } from "@/lib/queries/stock-analytics";
 import { loadStockBalance } from "@/lib/queries/stock-balance";
 import { loadStockDashboard } from "@/lib/queries/stock-dashboard";
 import { loadStockLedger } from "@/lib/queries/stock-ledger";
@@ -273,6 +275,70 @@ async function StockAgeingRoute({ orgSlug, searchParams }: { orgSlug: string; se
             to={to}
             itemId={item}
             warehouseId={warehouse}
+            columns={report.columns}
+            rows={report.rows}
+            error={report.error}
+        />
+    );
+}
+
+function calendarYear(): { from: string; to: string } {
+    const year = new Date().getFullYear();
+    return { from: `${year}-01-01`, to: `${year}-12-31` };
+}
+
+function oneOf(value: string | undefined, allowed: readonly string[], fallback: string): string {
+    return value && allowed.includes(value) ? value : fallback;
+}
+
+async function StockAnalyticsRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const supabase = createClient();
+    const { data } = await supabase
+        .from("fiscal_year")
+        .select("year_start_date, year_end_date")
+        .eq("org_id", org.id)
+        .order("year_start_date", { ascending: false });
+    const today = isoDate(new Date());
+    const current = (data ?? []).find((year) => year.year_start_date <= today && year.year_end_date >= today);
+    const fallback = calendarYear();
+    const from = one("from") || current?.year_start_date || fallback.from;
+    const to = one("to") || current?.year_end_date || fallback.to;
+    const tree = oneOf(one("tree"), ["Warehouse", "Item", "Item Group", "Brand"], "Item");
+    const value = oneOf(one("value"), ["Value", "Quantity"], "Value");
+    const range = oneOf(one("range"), ["Weekly", "Monthly", "Quarterly", "Yearly"], "Monthly");
+    const item = one("item") ?? "";
+    const itemGroup = one("item_group") ?? "";
+    const warehouse = one("warehouse") ?? "";
+    const brand = one("brand") ?? "";
+    let company = one("company") ?? "";
+    if (!company) {
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+    const report = company
+        ? await loadStockAnalytics({ company, from, to, tree, value, range, item, itemGroup, warehouse, brand })
+        : { columns: [], rows: [], error: "Company is mandatory" };
+
+    return (
+        <StockAnalytics
+            orgSlug={org.slug}
+            companyId={company}
+            from={from}
+            to={to}
+            tree={tree}
+            value={value}
+            range={range}
+            itemId={item}
+            itemGroupId={itemGroup}
+            warehouseId={warehouse}
+            brandId={brand}
             columns={report.columns}
             rows={report.rows}
             error={report.error}
@@ -865,6 +931,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "report" && link.target.report === "Stock Ageing") {
         return StockAgeingRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Stock Analytics") {
+        return StockAnalyticsRoute({ orgSlug: org, searchParams });
     }
     if (link.target.kind === "report" && link.target.report === "Trial Balance") {
         return TrialBalanceRoute({ orgSlug: org, searchParams });

@@ -391,6 +391,8 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 **Built (0418):** `app.report_stock_ageing` replays non-cancelled stock ledger rows through the as-on date and keeps one row per item and warehouse that still has qty. Age is days from the inward slot to that date, and the average is the qty-weighted age. A same-warehouse voucher pair puts the consumed slots back with their original dates. A move to another warehouse opens a slot on the transfer date. Bucket bounds come from `accounts_settings.default_ageing_range`, or 30, 60, 90 when that value has no integers. A warehouse filter includes that warehouse and its descendants. A missing company or as-on date is rejected. A company with no remaining qty returns the columns and an empty list. Migration `0418_stock_ageing_report.sql`.
 - **Stock Analytics** (`app.report_stock_analytics`): the stock twin of Sales Analytics. `tree_type` Warehouse, Item, Item Group or Brand; value is stock value movement or quantity; range weekly, monthly, quarterly, yearly.
 
+**Built (0419):** `app.report_stock_analytics` sums stock movement into weekly, monthly, quarterly, or yearly columns. Quantity is `actual_qty` and value is `stock_value_difference`. The tree is Warehouse, Item, Item Group, or Brand, and a parent total is the sum of its descendants. A period before the rounded start is not carried forward. An empty period is 0. A warehouse or item group filter includes that node and its descendants. A missing company, a missing date, or a from-date after the to-date is rejected. A company with no movement in range returns the columns and an empty list. Migration `0419_stock_analytics_report.sql`.
+
 ---
 
 ## 8. UI notes
@@ -425,6 +427,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 16. **Deviation:** Stock Balance shows the §7.2 columns only. ERPNext also shows item name, stock UOM, in value, out value, reserved stock, and company, and its include-zero checkbox defaults on. Filters are a single item, item group, and warehouse. **Reason:** §7.2 names those columns and defaults include zero off. Inventory dimensions, variants, and ageing columns are out of scope.
 17. **Deviation:** Stock Projected Qty shows the §7.2 columns only. ERPNext also shows item name, description, item group, brand, UOM, the extra reserved columns, and reorder qty, and it filters by item group, brand, and include UOM. **Reason:** §7.2 names those columns and the company, item, and warehouse filters. Reserved, planned, and ordered stay 0 until their documents exist.
 18. **Deviation:** Stock Ageing shows item, warehouse, available qty, average age, and a qty column per age bucket. ERPNext also shows item name, description, item group, brand, UOM, earliest, latest, a value column beside each age bucket, and an average-age chart, and its range box defaults to `30, 60, 90` rather than `accounts_settings.default_ageing_range`. **Reason:** §7.2 names the FIFO qty buckets, the average age, and the company, to-date, item, and warehouse filters. The warehouse column stays because the slots are per warehouse. Warehouse type, brand, and the show-warehouse checkbox are not filters.
+19. **Deviation:** Stock Analytics shows the movement in each period and rolls Warehouse, Item, Item Group, or Brand up the tree. ERPNext shows one row per item with a carried balance, item name, item group, brand, UOM, and a line chart, and empty periods repeat the previous balance. **Reason:** §7.2 names the tree and the stock value movement or quantity. Warehouse type and half-yearly are not filters.
 
 ---
 
@@ -453,7 +456,7 @@ Migration numbers: P2 `02nn_stock_*`, P4 `04nn_stock_*`, P5 pick list and packin
 - [x] `batch`, `serial_no`, `serial_and_batch_bundle`, auto-pick on outward — §2.13, §3.5, `0409_stock_serial_and_batch.sql`, `0410_stock_serial_batch_one.sql`, `0411_stock_serial_batch_clear.sql`
 - [x] `app.get_item_details` — §3.1, `0412_stock_get_item_details.sql`
 - [x] `app.reorder_items` — §3.4, `0413_stock_reorder_items.sql`
-- [ ] Dashboard and the five reports — §7
+- [x] Dashboard and the five reports — §7
 - [ ] Company checks `cant_change_valuation_method` and `validate_perpetual_inventory` once SLE exists — §3.3
 
 ### P5 / P6 — with the documents that use them
