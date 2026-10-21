@@ -1,0 +1,159 @@
+-- Stock Balance report.
+-- ERPNext: erpnext/stock/report/stock_balance/stock_balance.py (add_to_balance, get_columns)
+-- and erpnext/public/js/stock_balance_report.js.
+-- One row per item and warehouse. Opening is the ledger movement before the from-date.
+-- Reconciliation stores actual_qty as the quantity delta, so the sums are the balance.
+
+create or replace function app.report_stock_balance(p_filters jsonb)
+returns jsonb
+language plpgsql
+stable
+security invoker
+set search_path = ''
+as $$
+declare
+  v_company uuid;
+  v_org uuid;
+  v_from date;
+  v_to date;
+  v_item uuid;
+  v_item_group uuid;
+  v_warehouse uuid;
+  v_path extensions.ltree;
+  v_group_path extensions.ltree;
+  v_include_zero boolean;
+  v_columns jsonb;
+  v_rows jsonb := '[]'::jsonb;
+begin
+  if p_filters is null or nullif(p_filters ->> 'company', '') is null
+     or (p_filters ->> 'company') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    raise exception using errcode = 'P0001', message = 'sbal_company: Company is mandatory';
+  end if;
+  v_company := (p_filters ->> 'company')::uuid;
+
+  select c.org_id into v_org from public.companies c where c.id = v_company;
+  if v_org is null then
+    raise exception using errcode = 'P0001', message = 'sbal_company: Company is mandatory';
+  end if;
+
+  if nullif(p_filters ->> 'from_date', '') is null or nullif(p_filters ->> 'to_date', '') is null then
+    raise exception using errcode = 'P0001', message = 'sbal_dates: From Date and To Date are mandatory';
+  end if;
+  v_from := (p_filters ->> 'from_date')::date;
+  v_to := (p_filters ->> 'to_date')::date;
+  if v_from > v_to then
+    raise exception using errcode = 'P0001', message = 'sbal_dates: From Date must be before To Date';
+  end if;
+
+  if nullif(p_filters ->> 'item', '') is not null
+     and (p_filters ->> 'item') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    v_item := (p_filters ->> 'item')::uuid;
+  end if;
+  if nullif(p_filters ->> 'item_group', '') is not null
+     and (p_filters ->> 'item_group') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    v_item_group := (p_filters ->> 'item_group')::uuid;
+  end if;
+  if nullif(p_filters ->> 'warehouse', '') is not null
+     and (p_filters ->> 'warehouse') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    v_warehouse := (p_filters ->> 'warehouse')::uuid;
+  end if;
+  v_include_zero := coalesce(p_filters -> 'include_zero', 'false'::jsonb) = 'true'::jsonb;
+
+  v_columns := jsonb_build_array(
+    jsonb_build_object('field', 'item', 'label', 'Item'),
+    jsonb_build_object('field', 'item_group', 'label', 'Item Group'),
+    jsonb_build_object('field', 'warehouse', 'label', 'Warehouse'),
+    jsonb_build_object('field', 'opening_qty', 'label', 'Opening Qty'),
+    jsonb_build_object('field', 'opening_value', 'label', 'Opening Value', 'amount', true),
+    jsonb_build_object('field', 'in_qty', 'label', 'In Qty'),
+    jsonb_build_object('field', 'out_qty', 'label', 'Out Qty'),
+    jsonb_build_object('field', 'balance_qty', 'label', 'Balance Qty'),
+    jsonb_build_object('field', 'valuation_rate', 'label', 'Valuation Rate', 'amount', true),
+    jsonb_build_object('field', 'balance_value', 'label', 'Balance Value', 'amount', true)
+  );
+
+  if v_warehouse is not null then
+    select w.path into v_path
+      from public.warehouse w
+     where w.id = v_warehouse
+       and w.org_id = v_org;
+    if v_path is null then
+      return jsonb_build_object('columns', v_columns, 'rows', '[]'::jsonb);
+    end if;
+  end if;
+
+  if v_item_group is not null then
+    select g.path into v_group_path
+      from public.item_group g
+     where g.id = v_item_group
+       and g.org_id = v_org;
+    if v_group_path is null then
+      return jsonb_build_object('columns', v_columns, 'rows', '[]'::jsonb);
+    end if;
+  end if;
+
+  select coalesce(jsonb_agg(src.body order by src.item_code, src.warehouse_name), '[]'::jsonb)
+    into v_rows
+    from (
+      select i.item_code,
+             w.name as warehouse_name,
+             jsonb_build_object(
+               'row_type', 'entry',
+               'item', i.item_code,
+               'item_group', g.item_group_name,
+               'warehouse', w.name,
+               'opening_qty', agg.opening_qty,
+               'opening_value', agg.opening_value,
+               'in_qty', agg.in_qty,
+               'out_qty', agg.out_qty,
+               'balance_qty', agg.balance_qty,
+               'valuation_rate', agg.valuation_rate,
+               'balance_value', agg.balance_value
+             ) as body
+        from (
+          select s.item_id,
+                 s.warehouse_id,
+                 coalesce(sum(s.actual_qty) filter (where s.posting_date < v_from), 0) as opening_qty,
+                 coalesce(sum(s.stock_value_difference) filter (where s.posting_date < v_from), 0) as opening_value,
+                 coalesce(sum(s.actual_qty) filter (where s.posting_date >= v_from and s.actual_qty > 0), 0) as in_qty,
+                 coalesce(sum(-s.actual_qty) filter (where s.posting_date >= v_from and s.actual_qty < 0), 0) as out_qty,
+                 coalesce(sum(s.actual_qty), 0) as balance_qty,
+                 coalesce(sum(s.stock_value_difference), 0) as balance_value,
+                 (array_agg(s.valuation_rate order by s.posting_datetime desc, s.creation_order desc))[1] as valuation_rate
+            from public.stock_ledger_entry s
+            join public.item i on i.id = s.item_id and i.org_id = s.org_id
+            join public.item_group g on g.id = i.item_group_id and g.org_id = i.org_id
+            join public.warehouse w on w.id = s.warehouse_id and w.org_id = s.org_id
+           where s.org_id = v_org
+             and s.company_id = v_company
+             and not s.is_cancelled
+             and s.posting_date <= v_to
+             and (v_item is null or s.item_id = v_item)
+             and (v_path is null or w.path operator(extensions.<@) v_path)
+             and (v_group_path is null or g.path operator(extensions.<@) v_group_path)
+           group by s.item_id, s.warehouse_id
+        ) agg
+        join public.item i on i.id = agg.item_id and i.org_id = v_org
+        join public.item_group g on g.id = i.item_group_id and g.org_id = i.org_id
+        join public.warehouse w on w.id = agg.warehouse_id and w.org_id = v_org
+       where v_include_zero or agg.balance_qty <> 0 or agg.balance_value <> 0
+    ) src;
+
+  return jsonb_build_object('columns', v_columns, 'rows', v_rows);
+end;
+$$;
+
+create or replace function public.report_stock_balance(p_filters jsonb)
+returns jsonb
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select app.report_stock_balance(p_filters);
+$$;
+
+revoke execute on function app.report_stock_balance(jsonb) from public, anon;
+grant execute on function app.report_stock_balance(jsonb) to authenticated;
+revoke execute on function public.report_stock_balance(jsonb) from public, anon;
+grant execute on function public.report_stock_balance(jsonb) to authenticated;

@@ -79,6 +79,7 @@ const USERS = [
     { env: "E2E_ITEM_DETAILS", local: "item-details", first_name: "Item", last_name: "Details" },
     { env: "E2E_STOCK_DASHBOARD", local: "stock-dashboard", first_name: "Stock", last_name: "Dashboard" },
     { env: "E2E_STOCK_LEDGER", local: "stock-ledger", first_name: "Stock", last_name: "Ledger" },
+    { env: "E2E_STOCK_BALANCE", local: "stock-balance", first_name: "Stock", last_name: "Balance" },
 ] as const;
 
 /**
