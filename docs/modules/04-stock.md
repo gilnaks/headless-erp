@@ -378,6 +378,8 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 ### 7.2 Reports
 
 - **Stock Ledger** (`app.report_stock_ledger`): one row per SLE in the date range. Columns: date, item, item group, warehouse, voucher type, voucher, qty, incoming rate, balance qty, valuation rate, stock value, stock value difference. Filters: company ✔, from/to date ✔, item, warehouse, voucher type. Cancelled rows are excluded.
+
+**Built (0415):** `app.report_stock_ledger` lists non-cancelled stock ledger rows for the company whose posting date is inside the range, ordered by posting time. A warehouse filter includes that warehouse and its descendants. A missing company or a from-date after the to-date is rejected. A range with no rows returns the columns and an empty list. Migration `0415_stock_ledger_report.sql`.
 - **Stock Balance** (`app.report_stock_balance`): opening qty and value, in qty, out qty, balance qty, valuation rate, balance value, per item and warehouse. Opening is the SLE balance before `from_date`. Filters: company ✔, from/to date ✔, item, item group, warehouse, include zero balance (default off).
 - **Stock Projected Qty** (`app.report_stock_projected_qty`): actual, ordered, indented, reserved, planned, projected, reorder level, shortage. Filters: company, item, warehouse.
 - **Stock Ageing** (`app.report_stock_ageing`): FIFO buckets of remaining qty by age of the inward (`0–30`, `31–60`, `61–90`, `91+`, using `accounts_settings` ranges when set, else 30/60/90). Average age. Filters: company, to date, item, warehouse.
@@ -413,6 +415,7 @@ A material request's `per_ordered` is fulfilled qty over requested qty. For Purc
 12. **Deviation:** `app.get_item_details` does not insert an Item Price, and it does not apply pricing rules, POS, blanket orders, tax withholding, variants, or product bundles. Buying Settings are not built, so a buying document with no price uses `last_purchase_rate`, which is the ERPNext default. **Reason:** §2.6 puts that insert on the selling or buying save. Those other lookups are out of scope.
 13. **Deviation:** `app.reorder_items` leaves the Material Request as a draft and does not email. The trigger is strictly below the reorder level, and the qty stays the reorder qty instead of rising to the shortage. There is no buying UOM on the item. Material Transfer is skipped because a transfer requires a source warehouse and the reorder row does not name one. Variant reorder levels are not copied onto children. **Reason:** §3.4. Buying UOM and variants are out of scope, and `0407` already requires the transfer source.
 14. **Deviation:** Purchase Receipt Trends and Delivery Trends return not available. Oldest Items ages an item from the earliest stock ledger date that is still in stock, instead of the Stock Ageing report. **Reason:** Purchase Receipt, Delivery Note, and Stock Ageing are later checklist lines.
+15. **Deviation:** Stock Ledger has no opening row. Qty is `actual_qty` rather than In Qty and Out Qty. Item group, batch, serial, project, and brand filters are not on this report. **Reason:** §7.2 names one row per ledger entry and those columns. The opening balance belongs to Stock Balance. Inventory dimensions are out of scope.
 
 ---
 

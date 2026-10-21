@@ -9,6 +9,16 @@ export const generalLedgerParsers = {
     opening: parseAsBoolean.withDefault(false),
 };
 
+/** Stock Ledger URL state. Blank dates are filled with today minus one month through today. */
+export const stockLedgerParsers = {
+    company: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    item: parseAsString.withDefault(""),
+    warehouse: parseAsString.withDefault(""),
+    voucher_type: parseAsString.withDefault(""),
+};
+
 /** Trial Balance URL state. A blank year and blank dates are filled from the fiscal year that contains today. */
 export const trialBalanceParsers = {
     company: parseAsString.withDefault(""),

@@ -9,6 +9,7 @@ import { BalanceSheet } from "@/components/erp/report/balance-sheet";
 import { CashFlow } from "@/components/erp/report/cash-flow";
 import { GeneralLedger } from "@/components/erp/report/general-ledger";
 import { ProfitAndLoss } from "@/components/erp/report/profit-and-loss";
+import { StockLedger } from "@/components/erp/report/stock-ledger";
 import { type FiscalYearChoice, TrialBalance } from "@/components/erp/report/trial-balance";
 import { TrialBalanceForParty } from "@/components/erp/report/trial-balance-for-party";
 import { findLinkForPath, getModule, type NavLink } from "@/config/navigation";
@@ -26,6 +27,7 @@ import { getListLinkTitles } from "@/lib/queries/links";
 import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
 import { loadStockDashboard } from "@/lib/queries/stock-dashboard";
+import { loadStockLedger } from "@/lib/queries/stock-ledger";
 import { loadTrialBalance } from "@/lib/queries/trial-balance";
 import { loadTrialBalanceForParty } from "@/lib/queries/trial-balance-for-party";
 import { optionSourcesOf } from "@/lib/reference-options";
@@ -153,6 +155,46 @@ function defaultRange(): { from: string; to: string } {
     const from = new Date();
     from.setMonth(from.getMonth() - 1);
     return { from: isoDate(from), to: isoDate(to) };
+}
+
+async function StockLedgerRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const range = defaultRange();
+    const from = one("from") || range.from;
+    const to = one("to") || range.to;
+    const item = one("item") ?? "";
+    const warehouse = one("warehouse") ?? "";
+    const voucherType = one("voucher_type") ?? "";
+    let company = one("company") ?? "";
+    if (!company) {
+        const supabase = createClient();
+        const { data } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (data?.length === 1) company = data[0].id;
+    }
+    const report = company
+        ? await loadStockLedger({ company, from, to, item, warehouse, voucherType })
+        : { columns: [], rows: [], error: "Company is mandatory" };
+
+    return (
+        <StockLedger
+            orgSlug={org.slug}
+            companyId={company}
+            from={from}
+            to={to}
+            itemId={item}
+            warehouseId={warehouse}
+            voucherType={voucherType}
+            columns={report.columns}
+            rows={report.rows}
+            error={report.error}
+        />
+    );
 }
 
 async function GeneralLedgerRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
@@ -697,6 +739,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     if (!link) notFound();
     if (link.target.kind === "report" && link.target.report === "General Ledger") {
         return GeneralLedgerRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Stock Ledger") {
+        return StockLedgerRoute({ orgSlug: org, searchParams });
     }
     if (link.target.kind === "report" && link.target.report === "Trial Balance") {
         return TrialBalanceRoute({ orgSlug: org, searchParams });
