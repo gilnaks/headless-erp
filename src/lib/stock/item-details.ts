@@ -223,3 +223,43 @@ export async function fillQuotationItem(values: FieldValues, path?: string): Pro
         ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: String(details.rate) } : {}),
     };
 }
+
+/** Fills a blank Sales Order row from get_item_details. A rate the user already typed stays. */
+export async function fillSalesOrderItem(values: FieldValues, path?: string): Promise<FieldValues> {
+    const changed = changedItem(path);
+    if (!changed) return {};
+    const companyId = text(values.company_id);
+    const row = rowAt(values, changed.index);
+    const itemId = row ? text(row.item_id) : "";
+    if (!row || !companyId || !itemId) return {};
+
+    const details = await getItemDetails({
+        itemId,
+        companyId,
+        doctype: "Sales Order",
+        transactionType: "selling",
+        qty: qtyOf(row.qty),
+        uomId: text(row.uom_id) || undefined,
+        customerId: text(values.customer_id) || undefined,
+        transactionDate: text(values.transaction_date) || undefined,
+        warehouseId: text(values.set_warehouse_id) || undefined,
+    });
+    const prefix = `items.${changed.index}`;
+    const factor =
+        changed.field === "qty" ? qtyOf(row.conversion_factor || details.conversion_factor || 1) : Number(details.conversion_factor);
+    const headerWarehouse = text(values.set_warehouse_id);
+    return {
+        ...sharedPatch(prefix, row, details, changed.field),
+        [`${prefix}.stock_qty`]: String(qtyOf(row.qty) * (Number.isFinite(factor) ? factor : 1)),
+        ...(blank(row.item_name) && details.item_name ? { [`${prefix}.item_name`]: details.item_name } : {}),
+        ...(blank(row.stock_uom_id) && details.stock_uom_id ? { [`${prefix}.stock_uom_id`]: details.stock_uom_id } : {}),
+        ...(blank(row.warehouse_id) && (headerWarehouse || details.warehouse_id)
+            ? { [`${prefix}.warehouse_id`]: headerWarehouse || (details.warehouse_id ?? "") }
+            : {}),
+        ...(blank(row.delivery_date) && text(values.delivery_date) ? { [`${prefix}.delivery_date`]: text(values.delivery_date) } : {}),
+        ...(blank(row.price_list_rate) && details.price_list_rate != null
+            ? { [`${prefix}.price_list_rate`]: String(details.price_list_rate) }
+            : {}),
+        ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: String(details.rate) } : {}),
+    };
+}

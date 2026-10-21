@@ -24,6 +24,7 @@ import { industryType } from "./selling/industry-type";
 import { productBundle } from "./selling/product-bundle";
 import { quotation } from "./selling/quotation";
 import { quotationLostReason } from "./selling/quotation-lost-reason";
+import { salesOrder } from "./selling/sales-order";
 import { salesPerson } from "./selling/sales-person";
 import { territory } from "./selling/territory";
 import { address } from "./setup/address";
@@ -129,6 +130,7 @@ export const DOCTYPES: readonly Doctype[] = [
     industryType,
     quotationLostReason,
     quotation,
+    salesOrder,
     productBundle,
     supplier,
     supplierGroup,
