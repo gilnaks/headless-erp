@@ -86,6 +86,7 @@ const USERS = [
     { env: "E2E_COMPANY_VALUATION", local: "company-valuation", first_name: "Company", last_name: "Valuation" },
     { env: "E2E_QUOTATION_LOST_REASON", local: "quotation-lost-reason", first_name: "Lost", last_name: "Reason" },
     { env: "E2E_QUOTATION", local: "quotation", first_name: "Quotation", last_name: "Seller" },
+    { env: "E2E_SALES_ORDER", local: "sales-order", first_name: "Sales", last_name: "Order" },
 ] as const;
 
 /**

@@ -80,9 +80,10 @@ export function DocForm({
     const [tab, setTab] = useState<Key>(d.tabs[0]?.label ?? "");
     const [workflow, setWorkflow] = useState<"submit" | "cancel" | "amend" | null>(null);
     const docstatus = Number(row?.docstatus ?? 0);
-    const shownActions = d.actions.filter((action) =>
-        docstatus === 1 ? action.when === "submitted" : editable && (action.when ?? "draft") === "draft",
-    );
+    const shownActions = d.actions.filter((action) => {
+        const stage = docstatus === 1 ? action.when === "submitted" : editable && (action.when ?? "draft") === "draft";
+        return stage && (action.visible?.(values) ?? true);
+    });
     const status = docstatus === 1 ? "Submitted" : docstatus === 2 ? "Cancelled" : "Draft";
     const statusColor = docstatus === 1 ? "success" : docstatus === 2 ? "error" : "gray";
 

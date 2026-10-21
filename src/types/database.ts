@@ -300,6 +300,7 @@ export type Database = {
       }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_cancel__quotation: { Args: { p_id: string }; Returns: undefined }
+      on_cancel__sales_order: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_reconciliation: {
         Args: { p_id: string }
@@ -313,6 +314,7 @@ export type Database = {
       on_submit__payment_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_submit__quotation: { Args: { p_id: string }; Returns: undefined }
+      on_submit__sales_order: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_reconciliation: {
         Args: { p_id: string }
@@ -434,6 +436,8 @@ export type Database = {
       }
       revise_quotation: { Args: { p_id: string }; Returns: Json }
       round: { Args: { p_precision: number; p_value: number }; Returns: number }
+      sales_order_check_credit: { Args: { p_id: string }; Returns: undefined }
+      sales_order_next_status: { Args: { p_id: string }; Returns: string }
       sanitize_doc_payload: {
         Args: { p_doctype: string; p_payload: Json }
         Returns: Json
@@ -514,6 +518,10 @@ export type Database = {
       uom_names_curated: { Args: never; Returns: string[] }
       update_bin_qty: {
         Args: { p_item: string; p_warehouse: string }
+        Returns: undefined
+      }
+      update_sales_order_status: {
+        Args: { p_id: string; p_status: string }
         Returns: undefined
       }
       user_org_ids: { Args: never; Returns: string[] }
@@ -7743,6 +7751,351 @@ export type Database = {
           },
         ]
       }
+      sales_order: {
+        Row: {
+          advance_paid: number
+          advance_payment_status: string
+          amended_from: string | null
+          base_grand_total: number
+          billing_status: string
+          company_id: string
+          conversion_rate: number
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          customer_name: string | null
+          delivery_date: string | null
+          delivery_status: string
+          docstatus: number
+          grand_total: number
+          id: string
+          name: string
+          naming_series: string
+          net_total: number
+          order_type: string
+          org_id: string
+          per_billed: number
+          per_delivered: number
+          per_picked: number
+          po_date: string | null
+          po_no: string | null
+          reserve_stock: boolean
+          selling_price_list_id: string
+          set_warehouse_id: string | null
+          skip_delivery_note: boolean
+          status: string
+          tax_id: string | null
+          total: number
+          transaction_date: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          advance_paid?: number
+          advance_payment_status?: string
+          amended_from?: string | null
+          base_grand_total?: number
+          billing_status?: string
+          company_id: string
+          conversion_rate?: number
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          customer_id: string
+          customer_name?: string | null
+          delivery_date?: string | null
+          delivery_status?: string
+          docstatus?: number
+          grand_total?: number
+          id?: string
+          name: string
+          naming_series?: string
+          net_total?: number
+          order_type?: string
+          org_id: string
+          per_billed?: number
+          per_delivered?: number
+          per_picked?: number
+          po_date?: string | null
+          po_no?: string | null
+          reserve_stock?: boolean
+          selling_price_list_id: string
+          set_warehouse_id?: string | null
+          skip_delivery_note?: boolean
+          status?: string
+          tax_id?: string | null
+          total?: number
+          transaction_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          advance_paid?: number
+          advance_payment_status?: string
+          amended_from?: string | null
+          base_grand_total?: number
+          billing_status?: string
+          company_id?: string
+          conversion_rate?: number
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          customer_name?: string | null
+          delivery_date?: string | null
+          delivery_status?: string
+          docstatus?: number
+          grand_total?: number
+          id?: string
+          name?: string
+          naming_series?: string
+          net_total?: number
+          order_type?: string
+          org_id?: string
+          per_billed?: number
+          per_delivered?: number
+          per_picked?: number
+          po_date?: string | null
+          po_no?: string | null
+          reserve_stock?: boolean
+          selling_price_list_id?: string
+          set_warehouse_id?: string | null
+          skip_delivery_note?: boolean
+          status?: string
+          tax_id?: string | null
+          total?: number
+          transaction_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "sales_order"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_org_id_selling_price_list_id_fkey"
+            columns: ["org_id", "selling_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_org_id_set_warehouse_id_fkey"
+            columns: ["org_id", "set_warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      sales_order_item: {
+        Row: {
+          amount: number
+          billed_amt: number
+          closed: boolean
+          conversion_factor: number
+          cost_center_id: string | null
+          delivered_by_supplier: boolean
+          delivered_qty: number
+          delivery_date: string | null
+          discount_percentage: number
+          grant_commission: boolean
+          id: string
+          idx: number
+          is_stock_item: boolean
+          item_id: string
+          item_name: string | null
+          net_amount: number
+          net_rate: number
+          org_id: string
+          parent_id: string
+          picked_qty: number
+          prevdoc_id: string | null
+          price_list_rate: number | null
+          qty: number
+          quotation_item_id: string | null
+          rate: number | null
+          returned_qty: number
+          skip_delivery: boolean
+          stock_qty: number
+          stock_uom_id: string | null
+          supplier_id: string | null
+          uom_id: string | null
+          warehouse_id: string | null
+          work_order_qty: number
+        }
+        Insert: {
+          amount?: number
+          billed_amt?: number
+          closed?: boolean
+          conversion_factor?: number
+          cost_center_id?: string | null
+          delivered_by_supplier?: boolean
+          delivered_qty?: number
+          delivery_date?: string | null
+          discount_percentage?: number
+          grant_commission?: boolean
+          id?: string
+          idx: number
+          is_stock_item?: boolean
+          item_id: string
+          item_name?: string | null
+          net_amount?: number
+          net_rate?: number
+          org_id: string
+          parent_id: string
+          picked_qty?: number
+          prevdoc_id?: string | null
+          price_list_rate?: number | null
+          qty: number
+          quotation_item_id?: string | null
+          rate?: number | null
+          returned_qty?: number
+          skip_delivery?: boolean
+          stock_qty?: number
+          stock_uom_id?: string | null
+          supplier_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+          work_order_qty?: number
+        }
+        Update: {
+          amount?: number
+          billed_amt?: number
+          closed?: boolean
+          conversion_factor?: number
+          cost_center_id?: string | null
+          delivered_by_supplier?: boolean
+          delivered_qty?: number
+          delivery_date?: string | null
+          discount_percentage?: number
+          grant_commission?: boolean
+          id?: string
+          idx?: number
+          is_stock_item?: boolean
+          item_id?: string
+          item_name?: string | null
+          net_amount?: number
+          net_rate?: number
+          org_id?: string
+          parent_id?: string
+          picked_qty?: number
+          prevdoc_id?: string | null
+          price_list_rate?: number | null
+          qty?: number
+          quotation_item_id?: string | null
+          rate?: number | null
+          returned_qty?: number
+          skip_delivery?: boolean
+          stock_qty?: number
+          stock_uom_id?: string | null
+          supplier_id?: string | null
+          uom_id?: string | null
+          warehouse_id?: string | null
+          work_order_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_item_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "sales_order"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_prevdoc_id_fkey"
+            columns: ["org_id", "prevdoc_id"]
+            isOneToOne: false
+            referencedRelation: "quotation"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_quotation_item_id_fkey"
+            columns: ["org_id", "quotation_item_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_stock_uom_id_fkey"
+            columns: ["org_id", "stock_uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_supplier_id_fkey"
+            columns: ["org_id", "supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_uom_id_fkey"
+            columns: ["org_id", "uom_id"]
+            isOneToOne: false
+            referencedRelation: "uom"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_order_item_org_id_warehouse_id_fkey"
+            columns: ["org_id", "warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       sales_person: {
         Row: {
           commission_rate: number
@@ -10636,6 +10989,10 @@ export type Database = {
         Returns: Json
       }
       submit_doc: { Args: { p_doctype: string; p_id: string }; Returns: Json }
+      update_sales_order_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -117,6 +117,8 @@ export type FormAction = {
     label: string;
     /** Draft actions show while the document can be saved. Submitted actions show after submit. */
     when?: "draft" | "submitted";
+    /** Hides the action when this returns false. Status-specific submitted actions use it. */
+    visible?: (values: FieldValues) => boolean;
     run: (values: FieldValues, ctx: FormActionContext) => FieldValues | Promise<FieldValues>;
 };
 
