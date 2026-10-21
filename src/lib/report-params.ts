@@ -19,6 +19,17 @@ export const stockLedgerParsers = {
     voucher_type: parseAsString.withDefault(""),
 };
 
+/** Stock Balance URL state. Blank dates are filled with today minus one month through today. Include zero defaults off. */
+export const stockBalanceParsers = {
+    company: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    item: parseAsString.withDefault(""),
+    item_group: parseAsString.withDefault(""),
+    warehouse: parseAsString.withDefault(""),
+    zero: parseAsBoolean.withDefault(false),
+};
+
 /** Trial Balance URL state. A blank year and blank dates are filled from the fiscal year that contains today. */
 export const trialBalanceParsers = {
     company: parseAsString.withDefault(""),

@@ -401,6 +401,7 @@ export type Database = {
       report_cash_flow: { Args: { p_filters: Json }; Returns: Json }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
+      report_stock_balance: { Args: { p_filters: Json }; Returns: Json }
       report_stock_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance_for_party: {
@@ -10257,6 +10258,7 @@ export type Database = {
       report_cash_flow: { Args: { p_filters: Json }; Returns: Json }
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
+      report_stock_balance: { Args: { p_filters: Json }; Returns: Json }
       report_stock_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance: { Args: { p_filters: Json }; Returns: Json }
       report_trial_balance_for_party: {
