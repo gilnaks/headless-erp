@@ -88,7 +88,12 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                 <Table.Head
                                     id={column.field}
                                     label={column.label}
-                                    isRowHeader={column.field === "account" || column.field === "party" || column.field === "section"}
+                                    isRowHeader={
+                                        column.field === "account" ||
+                                        column.field === "party" ||
+                                        column.field === "section" ||
+                                        column.field === "entity"
+                                    }
                                     className={cx(isAmountColumn(column) && "[&>div]:justify-end")}
                                 />
                             )}
@@ -109,7 +114,7 @@ export function ReportView({ title, columns, rows, error, filters, exportName = 
                                                     "text-error-primary",
                                             )}
                                         >
-                                            {(column.field === "account" || column.field === "section") &&
+                                            {(column.field === "account" || column.field === "section" || column.field === "entity") &&
                                             typeof row.indent === "number" &&
                                             row.indent > 0 ? (
                                                 <span style={{ paddingInlineStart: row.indent * 16 }}>

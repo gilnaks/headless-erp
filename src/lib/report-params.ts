@@ -34,6 +34,20 @@ export const stockAgeingParsers = {
     warehouse: parseAsString.withDefault(""),
 };
 
+/** Stock Analytics URL state. Blank dates are filled from the fiscal year that contains today. */
+export const stockAnalyticsParsers = {
+    company: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    tree: parseAsString.withDefault("Item"),
+    value: parseAsString.withDefault("Value"),
+    range: parseAsString.withDefault("Monthly"),
+    item: parseAsString.withDefault(""),
+    item_group: parseAsString.withDefault(""),
+    warehouse: parseAsString.withDefault(""),
+    brand: parseAsString.withDefault(""),
+};
+
 /** Stock Balance URL state. Blank dates are filled with today minus one month through today. Include zero defaults off. */
 export const stockBalanceParsers = {
     company: parseAsString.withDefault(""),
