@@ -26,6 +26,14 @@ export const stockProjectedQtyParsers = {
     warehouse: parseAsString.withDefault(""),
 };
 
+/** Stock Ageing URL state. A blank as-on date is filled with today. */
+export const stockAgeingParsers = {
+    company: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    item: parseAsString.withDefault(""),
+    warehouse: parseAsString.withDefault(""),
+};
+
 /** Stock Balance URL state. Blank dates are filled with today minus one month through today. Include zero defaults off. */
 export const stockBalanceParsers = {
     company: parseAsString.withDefault(""),

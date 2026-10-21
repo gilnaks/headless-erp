@@ -9,6 +9,7 @@ import { BalanceSheet } from "@/components/erp/report/balance-sheet";
 import { CashFlow } from "@/components/erp/report/cash-flow";
 import { GeneralLedger } from "@/components/erp/report/general-ledger";
 import { ProfitAndLoss } from "@/components/erp/report/profit-and-loss";
+import { StockAgeing } from "@/components/erp/report/stock-ageing";
 import { StockBalance } from "@/components/erp/report/stock-balance";
 import { StockLedger } from "@/components/erp/report/stock-ledger";
 import { StockProjectedQty } from "@/components/erp/report/stock-projected-qty";
@@ -28,6 +29,7 @@ import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
+import { loadStockAgeing } from "@/lib/queries/stock-ageing";
 import { loadStockBalance } from "@/lib/queries/stock-balance";
 import { loadStockDashboard } from "@/lib/queries/stock-dashboard";
 import { loadStockLedger } from "@/lib/queries/stock-ledger";
@@ -236,6 +238,41 @@ async function StockBalanceRoute({ orgSlug, searchParams }: { orgSlug: string; s
             itemGroupId={itemGroup}
             warehouseId={warehouse}
             includeZero={includeZero}
+            columns={report.columns}
+            rows={report.rows}
+            error={report.error}
+        />
+    );
+}
+
+async function StockAgeingRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const to = one("to") || isoDate(new Date());
+    const item = one("item") ?? "";
+    const warehouse = one("warehouse") ?? "";
+    let company = one("company") ?? "";
+    if (!company) {
+        const supabase = createClient();
+        const { data } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (data?.length === 1) company = data[0].id;
+    }
+    const report = company
+        ? await loadStockAgeing({ company, to, item, warehouse })
+        : { columns: [], rows: [], error: "Company is mandatory" };
+
+    return (
+        <StockAgeing
+            orgSlug={org.slug}
+            companyId={company}
+            to={to}
+            itemId={item}
+            warehouseId={warehouse}
             columns={report.columns}
             rows={report.rows}
             error={report.error}
@@ -825,6 +862,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "report" && link.target.report === "Stock Projected Qty") {
         return StockProjectedQtyRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Stock Ageing") {
+        return StockAgeingRoute({ orgSlug: org, searchParams });
     }
     if (link.target.kind === "report" && link.target.report === "Trial Balance") {
         return TrialBalanceRoute({ orgSlug: org, searchParams });

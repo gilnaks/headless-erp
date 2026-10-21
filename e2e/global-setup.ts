@@ -81,6 +81,7 @@ const USERS = [
     { env: "E2E_STOCK_LEDGER", local: "stock-ledger", first_name: "Stock", last_name: "Ledger" },
     { env: "E2E_STOCK_BALANCE", local: "stock-balance", first_name: "Stock", last_name: "Balance" },
     { env: "E2E_STOCK_PROJECTED", local: "stock-projected", first_name: "Stock", last_name: "Projected" },
+    { env: "E2E_STOCK_AGEING", local: "stock-ageing", first_name: "Stock", last_name: "Ageing" },
 ] as const;
 
 /**
