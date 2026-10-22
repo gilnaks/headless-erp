@@ -126,8 +126,14 @@ select is(
           where i.parent_id = s.id
        )
        and (
-         select o.delivered_qty = 0
+         select o.delivered_qty = 2
+            and o.returned_qty = 0
+            and h.per_delivered = 100
+            and h.delivery_status = 'Fully Delivered'
+            and h.billing_status = 'Not Billed'
+            and h.status = 'To Bill'
            from public.sales_order_item o
+           join public.sales_order h on h.id = o.parent_id
           where o.id = current_setting('test.so_item')::uuid
        )
        and not exists (
@@ -140,7 +146,7 @@ select is(
      where s.id = current_setting('test.note')::uuid
   ),
   true,
-  'a submitted delivery note is to bill and does not post stock or update the order'
+  'a submitted delivery note is to bill, delivers the order, and posts no stock or general ledger'
 );
 
 select throws_ok(
