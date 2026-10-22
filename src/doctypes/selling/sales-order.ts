@@ -149,6 +149,21 @@ export const salesOrder = defineDoctype<"sales_order", "items">({
     triggers: { items: fillSalesOrderItem },
     actions: [
         {
+            id: "delivery-note",
+            label: "Delivery Note",
+            when: "submitted",
+            visible: (values) => {
+                const status = statusOf(values);
+                return status !== "Closed" && status !== "On Hold";
+            },
+            run: async (_values, { orgSlug, id }) => {
+                if (!id) throw new Error("Save the Sales Order first.");
+                const { makeDeliveryNoteFromSalesOrder } = await import("@/lib/actions/selling/sales-order");
+                await makeDeliveryNoteFromSalesOrder(orgSlug, id);
+                return {};
+            },
+        },
+        {
             id: "close",
             label: "Close",
             when: "submitted",
