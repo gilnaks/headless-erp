@@ -21,7 +21,7 @@ async function grantMapRoles(page: Page, org: string, email: string) {
     await expect(page.getByText("Not Saved")).toBeHidden();
 }
 
-test("a submitted quotation makes a draft sales order", async ({ page }) => {
+test("a submitted quotation makes a sales order and becomes ordered", async ({ page }) => {
     test.slow();
     const stamp = Date.now().toString(36);
     const orgName = `Map Org ${stamp}`;
@@ -64,6 +64,7 @@ test("a submitted quotation makes a draft sales order", async ({ page }) => {
     await page.locator('[data-grid="items"][data-row="0"][data-col="rate"] input:visible').fill("10");
     await page.getByRole("button", { name: /^Save/ }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/selling/quotation/[0-9a-f-]{36}$`), { timeout: 20_000 });
+    const quotationUrl = page.url();
     await page.getByRole("button", { name: "Submit" }).click();
     await expect(page.getByText("Submitted", { exact: true })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("textbox", { name: label("Status") })).toHaveValue("Open");
@@ -77,4 +78,10 @@ test("a submitted quotation makes a draft sales order", async ({ page }) => {
         { timeout: 15_000 },
     );
     await expect(page.locator('[data-grid="items"][data-row="0"][data-col="qty"] input:visible')).toHaveValue(/^2(\.0+)?$/);
+    await page.getByRole("button", { name: "Submit" }).click();
+    await expect(page.getByText("Submitted", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("textbox", { name: label("Status") })).toHaveValue("To Deliver and Bill");
+
+    await page.goto(quotationUrl);
+    await expect(page.getByRole("textbox", { name: label("Status") })).toHaveValue("Ordered");
 });

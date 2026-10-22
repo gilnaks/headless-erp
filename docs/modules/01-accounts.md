@@ -1183,7 +1183,7 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 
 ### P5 / P6 — invoices (owned here, scheduled with 02-selling / 03-buying; flagged because the requested grouping is P2/P3/P7)
 
-- [ ] `sales_invoice` + item / taxes / advances / payment schedule children; validate + submit pipeline, `app.sales_invoice_gl_map`, returns (`update_outstanding_for_self`), credit limit and overdue-billing check — §2.18, §3.1, §3.4, §4.3 (P5)
+- [ ] `sales_invoice` + item / taxes / advances / payment schedule children; validate + submit pipeline, `app.sales_invoice_gl_map`, returns (`update_outstanding_for_self`), credit limit and overdue-billing check; `billed_amt` / `per_billed` on the sales order and delivery note — §2.18, §3.1, §3.4, §4.3 (P5)
 - [ ] quotation → invoice, SO / DN → SI mappers (`app.map_doc`), SI → PE / Return — §3.1, §3.3 (P5)
 - [ ] `purchase_invoice` + children; `ExpenseAccountService` port, `app.purchase_invoice_gl_map`, `is_paid`, write-off, returns, `check_supplier_invoice_uniqueness`, on-hold — §2.19, §3.2, §4.4 (P6)
 - [ ] PO / PR → PI mappers — §3.2 (P6)

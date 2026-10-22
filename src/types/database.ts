@@ -405,6 +405,7 @@ export type Database = {
         Returns: undefined
       }
       provision_organization: { Args: { p: Json }; Returns: Json }
+      quotation_next_status: { Args: { p_id: string }; Returns: string }
       quotation_refresh_latest: {
         Args: { p_exclude: string; p_include: string; p_root: string }
         Returns: undefined
@@ -548,6 +549,10 @@ export type Database = {
       }
       update_delivery_note_status: {
         Args: { p_id: string; p_status: string }
+        Returns: undefined
+      }
+      update_prevdoc_status: {
+        Args: { p_cancel: boolean; p_doctype: string; p_id: string }
         Returns: undefined
       }
       update_sales_order_status: {
