@@ -1,11 +1,15 @@
 import { fillQuotationItem } from "@/lib/stock/item-details";
-import { defineChildDoctype, defineDoctype } from "../define";
+import { defineChildDoctype, defineDoctype, type FieldValues } from "../define";
 
 function today(): string {
     const date = new Date();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function statusOf(values: FieldValues): string {
+    return typeof values.status === "string" ? values.status : "";
 }
 
 export const quotationItem = defineChildDoctype({
@@ -111,6 +115,18 @@ export const quotation = defineDoctype<"quotation", "items">({
     },
     triggers: { items: fillQuotationItem },
     actions: [
+        {
+            id: "sales-order",
+            label: "Sales Order",
+            when: "submitted",
+            visible: (values) => statusOf(values) !== "Lost" && values.is_active !== false,
+            run: async (_values, { orgSlug, id }) => {
+                if (!id) throw new Error("Save the Quotation first.");
+                const { makeSalesOrderFromQuotation } = await import("@/lib/actions/selling/quotation");
+                await makeSalesOrderFromQuotation(orgSlug, id);
+                return {};
+            },
+        },
         {
             id: "revise",
             label: "Revise",

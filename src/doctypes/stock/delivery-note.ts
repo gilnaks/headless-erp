@@ -164,6 +164,18 @@ export const deliveryNote = defineDoctype<"delivery_note", "items" | "packed_ite
     triggers: { items: fillDeliveryNoteItem },
     actions: [
         {
+            id: "return",
+            label: "Return",
+            when: "submitted",
+            visible: (values) => values.is_return !== true,
+            run: async (_values, { orgSlug, id }) => {
+                if (!id) throw new Error("Save the Delivery Note first.");
+                const { makeDeliveryNoteReturn } = await import("@/lib/actions/stock/delivery-note");
+                await makeDeliveryNoteReturn(orgSlug, id);
+                return {};
+            },
+        },
+        {
             id: "close",
             label: "Close",
             when: "submitted",

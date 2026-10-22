@@ -274,6 +274,10 @@ export type Database = {
         Args: { p_doctype: string; p_parent: string }
         Returns: undefined
       }
+      make_return_doc: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: Json
+      }
       make_sl_entries: {
         Args: { p_entries: Json; p_opts?: Json }
         Returns: undefined
@@ -285,6 +289,20 @@ export type Database = {
       make_stock_gl_entries: {
         Args: { p_voucher_id: string; p_voucher_type: string }
         Returns: undefined
+      }
+      map_delivery_note_return: { Args: { p_id: string }; Returns: Json }
+      map_doc: {
+        Args: {
+          p_source_doctype: string
+          p_source_id: string
+          p_target_doctype: string
+        }
+        Returns: Json
+      }
+      map_quotation_to_sales_order: { Args: { p_id: string }; Returns: Json }
+      map_sales_order_to_delivery_note: {
+        Args: { p_id: string }
+        Returns: Json
       }
       material_request_set_status: {
         Args: { p_id: string; p_status: string }
@@ -11302,8 +11320,20 @@ export type Database = {
       }
       import_uoms: { Args: { p_org: string }; Returns: number }
       invitation_preview: { Args: { p_token: string }; Returns: Json }
+      make_return_doc: {
+        Args: { p_doctype: string; p_id: string }
+        Returns: Json
+      }
       make_stock_entry_from_material_request: {
         Args: { p_id: string }
+        Returns: Json
+      }
+      map_doc: {
+        Args: {
+          p_source_doctype: string
+          p_source_id: string
+          p_target_doctype: string
+        }
         Returns: Json
       }
       material_request_set_status: {

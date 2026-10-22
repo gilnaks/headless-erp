@@ -16,6 +16,21 @@ export async function reviseQuotation(orgSlug: string, id: string): Promise<neve
     redirect(`/${orgSlug}/selling/quotation/${created.id}`);
 }
 
+/** Draft Sales Order for the quotation's remaining qty, then opens it. */
+export async function makeSalesOrderFromQuotation(orgSlug: string, id: string): Promise<never> {
+    await requireUser(`/${orgSlug}`);
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("map_doc", {
+        p_source_doctype: "Quotation",
+        p_source_id: id,
+        p_target_doctype: "Sales Order",
+    });
+    if (error) throw new Error(dbError(error).message);
+    const created = data as { id?: string } | null;
+    if (!created?.id) throw new Error("Sales Order was not created.");
+    redirect(`/${orgSlug}/selling/sales-order/${created.id}`);
+}
+
 /** Asks for a lost reason, then marks this version and the other non-ordered versions Lost. */
 export async function setQuotationLost(orgSlug: string, id: string): Promise<void> {
     await requireUser(`/${orgSlug}`);
