@@ -39,6 +39,8 @@ test("a delivery note submits to bill and can be closed", async ({ page }) => {
     await page.getByRole("textbox", { name: label("Item Code") }).fill(code);
     await pick(page, "Item Group", "Products", /^Products/);
     await pick(page, "Default Unit of Measure", "Nos", /^Nos/);
+    // A stock item would need a balance before submit. This note only checks status.
+    await page.getByRole("checkbox", { name: label("Maintain Stock") }).uncheck({ force: true });
     await page.getByRole("button", { name: /^Save/ }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/stock/item/[0-9a-f-]{36}$`), { timeout: 15_000 });
 
