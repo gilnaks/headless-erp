@@ -18,7 +18,7 @@ select set_config(
 
 reset role;
 update public.org_members
-   set roles = roles || array['Sales User']
+   set roles = roles || array['Sales User', 'Stock Manager']
  where org_id = current_setting('test.org')::uuid
    and user_id = '00000000-0000-0000-0000-000000009301';
 select set_config('test.group', (
@@ -46,6 +46,12 @@ insert into public.item (id, org_id, item_code, item_name, item_group_id, stock_
   ('20000000-0000-0000-0000-0000000093d1', current_setting('test.org')::uuid, 'PREV-93-STK', 'PREV-93-STK', current_setting('test.group')::uuid, current_setting('test.nos')::uuid);
 insert into public.customer (id, org_id, name, customer_name) values
   ('20000000-0000-0000-0000-0000000093c1', current_setting('test.org')::uuid, 'Acme', 'Acme');
+insert into public.account (id, org_id, account_name, company_id, parent_id, root_type, account_type)
+  select '20000000-0000-0000-0000-0000000093c9', current_setting('test.org')::uuid, 'Temporary Opening',
+         current_setting('test.company')::uuid, a.parent_id, 'Asset', 'Temporary'
+    from public.account a
+    join public.companies c on c.default_inventory_account_id = a.id
+   where c.id = current_setting('test.company')::uuid;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-000000009301","role":"authenticated"}', true);
@@ -167,6 +173,22 @@ select set_config('test.detail', (
   select i.id::text from public.sales_order_item i
    where i.parent_id = current_setting('test.order')::uuid
 ), true);
+select set_config('test.opening', (
+  public.save_doc('Stock Reconciliation', jsonb_build_object(
+    'org_id', current_setting('test.org')::uuid,
+    'company_id', current_setting('test.company')::uuid,
+    'purpose', 'Opening Stock',
+    'posting_date', (current_date - 1)::text,
+    'posting_time', '08:00:00',
+    'items', jsonb_build_array(jsonb_build_object(
+      'item_id', '20000000-0000-0000-0000-0000000093d1',
+      'warehouse_id', current_setting('test.warehouse')::uuid,
+      'qty', 10, 'valuation_rate', 5
+    ))
+  )) ->> 'id'
+), true);
+select set_config('test.opening_submitted', public.submit_doc('Stock Reconciliation', current_setting('test.opening')::uuid)::text, true);
+
 select set_config('test.note', (
   public.save_doc('Delivery Note', jsonb_build_object(
     'org_id', current_setting('test.org')::uuid,
@@ -198,17 +220,20 @@ select is(
            from public.sales_order_item i
           where i.id = current_setting('test.detail')::uuid
        )
-       and not exists (
-         select 1 from public.stock_ledger_entry e where e.voucher_id = current_setting('test.note')::uuid
+       and (
+         select e.actual_qty = -2 and not e.is_cancelled
+           from public.stock_ledger_entry e
+          where e.voucher_id = current_setting('test.note')::uuid
        )
-       and not exists (
-         select 1 from public.gl_entry g where g.voucher_id = current_setting('test.note')::uuid
+       and exists (
+         select 1 from public.gl_entry g
+          where g.voucher_id = current_setting('test.note')::uuid and not g.is_cancelled and g.party_id is null
        )
       from public.sales_order s
      where s.id = current_setting('test.order')::uuid
   ),
   true,
-  'a full delivery note bills the order next and posts no stock or general ledger'
+  'a full delivery note bills the order next and posts stock and the general ledger'
 );
 
 select throws_ok(
@@ -265,8 +290,14 @@ select is(
            from public.delivery_note r
           where r.id = current_setting('test.return')::uuid
        )
-       and not exists (
-         select 1 from public.stock_ledger_entry e where e.voucher_id = current_setting('test.return')::uuid
+       and (
+         select e.actual_qty = 2 and not e.is_cancelled
+           from public.stock_ledger_entry e
+          where e.voucher_id = current_setting('test.return')::uuid
+       )
+       and exists (
+         select 1 from public.gl_entry g
+          where g.voucher_id = current_setting('test.return')::uuid and not g.is_cancelled
        )
       from public.delivery_note n
      where n.id = current_setting('test.note')::uuid

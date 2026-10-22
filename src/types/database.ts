@@ -156,6 +156,10 @@ export type Database = {
       }
       delivery_note_check_credit: { Args: { p_id: string }; Returns: undefined }
       delivery_note_next_status: { Args: { p_id: string }; Returns: string }
+      delivery_note_post_stock: {
+        Args: { p_cancel: boolean; p_id: string }
+        Returns: undefined
+      }
       doc_system_columns: { Args: never; Returns: string[] }
       doc_writable_columns: {
         Args: { p_exclude?: string[]; p_keys: string[]; p_table: string }
