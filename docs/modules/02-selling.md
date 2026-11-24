@@ -492,6 +492,8 @@ Charts, all Report charts rendered with Recharts:
 
 `app.report_sales_analytics(filters)`. Filters: `tree_type` (`Customer|Customer Group|Item|Item Group|Territory|Sales Person`), `doc_type` (`Quotation|Sales Order|Delivery Note|Sales Invoice|Sales Invoice (due)|Payment Entry|All`), `value_quantity` (`Value|Quantity`), `from_date`, `to_date`, `company`, `range` (`Weekly|Monthly|Quarterly|Yearly`). Value is `base_net_total` (Payment Entry: received amount). Quantity is stock qty. `Sales Invoice (due)` buckets by `due_date`. `doc_type = All` stacks Quotation, Sales Order, Delivery Note, Sales Invoice, Sales Invoice (due) and Payment Entry as separate series. Tree types roll up to ancestors via `path`. Subsidiary-company aggregation is omitted (one company tree is in scope, but the report does not cross companies).
 
+**Built (0509).** `app.report_sales_analytics` sums submitted quotations, sales orders, and delivery notes into weekly, monthly, quarterly, or yearly columns, plus a total. Value is `base_grand_total` on the document and the item amount times the conversion rate on an item row. Quantity is `stock_qty`. Customer Group, Item Group, and Territory roll a leaf up its path. Order Type is only Quotation and Sales Order. Payment Entry is a customer receipt and rejects quantity. All forces Customer and Value, then stacks Quotation, Sales Order, Delivery Note, and Payment Entry under a heading. Sales Invoice, Project, and Sales Person are rejected. A missing company or a from-date after the to-date is rejected. A range with no rows returns the columns and an empty list. The dashboard charts stay on the 0508 stubs. Migration `0509_selling_sales_analytics.sql`.
+
 ### 7.3 Sales Register
 
 `app.report_sales_register`. Port of `accounts/report/sales_register`: submitted Sales Invoices (and their returns) in a date range, with item rows when the user expands a voucher. Columns: voucher, posting date, customer, customer name, customer group, territory, tax id, receivable account, sales order, delivery note, cost center, warehouse, currency, net total, tax total, grand total, rounded total. Filters: company ✔, from/to date ✔, customer, customer group, territory, item, warehouse. Mode of payment and owner columns are omitted (POS and user-ownership filters).
@@ -564,5 +566,6 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 - [x] Delivery-note SLE and perpetual GL (with 04-stock) — §4, `0506_stock_delivery_note_ledger.sql`
 - [x] Selling Settings form — §2.14, `0507_selling_settings.sql`
 - [x] Dashboard cards and the four charts — §7.1, `0508_selling_dashboard.sql`
-- [ ] Sales Analytics, Sales Register, Gross Profit — §7.2–§7.4
+- [x] Sales Analytics — §7.2, `0509_selling_sales_analytics.sql`
+- [ ] Sales Register, Gross Profit — §7.3–§7.4
 - [ ] Retarget the Selling nav aliases (Sales Invoice, Delivery Note, Item, Price List) — §1, §9 item 12
