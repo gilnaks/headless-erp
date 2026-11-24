@@ -8789,6 +8789,165 @@ export type Database = {
           },
         ]
       }
+      selling_settings: {
+        Row: {
+          allow_against_multiple_purchase_orders: boolean
+          allow_delivery_of_overproduced_qty: boolean
+          allow_multiple_items: boolean
+          allow_negative_rates_for_items: boolean
+          allow_sales_order_creation_for_expired_quotation: boolean
+          allow_zero_qty_in_quotation: boolean
+          allow_zero_qty_in_sales_order: boolean
+          blanket_order_allowance: number | null
+          created_at: string
+          created_by: string | null
+          cust_master_name: string
+          customer_group_id: string | null
+          deliver_secondary_items: boolean
+          dn_required: string
+          dont_reserve_sales_order_qty_on_sales_return: boolean
+          editable_bundle_item_rates: boolean
+          editable_price_list_rate: boolean
+          enable_cutoff_date_on_bulk_delivery_note_creation: boolean
+          enable_discount_accounting: boolean
+          enable_proforma_invoice: boolean
+          enable_tracking_sales_commissions: boolean
+          enable_utm: boolean
+          fallback_to_default_price_list: boolean
+          hide_tax_id: boolean
+          id: string
+          maintain_same_rate_action: string
+          maintain_same_sales_rate: boolean
+          org_id: string
+          role_to_override_stop_action: string | null
+          sales_update_frequency: string
+          selling_price_list_id: string | null
+          set_zero_rate_for_expired_batch: boolean
+          skip_delivery_note_for_service_items: boolean
+          so_required: string
+          territory_id: string | null
+          updated_at: string
+          updated_by: string | null
+          validate_selling_price: boolean
+        }
+        Insert: {
+          allow_against_multiple_purchase_orders?: boolean
+          allow_delivery_of_overproduced_qty?: boolean
+          allow_multiple_items?: boolean
+          allow_negative_rates_for_items?: boolean
+          allow_sales_order_creation_for_expired_quotation?: boolean
+          allow_zero_qty_in_quotation?: boolean
+          allow_zero_qty_in_sales_order?: boolean
+          blanket_order_allowance?: number | null
+          created_at?: string
+          created_by?: string | null
+          cust_master_name?: string
+          customer_group_id?: string | null
+          deliver_secondary_items?: boolean
+          dn_required?: string
+          dont_reserve_sales_order_qty_on_sales_return?: boolean
+          editable_bundle_item_rates?: boolean
+          editable_price_list_rate?: boolean
+          enable_cutoff_date_on_bulk_delivery_note_creation?: boolean
+          enable_discount_accounting?: boolean
+          enable_proforma_invoice?: boolean
+          enable_tracking_sales_commissions?: boolean
+          enable_utm?: boolean
+          fallback_to_default_price_list?: boolean
+          hide_tax_id?: boolean
+          id?: string
+          maintain_same_rate_action?: string
+          maintain_same_sales_rate?: boolean
+          org_id: string
+          role_to_override_stop_action?: string | null
+          sales_update_frequency?: string
+          selling_price_list_id?: string | null
+          set_zero_rate_for_expired_batch?: boolean
+          skip_delivery_note_for_service_items?: boolean
+          so_required?: string
+          territory_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          validate_selling_price?: boolean
+        }
+        Update: {
+          allow_against_multiple_purchase_orders?: boolean
+          allow_delivery_of_overproduced_qty?: boolean
+          allow_multiple_items?: boolean
+          allow_negative_rates_for_items?: boolean
+          allow_sales_order_creation_for_expired_quotation?: boolean
+          allow_zero_qty_in_quotation?: boolean
+          allow_zero_qty_in_sales_order?: boolean
+          blanket_order_allowance?: number | null
+          created_at?: string
+          created_by?: string | null
+          cust_master_name?: string
+          customer_group_id?: string | null
+          deliver_secondary_items?: boolean
+          dn_required?: string
+          dont_reserve_sales_order_qty_on_sales_return?: boolean
+          editable_bundle_item_rates?: boolean
+          editable_price_list_rate?: boolean
+          enable_cutoff_date_on_bulk_delivery_note_creation?: boolean
+          enable_discount_accounting?: boolean
+          enable_proforma_invoice?: boolean
+          enable_tracking_sales_commissions?: boolean
+          enable_utm?: boolean
+          fallback_to_default_price_list?: boolean
+          hide_tax_id?: boolean
+          id?: string
+          maintain_same_rate_action?: string
+          maintain_same_sales_rate?: boolean
+          org_id?: string
+          role_to_override_stop_action?: string | null
+          sales_update_frequency?: string
+          selling_price_list_id?: string | null
+          set_zero_rate_for_expired_batch?: boolean
+          skip_delivery_note_for_service_items?: boolean
+          so_required?: string
+          territory_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          validate_selling_price?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selling_settings_org_id_customer_group_id_fkey"
+            columns: ["org_id", "customer_group_id"]
+            isOneToOne: false
+            referencedRelation: "customer_group"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "selling_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "selling_settings_org_id_role_to_override_stop_action_fkey"
+            columns: ["org_id", "role_to_override_stop_action"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["org_id", "name"]
+          },
+          {
+            foreignKeyName: "selling_settings_org_id_selling_price_list_id_fkey"
+            columns: ["org_id", "selling_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "selling_settings_org_id_territory_id_fkey"
+            columns: ["org_id", "territory_id"]
+            isOneToOne: false
+            referencedRelation: "territory"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
       serial_and_batch_bundle: {
         Row: {
           amended_from: string | null
