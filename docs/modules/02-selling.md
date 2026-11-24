@@ -484,6 +484,8 @@ Charts, all Report charts rendered with Recharts:
 | Sales Order Analysis | `sales_order_analysis` | status `To Bill` and `To Deliver`; one row per order (`group_by_so = 0`) |
 | Item-wise Annual Sales | item-wise sales history | from the start of the fiscal year |
 
+**Built (0508).** `app.card_selling` sums `base_grand_total` of submitted orders updated this calendar year, excluding Closed, and counts orders To Deliver and Bill or To Deliver, and orders To Deliver and Bill or To Bill. Active customers are the organization's customers that are not disabled. `app.chart_selling` draws Amount to Bill and Billed Amount for those open orders dated today or earlier. Billed amount stays 0 until Sales Invoice. Sales Order Trends, Top Customers, and Item-wise Annual Sales return not available. A missing company is rejected. Migration `0508_selling_dashboard.sql`.
+
 `Average Sales Order Value`, `Sales Orders Count` and `Total Sales Amount` exist as number cards and are not on the default dashboard. The first of those is wired to Purchase Order in ERPNext; we do not surface it.
 
 ### 7.2 Sales Analytics
@@ -561,6 +563,6 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 - [x] `app.update_prevdoc_status` for ordered qty, delivered qty, returned qty, and the three status maps — §4, §5, `0505_selling_prevdoc_status.sql`
 - [x] Delivery-note SLE and perpetual GL (with 04-stock) — §4, `0506_stock_delivery_note_ledger.sql`
 - [x] Selling Settings form — §2.14, `0507_selling_settings.sql`
-- [ ] Dashboard cards and the four charts — §7.1
+- [x] Dashboard cards and the four charts — §7.1, `0508_selling_dashboard.sql`
 - [ ] Sales Analytics, Sales Register, Gross Profit — §7.2–§7.4
 - [ ] Retarget the Selling nav aliases (Sales Invoice, Delivery Note, Item, Price List) — §1, §9 item 12
