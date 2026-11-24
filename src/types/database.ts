@@ -449,6 +449,7 @@ export type Database = {
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_sales_analytics: { Args: { p_filters: Json }; Returns: Json }
+      report_sales_register: { Args: { p_filters: Json }; Returns: Json }
       report_stock_ageing: { Args: { p_filters: Json }; Returns: Json }
       report_stock_analytics: { Args: { p_filters: Json }; Returns: Json }
       report_stock_balance: { Args: { p_filters: Json }; Returns: Json }
@@ -11847,6 +11848,7 @@ export type Database = {
       report_general_ledger: { Args: { p_filters: Json }; Returns: Json }
       report_profit_and_loss: { Args: { p_filters: Json }; Returns: Json }
       report_sales_analytics: { Args: { p_filters: Json }; Returns: Json }
+      report_sales_register: { Args: { p_filters: Json }; Returns: Json }
       report_stock_ageing: { Args: { p_filters: Json }; Returns: Json }
       report_stock_analytics: { Args: { p_filters: Json }; Returns: Json }
       report_stock_balance: { Args: { p_filters: Json }; Returns: Json }
