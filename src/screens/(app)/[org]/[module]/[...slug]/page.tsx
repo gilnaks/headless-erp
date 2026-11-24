@@ -1,4 +1,5 @@
 import { AccountsDashboard } from "@/components/erp/dashboard/accounts-dashboard";
+import { SellingDashboard } from "@/components/erp/dashboard/selling-dashboard";
 import { StockDashboard } from "@/components/erp/dashboard/stock-dashboard";
 import { DocForm } from "@/components/erp/doc/doc-form";
 import { DocList } from "@/components/erp/doc/doc-list";
@@ -30,6 +31,7 @@ import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
+import { loadSellingDashboard } from "@/lib/queries/selling-dashboard";
 import { loadStockAgeing } from "@/lib/queries/stock-ageing";
 import { loadStockAnalytics } from "@/lib/queries/stock-analytics";
 import { loadStockBalance } from "@/lib/queries/stock-balance";
@@ -829,6 +831,36 @@ async function StockDashboardRoute({ orgSlug, searchParams }: { orgSlug: string;
     );
 }
 
+async function SellingDashboardRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const companyParam = params.company;
+    let company = (Array.isArray(companyParam) ? companyParam[0] : companyParam) ?? "";
+    if (!company) {
+        const supabase = createClient();
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+    const dashboard = company ? await loadSellingDashboard({ company }) : null;
+
+    return (
+        <SellingDashboard
+            orgSlug={org.slug}
+            companyId={company}
+            annualSales={dashboard?.annualSales ?? EMPTY_STOCK_CARD}
+            toDeliver={dashboard?.toDeliver ?? EMPTY_STOCK_CARD}
+            toBill={dashboard?.toBill ?? EMPTY_STOCK_CARD}
+            customers={dashboard?.customers ?? EMPTY_STOCK_CARD}
+            trends={dashboard?.trends ?? EMPTY_STOCK_SERIES}
+            topCustomers={dashboard?.topCustomers ?? EMPTY_STOCK_SERIES}
+            analysis={dashboard?.analysis ?? EMPTY_STOCK_SERIES}
+            itemSales={dashboard?.itemSales ?? EMPTY_STOCK_SERIES}
+            error={company ? undefined : "Company is mandatory"}
+        />
+    );
+}
+
 async function AccountsDashboardRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
     const org = await getOrgBySlug(orgSlug);
     if (!org) notFound();
@@ -955,6 +987,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "dashboard" && moduleId === "stock") {
         return StockDashboardRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "dashboard" && moduleId === "selling") {
+        return SellingDashboardRoute({ orgSlug: org, searchParams });
     }
 
     return <PlaceholderPage title={link.label} description={describe(link, path)} phase={link.phase} />;
