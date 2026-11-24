@@ -221,8 +221,8 @@ export const MODULES: ModuleNav[] = [
             doctype("Customer", "selling/customer", "P2", "Customer", Users01),
             doctype("Quotation", "selling/quotation", "P5", "Quotation", File06),
             doctype("Sales Order", "selling/sales-order", "P5", "Sales Order", ShoppingCart01),
-            doctype("Delivery Note", "selling/delivery-note", "P5", "Delivery Note", Truck01),
-            doctype("Sales Invoice", "selling/sales-invoice", "P5", "Sales Invoice", Receipt),
+            doctype("Delivery Note", "stock/delivery-note", "P5", "Delivery Note", Truck01),
+            doctype("Sales Invoice", "accounts/sales-invoice", "P5", "Sales Invoice", Receipt),
         ],
         sections: [
             {
@@ -240,7 +240,7 @@ export const MODULES: ModuleNav[] = [
                 label: "Items",
                 icon: Package,
                 items: [
-                    doctype("Item", "selling/item", "P2"),
+                    doctype("Item", "stock/item", "P2"),
                     doctype("Product Bundle", "selling/product-bundle", "P2"),
                     doctype("Price List", "stock/price-list", "P2"),
                     doctype("Item Price", "stock/item-price", "P2"),

@@ -11,8 +11,8 @@ One doctype, one route. Sidebar items in other modules are aliases:
 | Doctype | Canonical route | Also linked from |
 |---|---|---|
 | Customer, Customer Group, Territory, Sales Person, Quotation, Sales Order, Selling Settings, Product Bundle | `/[org]/selling/…` | — |
-| Sales Invoice | `/[org]/accounts/sales-invoice` | Selling sidebar (nav currently says `selling/sales-invoice`; P5 points it here) |
-| Delivery Note | `/[org]/stock/delivery-note` | Selling sidebar (nav currently says `selling/delivery-note`; P5 points it here) |
+| Sales Invoice | `/[org]/accounts/sales-invoice` | Selling sidebar. The doctype is not built, so this route is still the placeholder. |
+| Delivery Note | `/[org]/stock/delivery-note` | Selling sidebar |
 | Item, Price List | `/[org]/stock/item`, `/[org]/stock/price-list` | Selling and Buying sidebars |
 
 ERPNext sources read (repo-relative to `C:\Users\John\Desktop\erpnext`):
@@ -533,7 +533,7 @@ The Selling sidebar links to the P7 reports specified in 01-accounts. No second 
 9. **Deviation:** Industry Type is a master and is not seeded. **Reason:** 00-setup skipped that fixture; the customer link still needs a target.
 10. **Not a deviation (recorded for implementers):** quotation status `Replied` is never written, and `Expired` is only written by the daily job, not by `set_status`. That is what `status_map` and `set_expired_status` do; a later status refresh moves an expired quotation back to Open.
 11. **Deviation:** sales-partner commission fields (`sales_partner`, `commission_rate`, `total_commission`) are omitted. Sales-team allocation and incentives stay, using `grant_commission` on the item. **Reason:** Sales Partner is not on the sidebar and `enable_tracking_sales_commissions` defaults off; the team itself is on the default customer and order forms.
-12. **Deviation:** Selling sidebar entries for Sales Invoice, Delivery Note, Item and Price List open the canonical route in §1 rather than a second copy of the doctype. **Reason:** one table, one form; the current `navigation.ts` paths are placeholders until P5.
+12. **Deviation:** Selling sidebar entries for Sales Invoice, Delivery Note, Item and Price List open the canonical route in §1 rather than a second copy of the doctype. Sales Invoice still shows the accounts placeholder because that doctype is not built. **Reason:** one table, one form.
 13. **Deviation:** Quotation header totals are the sum of item amounts. Tax rows, rounding, `in_words`, margin columns, and the payment schedule wait for the open accounts lines. Packed rows are stored by `app.make_packing_list` and stay off this form (item 15). `app.map_doc` saves a sales order (0504). A sales invoice still waits. Competitors, opportunity, and lead stay out (items 1 and 3). Submitting a sales order writes the quotation's ordered quantity and status (0505). Cancelling the quotation is refused while that order is submitted. **Reason:** those engines are still open checklist lines.
 14. **Deviation:** Sales Order header totals are the sum of item amounts. Tax rows and the payment schedule wait for their own lines. `app.map_doc` saves a delivery note (0504). Packed rows are stored and stay off this form (item 15). Selling Settings is stored (0507). Submit still uses the wizard defaults, so skip-delivery stays off, a service item still needs a delivery date, and a repeated customer PO is always rejected. `per_billed` and `advance_paid` stay 0, so a delivered order becomes To Bill and never To Pay or Completed. `per_delivered` is written when a delivery note is submitted (0505). Quotation ordered quantity is written by that same updater. There is no sales invoice, so cancel does not look for a draft invoice. There is no project column. Row close stays off the form because `save_doc` rewrites children only while the order is a draft; `po_no` and `po_date` are the post-submit edits. **Reason:** those engines and the child-update path are still open.
 15. **Deviation:** Delivery Note submit posts a stock ledger entry and perpetual GL (0506). It also updates the sales order's delivered quantity and the source note's returned quantity (0505). Serial and batch columns are omitted, so a serialized item cannot be delivered. Quotation and sales order packed rows are stored by `app.make_packing_list` and are not shown on those forms. `app.make_return_doc` saves a return draft (0504). Submitting that return posts the stock back in. Packed rows have no target warehouse, so they stay in their own warehouse. **Reason:** the sales invoice does not exist yet, and the serial columns are a later stock line.
@@ -568,4 +568,4 @@ Migration numbers follow 02-database-conventions: P2 `02nn_selling_*`, P5 `05nn_
 - [x] Dashboard cards and the four charts — §7.1, `0508_selling_dashboard.sql`
 - [x] Sales Analytics — §7.2, `0509_selling_sales_analytics.sql`
 - [ ] Sales Register, Gross Profit — §7.3–§7.4
-- [ ] Retarget the Selling nav aliases (Sales Invoice, Delivery Note, Item, Price List) — §1, §9 item 12
+- [x] Retarget the Selling nav aliases (Sales Invoice, Delivery Note, Item, Price List) — §1, §9 item 12

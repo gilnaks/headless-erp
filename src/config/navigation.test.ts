@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findLinkForPath, MODULE_IDS, MODULES, moduleForPath, moduleLinks } from "./navigation";
+import { findLinkForPath, getModule, MODULE_IDS, MODULES, moduleForPath, moduleLinks } from "./navigation";
 
 describe("navigation config", () => {
     it("covers the eight PLAN §1 modules exactly once", () => {
@@ -42,6 +42,17 @@ describe("navigation config", () => {
         ]) {
             expect(labels).not.toContain(banned);
         }
+    });
+
+    it("points Selling aliases at the canonical routes", () => {
+        const selling = getModule("selling");
+        expect(selling).toBeDefined();
+        if (!selling) return;
+        const path = (label: string) => moduleLinks(selling).find((link) => link.label === label)?.path;
+        expect(path("Delivery Note")).toBe("stock/delivery-note");
+        expect(path("Sales Invoice")).toBe("accounts/sales-invoice");
+        expect(path("Item")).toBe("stock/item");
+        expect(path("Price List")).toBe("stock/price-list");
     });
 
     it("resolves doctype sub-pages to their list entry", () => {
