@@ -334,6 +334,7 @@ export type Database = {
       }
       on_cancel__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_cancel__quotation: { Args: { p_id: string }; Returns: undefined }
+      on_cancel__sales_invoice: { Args: { p_id: string }; Returns: undefined }
       on_cancel__sales_order: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_cancel__stock_reconciliation: {
@@ -349,6 +350,7 @@ export type Database = {
       on_submit__payment_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__product_bundle: { Args: { p_id: string }; Returns: undefined }
       on_submit__quotation: { Args: { p_id: string }; Returns: undefined }
+      on_submit__sales_invoice: { Args: { p_id: string }; Returns: undefined }
       on_submit__sales_order: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_entry: { Args: { p_id: string }; Returns: undefined }
       on_submit__stock_reconciliation: {
@@ -473,6 +475,7 @@ export type Database = {
       }
       revise_quotation: { Args: { p_id: string }; Returns: Json }
       round: { Args: { p_precision: number; p_value: number }; Returns: number }
+      sales_invoice_gl_map: { Args: { p_id: string }; Returns: Json }
       sales_order_check_credit: { Args: { p_id: string }; Returns: undefined }
       sales_order_next_status: { Args: { p_id: string }; Returns: string }
       sanitize_doc_payload: {
@@ -8247,6 +8250,224 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_invoice: {
+        Row: {
+          amended_from: string | null
+          base_grand_total: number
+          company_id: string
+          conversion_rate: number
+          cost_center_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          customer_name: string | null
+          debit_to_id: string
+          docstatus: number
+          due_date: string
+          grand_total: number
+          id: string
+          name: string
+          naming_series: string
+          net_total: number
+          org_id: string
+          outstanding_amount: number
+          posting_date: string
+          posting_time: string
+          selling_price_list_id: string
+          status: string
+          total: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amended_from?: string | null
+          base_grand_total?: number
+          company_id: string
+          conversion_rate?: number
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          customer_id: string
+          customer_name?: string | null
+          debit_to_id: string
+          docstatus?: number
+          due_date: string
+          grand_total?: number
+          id?: string
+          name: string
+          naming_series?: string
+          net_total?: number
+          org_id: string
+          outstanding_amount?: number
+          posting_date?: string
+          posting_time?: string
+          selling_price_list_id: string
+          status?: string
+          total?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amended_from?: string | null
+          base_grand_total?: number
+          company_id?: string
+          conversion_rate?: number
+          cost_center_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          customer_name?: string | null
+          debit_to_id?: string
+          docstatus?: number
+          due_date?: string
+          grand_total?: number
+          id?: string
+          name?: string
+          naming_series?: string
+          net_total?: number
+          org_id?: string
+          outstanding_amount?: number
+          posting_date?: string
+          posting_time?: string
+          selling_price_list_id?: string
+          status?: string
+          total?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoice_org_id_amended_from_fkey"
+            columns: ["org_id", "amended_from"]
+            isOneToOne: false
+            referencedRelation: "sales_invoice"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_org_id_company_id_fkey"
+            columns: ["org_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_org_id_customer_id_fkey"
+            columns: ["org_id", "customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_org_id_debit_to_id_fkey"
+            columns: ["org_id", "debit_to_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_org_id_selling_price_list_id_fkey"
+            columns: ["org_id", "selling_price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["org_id", "id"]
+          },
+        ]
+      }
+      sales_invoice_item: {
+        Row: {
+          amount: number
+          cost_center_id: string
+          id: string
+          idx: number
+          income_account_id: string
+          item_id: string
+          item_name: string | null
+          org_id: string
+          parent_id: string
+          qty: number
+          rate: number
+        }
+        Insert: {
+          amount?: number
+          cost_center_id: string
+          id?: string
+          idx: number
+          income_account_id: string
+          item_id: string
+          item_name?: string | null
+          org_id: string
+          parent_id: string
+          qty: number
+          rate?: number
+        }
+        Update: {
+          amount?: number
+          cost_center_id?: string
+          id?: string
+          idx?: number
+          income_account_id?: string
+          item_id?: string
+          item_name?: string | null
+          org_id?: string
+          parent_id?: string
+          qty?: number
+          rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoice_item_org_id_cost_center_id_fkey"
+            columns: ["org_id", "cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_center"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_item_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_item_org_id_income_account_id_fkey"
+            columns: ["org_id", "income_account_id"]
+            isOneToOne: false
+            referencedRelation: "account"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_item_org_id_item_id_fkey"
+            columns: ["org_id", "item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["org_id", "id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_item_org_id_parent_id_fkey"
+            columns: ["org_id", "parent_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoice"
+            referencedColumns: ["org_id", "id"]
           },
         ]
       }

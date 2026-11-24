@@ -22,7 +22,7 @@ test("selling aliases open the canonical screens", async ({ page }) => {
     await selling.getByRole("link", { name: "Sales Invoice" }).click();
     await expect(page).toHaveURL(new RegExp(`${org}/accounts/sales-invoice$`));
     await expect(page.getByRole("heading", { name: "Sales Invoice" })).toBeVisible();
-    await expect(page.getByText("Not built yet (phase P5)")).toBeVisible();
+    await expect(page.getByText("Not built yet (phase P5)")).toHaveCount(0);
 
     await page.getByRole("link", { name: "Selling" }).click();
     await openItems();
