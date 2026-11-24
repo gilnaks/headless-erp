@@ -10,6 +10,7 @@ import { BalanceSheet } from "@/components/erp/report/balance-sheet";
 import { CashFlow } from "@/components/erp/report/cash-flow";
 import { GeneralLedger } from "@/components/erp/report/general-ledger";
 import { ProfitAndLoss } from "@/components/erp/report/profit-and-loss";
+import { SalesAnalytics } from "@/components/erp/report/sales-analytics";
 import { StockAgeing } from "@/components/erp/report/stock-ageing";
 import { StockAnalytics } from "@/components/erp/report/stock-analytics";
 import { StockBalance } from "@/components/erp/report/stock-balance";
@@ -31,6 +32,7 @@ import { loadGeneralLedger } from "@/lib/queries/general-ledger";
 import { getListLinkTitles } from "@/lib/queries/links";
 import { loadProfitAndLoss } from "@/lib/queries/profit-and-loss";
 import { getReferenceOptions } from "@/lib/queries/reference";
+import { loadSalesAnalytics } from "@/lib/queries/sales-analytics";
 import { loadSellingDashboard } from "@/lib/queries/selling-dashboard";
 import { loadStockAgeing } from "@/lib/queries/stock-ageing";
 import { loadStockAnalytics } from "@/lib/queries/stock-analytics";
@@ -341,6 +343,58 @@ async function StockAnalyticsRoute({ orgSlug, searchParams }: { orgSlug: string;
             itemGroupId={itemGroup}
             warehouseId={warehouse}
             brandId={brand}
+            columns={report.columns}
+            rows={report.rows}
+            error={report.error}
+        />
+    );
+}
+
+const SALES_TREES = ["Customer Group", "Customer", "Item Group", "Item", "Territory", "Order Type"] as const;
+const SALES_DOCS = ["All", "Quotation", "Sales Order", "Delivery Note", "Payment Entry"] as const;
+
+async function SalesAnalyticsRoute({ orgSlug, searchParams }: { orgSlug: string; searchParams: ItemPageProps["searchParams"] }) {
+    const org = await getOrgBySlug(orgSlug);
+    if (!org) notFound();
+    const params = await searchParams;
+    const one = (key: string) => {
+        const value = params[key];
+        return Array.isArray(value) ? value[0] : value;
+    };
+    const supabase = createClient();
+    const { data } = await supabase
+        .from("fiscal_year")
+        .select("year_start_date, year_end_date")
+        .eq("org_id", org.id)
+        .order("year_start_date", { ascending: false });
+    const today = isoDate(new Date());
+    const current = (data ?? []).find((year) => year.year_start_date <= today && year.year_end_date >= today);
+    const fallback = calendarYear();
+    const from = one("from") || current?.year_start_date || fallback.from;
+    const to = one("to") || current?.year_end_date || fallback.to;
+    const tree = oneOf(one("tree"), SALES_TREES, "Customer");
+    const doc = oneOf(one("doc"), SALES_DOCS, "Sales Order");
+    const value = oneOf(one("value"), ["Value", "Quantity"], "Value");
+    const range = oneOf(one("range"), ["Weekly", "Monthly", "Quarterly", "Yearly"], "Monthly");
+    let company = one("company") ?? "";
+    if (!company) {
+        const { data: companies } = await supabase.from("companies").select("id").eq("org_id", org.id).limit(2);
+        if (companies?.length === 1) company = companies[0].id;
+    }
+    const report = company
+        ? await loadSalesAnalytics({ company, from, to, tree, doc, value, range })
+        : { columns: [], rows: [], error: "Company is mandatory" };
+
+    return (
+        <SalesAnalytics
+            orgSlug={org.slug}
+            companyId={company}
+            from={from}
+            to={to}
+            tree={tree}
+            doc={doc}
+            value={value}
+            range={range}
             columns={report.columns}
             rows={report.rows}
             error={report.error}
@@ -966,6 +1020,9 @@ async function ItemRoute({ params, searchParams }: ItemPageProps) {
     }
     if (link.target.kind === "report" && link.target.report === "Stock Analytics") {
         return StockAnalyticsRoute({ orgSlug: org, searchParams });
+    }
+    if (link.target.kind === "report" && link.target.report === "Sales Analytics") {
+        return SalesAnalyticsRoute({ orgSlug: org, searchParams });
     }
     if (link.target.kind === "report" && link.target.report === "Trial Balance") {
         return TrialBalanceRoute({ orgSlug: org, searchParams });

@@ -35,6 +35,17 @@ export const stockAgeingParsers = {
 };
 
 /** Stock Analytics URL state. Blank dates are filled from the fiscal year that contains today. */
+/** Sales Analytics URL state. Blank dates are filled from the fiscal year that contains today. Based On defaults to Sales Order. */
+export const salesAnalyticsParsers = {
+    company: parseAsString.withDefault(""),
+    from: parseAsString.withDefault(""),
+    to: parseAsString.withDefault(""),
+    tree: parseAsString.withDefault("Customer"),
+    doc: parseAsString.withDefault("Sales Order"),
+    value: parseAsString.withDefault("Value"),
+    range: parseAsString.withDefault("Monthly"),
+};
+
 export const stockAnalyticsParsers = {
     company: parseAsString.withDefault(""),
     from: parseAsString.withDefault(""),
