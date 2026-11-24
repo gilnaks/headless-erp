@@ -93,6 +93,7 @@ const USERS = [
     { env: "E2E_SELLING_DASHBOARD", local: "selling-dashboard", first_name: "Selling", last_name: "Dashboard" },
     { env: "E2E_SALES_ANALYTICS", local: "sales-analytics", first_name: "Sales", last_name: "Analytics" },
     { env: "E2E_SELLING_NAV", local: "selling-nav", first_name: "Selling", last_name: "Nav" },
+    { env: "E2E_SALES_INVOICE", local: "sales-invoice", first_name: "Sales", last_name: "Invoice" },
 ] as const;
 
 /**

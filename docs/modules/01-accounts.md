@@ -301,7 +301,9 @@ Validations: see §3.6.
 
 ### 2.18 Sales Invoice → `sales_invoice` + children (P5; owned here, flows in 02-selling)
 
-- **Kind:** submittable. **Naming series:** `ACC-SINV-.YYYY.-` and `ACC-SINV-RET-.YYYY.-` (returns default to the RET series). Title `customer_name`. **Perms:** Accounts Manager rwcsxd, Accounts User rwcs (**no cancel in ERPNext**, kept). 02-selling may add Sales User r.
+**Built (0510).** A draft is named `DRAFT-<id>`. Submit issues `ACC-SINV-.YYYY.-`. Header totals are the sum of the item amounts. `base_grand_total` is that sum times the conversion rate, and `outstanding_amount` starts at the same figure. An empty due date becomes the posting date. Debit To defaults from the customer receivable. A blank income account uses the item default, then the company default income account. Submit debits Debit To for the customer and credits each item income account for the base amount. Status is Unpaid when the due date is today or later, and Overdue when it is earlier. Cancel reverses the general-ledger rows. Taxes, returns, stock, the payment schedule, advances, and `billed_amt` stay open. A later payment does not change the status until `app.refresh_outstanding` is built.
+
+- **Kind:** submittable. **Naming series:** `ACC-SINV-.YYYY.-` and `ACC-SINV-RET-.YYYY.-` (returns default to the RET series). Title `customer_name`. **Perms:** Accounts Manager rwcsxd, Accounts User rwcs (**no cancel in ERPNext**, kept). Sales User can read.
 - **List:** columns title, status, posting_date, due_date, grand_total (right column), customer; standard filters customer, company, posting_date, status; search posting_date, due_date, customer, base_grand_total, outstanding_amount. Saved list filters (v16 `list_filter`): Credit Notes (`is_return = 1`), Drafts, Overdue, This Month, Unpaid. Bulk actions: Delivery Note, Payment (Payment Entry).
 - **Indicator colours** (`sales_invoice_list.js`): Draft red, Unpaid orange, Paid green, Return gray, Credit Note Issued gray (shown as green "Settled with Credit Note" when `outstanding_amount = 0`), Overdue red, Partly Paid yellow, Internal Transfer darkgrey, Cancelled red.
 - **Connections** (`sales_invoice_dashboard.py`): Payment → Payment Entry, Journal Entry (Payment Request, Invoice Discounting, Dunning dropped); Reference → Timesheet, Delivery Note, Sales Order; Returns → Sales Invoice (`return_against`). Subscription/Auto Repeat and Internal Transfers dropped.
@@ -1183,7 +1185,8 @@ Migration numbers follow 02-database-conventions (one block per phase, numbered 
 
 ### P5 / P6 — invoices (owned here, scheduled with 02-selling / 03-buying; flagged because the requested grouping is P2/P3/P7)
 
-- [ ] `sales_invoice` + item / taxes / advances / payment schedule children; validate + submit pipeline, `app.sales_invoice_gl_map`, returns (`update_outstanding_for_self`), credit limit and overdue-billing check; `billed_amt` / `per_billed` on the sales order and delivery note — §2.18, §3.1, §3.4, §4.3 (P5)
+- [x] `sales_invoice` + `sales_invoice_item`; validate, `app.sales_invoice_gl_map`, submit debit to the receivable and credit to each income account — §2.18, §4.3 (P5), `0510_accounts_sales_invoice.sql`
+- [ ] Sales Invoice taxes, advances, payment schedule, returns (`update_outstanding_for_self`), credit limit and overdue-billing check; `billed_amt` / `per_billed` on the sales order and delivery note; `app.refresh_outstanding` — §2.18, §3.1, §3.4, §4.3 (P5)
 - [ ] quotation → invoice, SO / DN → SI mappers (`app.map_doc`), SI → PE / Return — §3.1, §3.3 (P5)
 - [ ] `purchase_invoice` + children; `ExpenseAccountService` port, `app.purchase_invoice_gl_map`, `is_paid`, write-off, returns, `check_supplier_invoice_uniqueness`, on-hold — §2.19, §3.2, §4.4 (P6)
 - [ ] PO / PR → PI mappers — §3.2 (P6)

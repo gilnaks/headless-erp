@@ -264,6 +264,35 @@ export async function fillSalesOrderItem(values: FieldValues, path?: string): Pr
     };
 }
 
+/** Fills a blank Sales Invoice row from get_item_details. A rate the user already typed stays. */
+export async function fillSalesInvoiceItem(values: FieldValues, path?: string): Promise<FieldValues> {
+    const changed = changedItem(path);
+    if (!changed) return {};
+    const companyId = text(values.company_id);
+    const row = rowAt(values, changed.index);
+    const itemId = row ? text(row.item_id) : "";
+    if (!row || !companyId || !itemId) return {};
+
+    const details = await getItemDetails({
+        itemId,
+        companyId,
+        doctype: "Sales Invoice",
+        transactionType: "selling",
+        qty: qtyOf(row.qty),
+        customerId: text(values.customer_id) || undefined,
+        transactionDate: text(values.posting_date) || undefined,
+    });
+    const prefix = `items.${changed.index}`;
+    return {
+        ...(blank(row.item_name) && details.item_name ? { [`${prefix}.item_name`]: details.item_name } : {}),
+        ...(blank(row.income_account_id) && details.income_account_id
+            ? { [`${prefix}.income_account_id`]: details.income_account_id }
+            : {}),
+        ...(blank(row.cost_center_id) && details.cost_center_id ? { [`${prefix}.cost_center_id`]: details.cost_center_id } : {}),
+        ...(blankRate(row.rate) && details.rate != null ? { [`${prefix}.rate`]: String(details.rate) } : {}),
+    };
+}
+
 /** Fills a blank Delivery Note row from get_item_details. A rate the user already typed stays. */
 export async function fillDeliveryNoteItem(values: FieldValues, path?: string): Promise<FieldValues> {
     const changed = changedItem(path);

@@ -12,6 +12,7 @@ import { paymentEntry } from "./accounts/payment-entry";
 import { paymentTerm } from "./accounts/payment-term";
 import { paymentTermsTemplate } from "./accounts/payment-terms-template";
 import { purchaseTaxesAndChargesTemplate } from "./accounts/purchase-taxes-and-charges-template";
+import { salesInvoice } from "./accounts/sales-invoice";
 import { salesTaxesAndChargesTemplate } from "./accounts/sales-taxes-and-charges-template";
 import { taxCategory } from "./accounts/tax-category";
 import { taxRule } from "./accounts/tax-rule";
@@ -94,6 +95,7 @@ export const DOCTYPES: readonly Doctype[] = [
     itemTaxTemplate,
     journalEntry,
     paymentEntry,
+    salesInvoice,
     currencyExchange,
     partyType,
     taxCategory,
