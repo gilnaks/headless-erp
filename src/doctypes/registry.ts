@@ -26,6 +26,7 @@ import { quotation } from "./selling/quotation";
 import { quotationLostReason } from "./selling/quotation-lost-reason";
 import { salesOrder } from "./selling/sales-order";
 import { salesPerson } from "./selling/sales-person";
+import { sellingSettings } from "./selling/selling-settings";
 import { territory } from "./selling/territory";
 import { address } from "./setup/address";
 import { authorizationRule } from "./setup/authorization-rule";
@@ -133,6 +134,7 @@ export const DOCTYPES: readonly Doctype[] = [
     quotationLostReason,
     quotation,
     salesOrder,
+    sellingSettings,
     productBundle,
     supplier,
     supplierGroup,
